@@ -29,3 +29,8 @@
 - 요청 요약: AGENTS.md를 불러오는 한 줄짜리 CLAUDE.md 만들기, design.md와 함께 커밋 안내
 - 수정한 파일: CLAUDE.md(새로 만듦)
 - 판단 근거: AGENTS.md 규칙상 git 명령은 실행하지 않으므로 파일만 만들고 커밋은 사용자에게 맡김
+
+## 2026-11-09 00:21
+- 요청 요약: spec.md 1단계(혼자 하는 게임) 초안 구현 — Live Server로 index.html 실행
+- 수정한 파일: index.html, questions.json, js/main.js, js/config.js, js/state.js, js/questions.js, js/ui.js, js/dungeons.js, js/scenes/StartScene.js, js/scenes/WorldMapScene.js, js/scenes/QuizScene.js, js/scenes/DungeonScene.js, js/scenes/ResultScene.js (모두 새로 만듦)
+- 판단 근거: 교사 플랫폼(2단계)은 Firebase 설정 값이 필요해 제외하고, [미정] 수치는 config.js에 [임시] 표시로 모아 나중에 바꾸기 쉽게 함
