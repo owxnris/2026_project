@@ -1,0 +1,14 @@
+[
+  { "subject": "수학", "question": "12 × 8 은?", "choices": ["86", "96", "106", "92"], "answer": 1 },
+  { "subject": "수학", "question": "x + 7 = 3x − 5 일 때, x의 값은?", "choices": ["4", "5", "6", "7"], "answer": 2 },
+  { "subject": "과학", "question": "1기압에서 물이 끓는 온도는?", "choices": ["50℃", "80℃", "100℃", "120℃"], "answer": 2 },
+  { "subject": "과학", "question": "식물이 빛을 이용해 양분을 만드는 과정은?", "choices": ["호흡", "광합성", "증산 작용", "발효"], "answer": 1 },
+  { "subject": "국어", "question": "'가랑비에 옷 젖는 줄 모른다'의 뜻으로 알맞은 것은?", "choices": ["작은 것도 쌓이면 크게 된다", "비 오는 날엔 조심해야 한다", "급할수록 돌아가라", "남의 떡이 커 보인다"], "answer": 0 },
+  { "subject": "국어", "question": "다음 중 맞춤법이 바른 것은?", "choices": ["어의없다", "왠지 슬프다", "몇일 동안", "금새 끝났다"], "answer": 1 },
+  { "subject": "사회", "question": "대한민국의 수도는?", "choices": ["부산", "인천", "서울", "대전"], "answer": 2 },
+  { "subject": "사회", "question": "국회가 법을 만드는 권한을 무엇이라고 하나요?", "choices": ["행정권", "입법권", "사법권", "자치권"], "answer": 1 },
+  { "subject": "영어", "question": "'apple'의 뜻은?", "choices": ["바나나", "사과", "포도", "딸기"], "answer": 1 },
+  { "subject": "영어", "question": "빈칸에 알맞은 말은?  She ___ to school every day.", "choices": ["go", "goes", "going", "gone"], "answer": 1 },
+  { "subject": "상식", "question": "1년은 보통 며칠인가요?", "choices": ["360일", "364일", "365일", "366일"], "answer": 2 },
+  { "subject": "상식", "question": "무지개 색은 보통 몇 가지로 말하나요?", "choices": ["5가지", "6가지", "7가지", "8가지"], "answer": 2 }
+]
