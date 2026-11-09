@@ -1,7 +1,7 @@
 // 학급 만들기와 참여 코드 발급.
 // 참여 코드: 무작위 숫자 6자리. 지금 쓰이는 코드(joinCodes에 있는 코드)와 겹치지 않게 한다.
 import {
-  doc, getDoc, collection, writeBatch, serverTimestamp, query, where, onSnapshot, getCountFromServer,
+  doc, getDoc, collection, writeBatch, serverTimestamp, query, where, onSnapshot, getCountFromServer, updateDoc,
 } from '../firebase/sdk.js';
 import { auth, db } from '../firebase/app.js';
 
@@ -50,6 +50,11 @@ export function watchMyClasses(onChange, onError) {
     list.sort((a, b) => (b.createdAt?.toMillis() ?? 0) - (a.createdAt?.toMillis() ?? 0)); // 최근에 만든 학급이 위
     onChange(list);
   }, onError);
+}
+
+// 학급 이름만 바꾼다. 다른 교사의 학급은 보안 규칙(소유 교사만 update, ownerUid 변경 불가)이 막는다.
+export function renameClass(classId, name) {
+  return updateDoc(doc(db, 'classes', classId), { name });
 }
 
 export async function countStudents(classId) {

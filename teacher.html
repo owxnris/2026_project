@@ -58,7 +58,20 @@
       <div class="page-head">
         <button class="btn" id="class-back-btn" type="button">학급 목록으로</button>
       </div>
-      <h2 class="body-text" id="detail-name"></h2>
+      <div class="name-row">
+        <h2 class="body-text" id="detail-name"></h2>
+        <span class="small-text notice" id="detail-notice"></span>
+      </div>
+      <button class="btn" id="rename-btn" type="button">이름 바꾸기</button>
+      <form id="rename-form" class="form-row" novalidate hidden>
+        <label class="field">
+          <span class="small-text">새 학급 이름</span>
+          <input class="input" id="rename-input" type="text" autocomplete="off">
+        </label>
+        <button class="btn primary" id="rename-save-btn" type="submit">저장</button>
+        <button class="btn" id="rename-cancel-btn" type="button">취소</button>
+      </form>
+      <p class="small-text error" id="rename-error"></p>
       <p class="small-text detail-label">참여 코드</p>
       <p class="big-text" id="detail-code"></p>
 
@@ -68,13 +81,13 @@
         <button class="tab" type="button" data-tab="results">결과</button>
       </nav>
       <div class="tab-panel" data-panel="students">
-        <p class="small-text muted">참여한 학생 목록은 4단계(학생 참여)에서 만들어요.</p>
+        <p class="small-text muted">참여한 학생 목록은 6단계(학생 참여)에서 만들어요.</p>
       </div>
       <div class="tab-panel" data-panel="activities" hidden>
-        <p class="small-text muted">학습 활동은 6단계에서 만들어요.</p>
+        <p class="small-text muted">학습 활동은 5단계(수업 활동 관리)에서 만들어요.</p>
       </div>
       <div class="tab-panel" data-panel="results" hidden>
-        <p class="small-text muted">결과 조회는 8단계에서 만들어요.</p>
+        <p class="small-text muted">결과 조회는 8단계(결과 분석)에서 만들어요.</p>
       </div>
     </section>
 
@@ -82,7 +95,7 @@
       <div class="page-head">
         <h2 class="body-text">문제은행</h2>
       </div>
-      <p class="small-text muted">문제은행은 5단계에서 만들어요.</p>
+      <p class="small-text muted">문제은행은 4단계에서 만들어요.</p>
     </section>
   </main>
 

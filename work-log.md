@@ -134,3 +134,13 @@
 - 요청 요약: 3-6 학급 상세 화면 구현
 - 수정한 파일: js/teacher/classDetail.js(새로 만듦), js/teacher/nav.js, js/teacher/classList.js, js/teacher/main.js, teacher.html, css/teacher.css, tasks.md
 - 판단 근거: 상세 화면은 목록에서 이미 받은 학급 데이터를 써서 추가 조회 없이 열고, 탭 내용은 해당 단계 전까지 안내만 둠. 데이터 구조는 바꾸지 않음
+
+## 2026-11-10 00:55
+- 요청 요약: 3-6 이후 전체 개발 계획 재배치 (문제은행 → 수업 활동 → 학생 참여 → 게임 연동 → 결과 분석 → 차별화 → 통합 검증)
+- 수정한 파일: tasks.md
+- 판단 근거: 기존 체크와 [미정]은 유지하고 옛 번호를 (구 x-y)로 남겼으며, spec에 없거나 범위 밖과 충돌하는 차별화 기능(오답 도감·재도전·공동 보스)은 spec 반영 승인 후 진행하도록 표시함
+
+## 2026-11-10 00:58
+- 요청 요약: 3-7 학급 이름 수정, 교사 화면 단계 안내 문구를 현재 개발 순서로 수정
+- 수정한 파일: js/teacher/classDetail.js, js/teacher/classes.js, js/firebase/sdk.js, teacher.html, css/teacher.css, tasks.md
+- 판단 근거: name 필드만 updateDoc으로 바꿔 데이터 구조·규칙을 그대로 두고, 다른 교사 학급 수정은 기존 규칙(소유 교사만 update)에 맡김. Google 로그인이 필요한 Live Server 확인은 사용자 몫으로 남김

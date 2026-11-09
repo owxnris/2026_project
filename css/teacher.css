@@ -99,6 +99,8 @@ main { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
 
 /* 학급 상세: 참여 코드와 탭 (지금 탭은 흰색 2px 밑줄) */
 .detail-label { margin-top: 16px; }
+.name-row { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+#rename-form { margin-bottom: 8px; }
 .tabs { display: flex; gap: 24px; margin: 32px 0 16px; border-bottom: 1px solid var(--line); }
 .tab {
   padding: 8px 0;
