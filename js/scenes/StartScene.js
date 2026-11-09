@@ -13,8 +13,9 @@ export default class StartScene extends Phaser.Scene {
   create() {
     setQuestions(this.cache.json.get('questions'));
     const cx = LAYOUT.W / 2;
-    text(this, cx, 200, '퀴즈 던전 (가제)', 'body').setOrigin(0.5);
-    text(this, cx, 240, '퀴즈로 코인을 모으고, 대시로 장애물 코스를 돌파하세요', 'small').setOrigin(0.5);
+    text(this, cx, 170, '던전 대시', 'big').setOrigin(0.5);
+    text(this, cx, 215, 'DUNGEON DASH', 'small').setOrigin(0.5);
+    text(this, cx, 255, '퀴즈로 코인을 모으고, 대시로 장애물 코스를 돌파하세요', 'small').setOrigin(0.5);
     createButton(this, cx, 330, '시작', () => {
       resetGame();
       this.scene.start('WorldMap');
