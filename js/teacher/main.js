@@ -3,6 +3,7 @@ import { isConfigured } from '../firebase/app.js';
 import { watchTeacher, login, logout } from './auth.js';
 import { createClass, watchMyClasses } from './classes.js';
 import { renderClassList, showClassListLoading, showClassListError } from './classList.js';
+import { showView, hideAllViews, setupMenu } from './nav.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -34,14 +35,15 @@ function showError(msg) {
 
 function show(user) {
   $('login-view').hidden = !!user;
-  $('home-view').hidden = !user;
   $('account').hidden = !user;
-  $('page-title').textContent = user ? '홈' : '로그인';
+  $('menu').hidden = !user;
   if (user) {
+    showView('classes');
     $('teacher-name').textContent = user.displayName || user.email;
     $('welcome').textContent = `${user.displayName || '선생님'} 선생님, 환영합니다`;
     startClassList();
   } else {
+    hideAllViews();
     stopClassListWatch();
   }
 }
@@ -50,6 +52,7 @@ if (!isConfigured) {
   $('login-btn').disabled = true;
   showError('Firebase 설정값이 아직 없어요. js/firebase/config.js에 Firebase 콘솔에서 받은 값을 넣어 주세요.');
 } else {
+  setupMenu();
   watchTeacher(show);
   $('login-btn').addEventListener('click', async () => {
     showError('');

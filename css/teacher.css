@@ -36,6 +36,21 @@ body {
 .topbar-left, .topbar-right { display: flex; align-items: center; gap: 16px; }
 .topbar .btn { width: auto; height: 40px; padding: 0 16px; font-size: 16px; }
 
+/* 메뉴: 지금 메뉴는 흰색 2px 밑줄, 나머지는 투명도 60% */
+.menu { display: flex; gap: 16px; }
+.menu-item {
+  padding: 4px 0;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--white);
+  font: inherit;
+  font-size: 16px;
+  opacity: 0.6;
+  cursor: pointer;
+}
+.menu-item.current { opacity: 1; border-bottom-color: var(--white); }
+
 main { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
 .center { display: flex; flex-direction: column; align-items: center; gap: 16px; padding-top: 96px; text-align: center; }
 

@@ -124,3 +124,8 @@
 - 요청 요약: 3-4 완료 처리, 3-5 내가 만든 학급 목록 구현
 - 수정한 파일: js/teacher/classList.js(새로 만듦), js/teacher/classes.js, js/teacher/main.js, teacher.html, css/teacher.css, js/firebase/sdk.js, tasks.md
 - 판단 근거: ownerUid로만 조회하고 정렬은 화면에서 해 복합 색인이 필요 없게 했고, 로그아웃 전에 구독을 끊어 권한 오류가 콘솔에 뜨지 않게 함
+
+## 2026-11-10 00:42
+- 요청 요약: 3-1 메뉴와 화면 전환 구현
+- 수정한 파일: js/teacher/nav.js(새로 만듦), js/teacher/main.js, teacher.html, css/teacher.css, tasks.md
+- 판단 근거: design.md대로 정보 표시줄 왼쪽에 '학급 · 문제은행' 메뉴를 두고 화면 제목 글자(page-title)는 메뉴로 대체, 문제은행 화면은 5단계 전까지 안내만 둠
