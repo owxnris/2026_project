@@ -33,11 +33,11 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
   - 다른 교사의 학급에 함부로 접근하지 못하도록 기존 Firestore 보안 규칙을 그대로 유지한다
   - [미정] 지워진 학급의 코드를 다시 쓸 수 있는지 (3-8 학급 삭제와 함께 정함)
 
-- [ ] 3-4 학급 만들기와 참여 코드 발급
+- [x] 3-4 학급 만들기와 참여 코드 발급
   - 로그인 후 화면에 '학급 만들기' 버튼(주 버튼)과 학급 이름 입력창
   - 숫자 6자리 코드를 무작위로 만들고, 학급 문서(classes)와 코드 문서(joinCodes)를 한 번에(batch) 저장
   - 코드가 이미 있으면(규칙이 막음) 새 코드로 다시 시도
-  - 구현됨 (js/teacher/classes.js, teacher.html, js/teacher/main.js, css/teacher.css, js/firebase/sdk.js) — 가짜 Firestore로 코드 형식·필드·중복 재시도 시험 통과, Live Server 확인 전
+  - 구현됨 (js/teacher/classes.js, teacher.html, js/teacher/main.js, css/teacher.css, js/firebase/sdk.js) — 가짜 Firestore로 코드 형식·필드·중복 재시도 시험 통과, Live Server에서 저장 완료 안내·6자리 코드 표시 확인(사용자)
   - 확인 (Live Server)
     - 학급 이름을 넣고 '학급 만들기' → '저장했어요'(금색)와 발급된 6자리 숫자 코드가 화면에 보인다
     - Firestore 콘솔: classes/{id}에 ownerUid(내 uid)·name·joinCode·createdAt, joinCodes/{코드}에 classId·ownerUid가 생긴다
@@ -53,6 +53,7 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
     - 새로고침해도 목록이 그대로 보인다
     - 다른 Google 계정으로 로그인하면 내 학급이 보이지 않는다
     - 개발자 도구 콘솔에 빨간 오류(권한 오류 포함)가 없다
+  - 구현됨 (js/teacher/classList.js, classes.js, main.js, teacher.html, css/teacher.css, js/firebase/sdk.js) — 가짜 Firestore·가짜 DOM 시험 통과, Live Server 확인 전
 
 - [ ] 3-1 메뉴와 화면 전환
   - 정보 표시줄에 메뉴 '학급 · 문제은행', 한 번에 한 화면만 보이기 (문제은행 화면은 5단계 전까지 빈 화면)

@@ -1,9 +1,27 @@
 // 교사 플랫폼 진입점: 로그인 상태에 따라 화면을 바꾼다.
 import { isConfigured } from '../firebase/app.js';
 import { watchTeacher, login, logout } from './auth.js';
-import { createClass } from './classes.js';
+import { createClass, watchMyClasses } from './classes.js';
+import { renderClassList, showClassListLoading, showClassListError } from './classList.js';
 
 const $ = (id) => document.getElementById(id);
+
+// 학급 목록 실시간 구독. 로그아웃 전에 끊어야 권한 오류가 나지 않는다.
+let stopClassList = null;
+
+function startClassList() {
+  stopClassListWatch();
+  showClassListLoading($('class-list'));
+  stopClassList = watchMyClasses(
+    (classes) => renderClassList($('class-list'), classes),
+    (e) => showClassListError($('class-list'), e),
+  );
+}
+
+function stopClassListWatch() {
+  if (stopClassList) stopClassList();
+  stopClassList = null;
+}
 
 const ERROR_TEXT = {
   'auth/unauthorized-domain': '이 주소는 로그인이 허용되지 않았어요. Firebase 콘솔 → Authentication → 설정 → 승인된 도메인에 추가해 주세요.',
@@ -22,6 +40,9 @@ function show(user) {
   if (user) {
     $('teacher-name').textContent = user.displayName || user.email;
     $('welcome').textContent = `${user.displayName || '선생님'} 선생님, 환영합니다`;
+    startClassList();
+  } else {
+    stopClassListWatch();
   }
 }
 
@@ -39,7 +60,10 @@ if (!isConfigured) {
       showError(ERROR_TEXT[e.code] || `로그인하지 못했어요 (${e.code || e.message})`);
     }
   });
-  $('logout-btn').addEventListener('click', () => logout());
+  $('logout-btn').addEventListener('click', () => {
+    stopClassListWatch();
+    logout();
+  });
   $('class-form').addEventListener('submit', onCreateClass);
 }
 

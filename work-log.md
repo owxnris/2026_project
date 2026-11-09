@@ -119,3 +119,8 @@
 - 요청 요약: 지금까지의 변경을 두 단계로 나눠 커밋해 달라는 요청
 - 수정한 파일: 없음 (git 커밋 2개)
 - 판단 근거: AGENTS.md는 git을 사용자가 하도록 하지만 사용자가 직접 요청해 이번에만 커밋함. 0~2단계 전용 파일과 3-4·문서 변경으로 나누고, 사용자가 만든 js/config.js 빈 줄 변경은 제외함
+
+## 2026-11-10 00:41
+- 요청 요약: 3-4 완료 처리, 3-5 내가 만든 학급 목록 구현
+- 수정한 파일: js/teacher/classList.js(새로 만듦), js/teacher/classes.js, js/teacher/main.js, teacher.html, css/teacher.css, js/firebase/sdk.js, tasks.md
+- 판단 근거: ownerUid로만 조회하고 정렬은 화면에서 해 복합 색인이 필요 없게 했고, 로그아웃 전에 구독을 끊어 권한 오류가 콘솔에 뜨지 않게 함
