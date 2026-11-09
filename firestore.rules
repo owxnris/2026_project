@@ -1,0 +1,97 @@
+// 던전 대시 Firestore 보안 규칙 (초안)
+// Firebase 콘솔 → Firestore Database → 규칙 탭에 그대로 붙여 넣고 '게시'한다.
+// 교사 = Google 로그인 사용자, 학생 = 익명 로그인 사용자.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isTeacher() {
+      return signedIn() && request.auth.token.firebase.sign_in_provider == 'google.com';
+    }
+    function classDoc(classId) {
+      return get(/databases/$(database)/documents/classes/$(classId));
+    }
+    function ownsClass(classId) {
+      return isTeacher() && classDoc(classId).data.ownerUid == request.auth.uid;
+    }
+    function inClass(classId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/classes/$(classId)/students/$(request.auth.uid));
+    }
+
+    // 교사 정보와 문제은행: 본인만
+    match /teachers/{uid} {
+      allow read, write: if isTeacher() && request.auth.uid == uid;
+      match /questions/{qid} {
+        allow read, write: if isTeacher() && request.auth.uid == uid;
+      }
+    }
+
+    // 참여 코드 → 학급 찾기: 코드 하나 조회만, 목록 조회 불가
+    // 학급 문서와 같은 일괄 쓰기(batch)로 만든다.
+    match /joinCodes/{code} {
+      allow get: if signedIn();
+      allow list: if false;
+      // 이미 있는 코드에 쓰면 create가 아니라 update라서 막힌다 → 다른 학급 코드를 덮어쓸 수 없다
+      allow create: if isTeacher()
+        && request.resource.data.keys().hasOnly(['classId', 'ownerUid'])
+        && request.resource.data.ownerUid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/classes/$(request.resource.data.classId)).data.ownerUid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/classes/$(request.resource.data.classId)).data.joinCode == code;
+      // 자기가 만든 코드만 지울 수 있다
+      allow delete: if isTeacher() && resource.data.ownerUid == request.auth.uid;
+      allow update: if false;
+    }
+
+    match /classes/{classId} {
+      allow read: if (isTeacher() && resource.data.ownerUid == request.auth.uid) || inClass(classId);
+      allow create: if isTeacher() && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if isTeacher() && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid;
+      allow delete: if isTeacher() && resource.data.ownerUid == request.auth.uid;
+
+      // 학생 참여: 본인 문서만, 참여 코드가 이 학급을 가리켜야 한다
+      match /students/{studentUid} {
+        allow read: if ownsClass(classId) || request.auth.uid == studentUid;
+        // 이미 참여한 학생이 다시 쓰면 update라서 막힌다 → 앱에서 먼저 문서가 있는지 확인한다
+        // 닉네임 길이 제한 [미정] — 지금은 빈 문자열만 막는다
+        allow create: if signedIn() && request.auth.uid == studentUid
+          && request.resource.data.keys().hasOnly(['nickname', 'joinCode', 'joinedAt'])
+          && request.resource.data.nickname is string
+          && request.resource.data.nickname.size() > 0
+          && request.resource.data.joinCode is string
+          && get(/databases/$(database)/documents/joinCodes/$(request.resource.data.joinCode)).data.classId == classId;
+        allow delete: if ownsClass(classId);
+        allow update: if false;
+      }
+
+      // 학습 활동: 교사가 쓰고, 학급 학생은 읽기만
+      match /activities/{activityId} {
+        allow read: if ownsClass(classId) || inClass(classId);
+        allow write: if ownsClass(classId);
+
+        // 실시간 진행 상황: 학생은 자기 문서만 쓴다
+        match /progress/{studentUid} {
+          allow read: if ownsClass(classId);
+          allow create, update: if inClass(classId) && request.auth.uid == studentUid
+            && request.resource.data.keys().hasOnly(['nickname', 'currentDungeon', 'clearedCount', 'coins', 'updatedAt']);
+          allow delete: if ownsClass(classId);
+        }
+      }
+
+      // 결과: 학생은 자기 결과를 추가만, 수정·삭제 불가
+      match /results/{resultId} {
+        allow read: if ownsClass(classId);
+        allow create: if inClass(classId) && request.resource.data.studentUid == request.auth.uid
+          && request.resource.data.keys().hasOnly([
+               'studentUid', 'nickname', 'activityId', 'dungeon', 'cleared',
+               'quizCorrect', 'quizTotal', 'answers', 'coinsEarned', 'coinsSpent',
+               'abilities', 'dashesUsed', 'hits', 'falls', 'clearSec', 'createdAt'])
+          && exists(/databases/$(database)/documents/classes/$(classId)/activities/$(request.resource.data.activityId));
+        allow update: if false;
+        allow delete: if ownsClass(classId);
+      }
+    }
+  }
+}

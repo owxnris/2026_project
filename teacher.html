@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>던전 대시 - 교사 플랫폼</title>
+  <link rel="stylesheet" href="css/teacher.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="body-text">던전 대시</span>
+      <span class="small-text" id="page-title">로그인</span>
+    </div>
+    <div class="topbar-right" id="account" hidden>
+      <span class="small-text" id="teacher-name"></span>
+      <button class="btn" id="logout-btn">로그아웃</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="login-view" class="center">
+      <h1 class="big-text">던전 대시</h1>
+      <p class="small-text">DUNGEON DASH · 교사 플랫폼</p>
+      <button class="btn primary" id="login-btn">Google로 로그인</button>
+      <p class="small-text error" id="error"></p>
+    </section>
+
+    <section id="home-view" class="center" hidden>
+      <p class="body-text" id="welcome"></p>
+    </section>
+  </main>
+
+  <script type="module" src="js/teacher/main.js"></script>
+</body>
+</html>
