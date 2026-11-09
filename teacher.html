@@ -26,8 +26,27 @@
       <p class="small-text error" id="error"></p>
     </section>
 
-    <section id="home-view" class="center" hidden>
+    <section id="home-view" hidden>
       <p class="body-text" id="welcome"></p>
+
+      <div class="page-head">
+        <h2 class="body-text">학급</h2>
+        <span class="small-text notice" id="class-notice"></span>
+      </div>
+
+      <form id="class-form" class="form-row" novalidate>
+        <label class="field">
+          <span class="small-text">학급 이름</span>
+          <input class="input" id="class-name" type="text" autocomplete="off">
+        </label>
+        <button class="btn primary" id="class-create-btn" type="submit">학급 만들기</button>
+      </form>
+      <p class="small-text error" id="class-error"></p>
+
+      <div id="class-created" hidden>
+        <p class="small-text" id="class-created-name"></p>
+        <p class="big-text" id="class-code"></p>
+      </div>
     </section>
   </main>
 

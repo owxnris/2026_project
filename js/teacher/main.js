@@ -1,6 +1,7 @@
 // 교사 플랫폼 진입점: 로그인 상태에 따라 화면을 바꾼다.
 import { isConfigured } from '../firebase/app.js';
 import { watchTeacher, login, logout } from './auth.js';
+import { createClass } from './classes.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -39,4 +40,35 @@ if (!isConfigured) {
     }
   });
   $('logout-btn').addEventListener('click', () => logout());
+  $('class-form').addEventListener('submit', onCreateClass);
+}
+
+// 학급 만들기: 이름이 비면 안내만, 저장되면 발급된 참여 코드를 보여 준다.
+async function onCreateClass(event) {
+  event.preventDefault();
+  const input = $('class-name');
+  const name = input.value.trim();
+  $('class-error').textContent = '';
+  input.classList.remove('invalid');
+
+  if (!name) {
+    input.classList.add('invalid');
+    $('class-error').textContent = '학급 이름을 입력해 주세요.';
+    return;
+  }
+
+  $('class-create-btn').disabled = true;
+  try {
+    const { joinCode } = await createClass(name);
+    input.value = '';
+    $('class-created-name').textContent = `${name} 참여 코드`;
+    $('class-code').textContent = joinCode;
+    $('class-created').hidden = false;
+    $('class-notice').textContent = '저장했어요';
+    setTimeout(() => { $('class-notice').textContent = ''; }, 2000);
+  } catch (e) {
+    $('class-error').textContent = `학급을 만들지 못했어요 (${e.code || e.message})`;
+  } finally {
+    $('class-create-btn').disabled = false;
+  }
 }

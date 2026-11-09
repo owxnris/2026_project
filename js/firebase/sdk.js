@@ -4,5 +4,5 @@ export {
   getAuth, GoogleAuthProvider, signInWithPopup, signInAnonymously, signOut, onAuthStateChanged,
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 export {
-  getFirestore, doc, getDoc, setDoc, serverTimestamp,
+  getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, writeBatch,
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';

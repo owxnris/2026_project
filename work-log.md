@@ -69,3 +69,53 @@
 - 요청 요약: 1단계 제목 변경 — 브라우저 탭 제목과 시작 화면을 '던전 대시 / DUNGEON DASH'로
 - 수정한 파일: index.html, js/scenes/StartScene.js, tasks.md
 - 판단 근거: design.md대로 게임 이름은 큰 숫자 크기(48px 굵게), 영문 부제는 작은 안내(16px)로 하고 나머지 시작 화면은 그대로 둠
+
+## 2026-11-09 23:25
+- 요청 요약: 2단계 Firebase 기반 — 초기화, 교사 Google 로그인 화면, 학생 익명 로그인 함수, Firestore 보안 규칙 초안
+- 수정한 파일: js/firebase/sdk.js·config.js·app.js·student.js, js/teacher/auth.js·main.js, teacher.html, css/teacher.css, firestore.rules (모두 새로 만듦), tasks.md, spec.md
+- 판단 근거: 설정값이 없어 [미정] 자리로 두고, 값이 없으면 Firebase를 쓰지 않게 해서 학생 게임은 지금처럼 Firebase 없이도 실행되게 함
+
+## 2026-11-09 23:34
+- 요청 요약: joinCodes ownerUid·소형 버튼 예외 승인 반영, spec 데이터 구조 확정, design 교사 UI 규칙, firestore.rules 점검, tasks.md를 커밋 단위로 재정리
+- 수정한 파일: spec.md, design.md, firestore.rules, tasks.md
+- 판단 근거: 코드 대신 문서·규칙만 고치고, 규칙은 학생이 쓰는 문서의 필드를 제한하는 등 데이터 구조와 맞추는 범위로만 수정함
+
+## 2026-11-09 23:56
+- 요청 요약: Firebase 설정값으로 js/firebase/config.js 작성·초기화 요청
+- 수정한 파일: 없음
+- 판단 근거: 설정값이 붙여넣어지지 않았고(자리 표시 문구만 있음), config.js·app.js가 이미 있어 그대로 만들면 초기화가 두 번 돼 먼저 확인함
+
+## 2026-11-10 00:01
+- 요청 요약: A안으로 Firebase 초기화 완료 — app.js에서 한 번만 초기화하고 app·auth·db export, config.js는 실제 설정값 자리
+- 수정한 파일: js/firebase/app.js, js/firebase/config.js(안내 주석), tasks.md
+- 판단 근거: 실제 설정값이 메시지에 없어 [미정] 자리를 유지하고, 실제 CDN SDK와 시험용 설정값으로 Node에서 초기화를 돌려 오류가 없음을 확인함
+
+## 2026-11-10 00:09
+- 요청 요약: 발급받은 Firebase 설정값(gbl-dungeondash) 적용
+- 수정한 파일: js/firebase/config.js, tasks.md
+- 판단 근거: 값은 게임 설정(js/config.js)이 아니라 Firebase 설정 파일에 넣고, 실제 프로젝트로 초기화와 '로그인 없는 읽기 거부(permission-denied)'를 확인해 연결과 규칙 게시를 검증함
+
+## 2026-11-10 00:13
+- 요청 요약: 교사 Google 로그인·이름 표시·teachers 문서 생성 확인 반영, 다음 작업과 학급·참여 코드 우선순위 질문
+- 수정한 파일: tasks.md, spec.md
+- 판단 근거: 확인받은 로그인만 체크하고 로그아웃은 별도 미완료 항목(2-9)으로 분리, 참여 코드 6자리는 사용자 언급대로 반영하고 글자 종류는 [미정] 유지
+
+## 2026-11-10 00:24
+- 요청 요약: 로그아웃 확인 반영, 3단계 순서 변경(3-3→3-4→3-5→3-1→3-6), 3-2 공통 UI 작업 제거, 참여 코드 숫자 6자리 확정, 작업별 Live Server 확인 조건 작성
+- 수정한 파일: tasks.md
+- 판단 근거: tasks.md만 고치라는 요청에 따라 spec.md의 참여 코드 글자 종류 [미정]은 그대로 두고, 학급 삭제 시 코드 재사용 여부는 [미정]으로 남김
+
+## 2026-11-10 00:29
+- 요청 요약: 3-4 학급 만들기와 참여 코드(숫자 6자리 무작위, 중복 방지) 발급·Firestore 저장, spec.md 참여 코드 규칙 확정
+- 수정한 파일: js/teacher/classes.js(새로 만듦), js/teacher/main.js, teacher.html, css/teacher.css, js/firebase/sdk.js, spec.md, tasks.md
+- 판단 근거: 저장 전 코드 조회 + 규칙의 덮어쓰기 거부를 함께 써서 중복을 막고, Google 로그인이 필요한 Live Server 확인은 사용자 몫으로 남겨 3-4는 체크하지 않음. git 명령은 AGENTS.md 규칙에 따라 실행하지 않음
+
+## 2026-11-10 00:32
+- 요청 요약: 학습 데이터 기반 차별화 — learningConcept 필드, 활동 복사 시 개념 유지, 오답·오답 개념 결과 구조, 교사 취약 개념 분석, 정답 비노출 설계
+- 수정한 파일: spec.md, tasks.md
+- 판단 근거: 즉시 채점과 정답 비노출은 서버 채점 없이는 함께 지킬 수 없어 채점 방식을 [미정](6-0)으로 두고, 정답표 분리·개념 필드 추가처럼 어느 방식에도 필요한 구조만 확정함
+
+## 2026-11-10 00:33
+- 요청 요약: 지금까지의 변경을 두 단계로 나눠 커밋해 달라는 요청
+- 수정한 파일: 없음 (git 커밋 2개)
+- 판단 근거: AGENTS.md는 git을 사용자가 하도록 하지만 사용자가 직접 요청해 이번에만 커밋함. 0~2단계 전용 파일과 3-4·문서 변경으로 나누고, 사용자가 만든 js/config.js 빈 줄 변경은 제외함
