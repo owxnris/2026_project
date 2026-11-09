@@ -4,6 +4,7 @@ import { watchTeacher, login, logout } from './auth.js';
 import { createClass, watchMyClasses } from './classes.js';
 import { renderClassList, showClassListLoading, showClassListError } from './classList.js';
 import { showView, hideAllViews, setupMenu } from './nav.js';
+import { openClassDetail, setupClassDetail } from './classDetail.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -14,7 +15,7 @@ function startClassList() {
   stopClassListWatch();
   showClassListLoading($('class-list'));
   stopClassList = watchMyClasses(
-    (classes) => renderClassList($('class-list'), classes),
+    (classes) => renderClassList($('class-list'), classes, openClassDetail),
     (e) => showClassListError($('class-list'), e),
   );
 }
@@ -53,6 +54,7 @@ if (!isConfigured) {
   showError('Firebase 설정값이 아직 없어요. js/firebase/config.js에 Firebase 콘솔에서 받은 값을 넣어 주세요.');
 } else {
   setupMenu();
+  setupClassDetail();
   watchTeacher(show);
   $('login-btn').addEventListener('click', async () => {
     showError('');

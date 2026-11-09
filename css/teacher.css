@@ -95,3 +95,20 @@ main { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
 .table th { background: rgba(245, 245, 245, 0.1); font-weight: normal; text-align: left; padding: 12px 16px; }
 .table td { padding: 12px 16px; border-bottom: 1px solid var(--line); }
 .muted { opacity: 0.6; }
+.table tr.clickable { cursor: pointer; }
+
+/* 학급 상세: 참여 코드와 탭 (지금 탭은 흰색 2px 밑줄) */
+.detail-label { margin-top: 16px; }
+.tabs { display: flex; gap: 24px; margin: 32px 0 16px; border-bottom: 1px solid var(--line); }
+.tab {
+  padding: 8px 0;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--white);
+  font: inherit;
+  font-size: 16px;
+  opacity: 0.6;
+  cursor: pointer;
+}
+.tab.current { opacity: 1; border-bottom-color: var(--white); }

@@ -54,6 +54,30 @@
       <div id="class-list"></div>
     </section>
 
+    <section id="class-view" hidden>
+      <div class="page-head">
+        <button class="btn" id="class-back-btn" type="button">학급 목록으로</button>
+      </div>
+      <h2 class="body-text" id="detail-name"></h2>
+      <p class="small-text detail-label">참여 코드</p>
+      <p class="big-text" id="detail-code"></p>
+
+      <nav class="tabs">
+        <button class="tab" type="button" data-tab="students">학생</button>
+        <button class="tab" type="button" data-tab="activities">활동</button>
+        <button class="tab" type="button" data-tab="results">결과</button>
+      </nav>
+      <div class="tab-panel" data-panel="students">
+        <p class="small-text muted">참여한 학생 목록은 4단계(학생 참여)에서 만들어요.</p>
+      </div>
+      <div class="tab-panel" data-panel="activities" hidden>
+        <p class="small-text muted">학습 활동은 6단계에서 만들어요.</p>
+      </div>
+      <div class="tab-panel" data-panel="results" hidden>
+        <p class="small-text muted">결과 조회는 8단계에서 만들어요.</p>
+      </div>
+    </section>
+
     <section id="bank-view" hidden>
       <div class="page-head">
         <h2 class="body-text">문제은행</h2>

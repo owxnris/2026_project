@@ -72,6 +72,7 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
     - 돌아가기(보조 버튼)나 '학급' 메뉴를 누르면 목록으로 돌아온다
     - 다른 학급을 고르면 그 학급의 정보로 바뀐다
     - 개발자 도구 콘솔에 빨간 오류가 없다
+  - 구현됨 (js/teacher/classDetail.js, nav.js, classList.js, main.js, teacher.html, css/teacher.css) — 가짜 DOM 시험 통과, Live Server 확인 전
 
 - [ ] 3-7 학급 이름 수정 — 확인: 목록에 바로 반영
 - [ ] 3-8 [미정] 학급 삭제 지원 여부와 하위 데이터(학생·활동·결과) 처리

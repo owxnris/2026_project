@@ -129,3 +129,8 @@
 - 요청 요약: 3-1 메뉴와 화면 전환 구현
 - 수정한 파일: js/teacher/nav.js(새로 만듦), js/teacher/main.js, teacher.html, css/teacher.css, tasks.md
 - 판단 근거: design.md대로 정보 표시줄 왼쪽에 '학급 · 문제은행' 메뉴를 두고 화면 제목 글자(page-title)는 메뉴로 대체, 문제은행 화면은 5단계 전까지 안내만 둠
+
+## 2026-11-10 00:43
+- 요청 요약: 3-6 학급 상세 화면 구현
+- 수정한 파일: js/teacher/classDetail.js(새로 만듦), js/teacher/nav.js, js/teacher/classList.js, js/teacher/main.js, teacher.html, css/teacher.css, tasks.md
+- 판단 근거: 상세 화면은 목록에서 이미 받은 학급 데이터를 써서 추가 조회 없이 열고, 탭 내용은 해당 단계 전까지 안내만 둠. 데이터 구조는 바꾸지 않음

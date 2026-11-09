@@ -16,8 +16,8 @@ export function showClassListError(box, error) {
   message(box, `학급 목록을 불러오지 못했어요 (${error.code || error.message})`, 'error');
 }
 
-// classes: [{ id, name, joinCode, ... }]
-export function renderClassList(box, classes) {
+// classes: [{ id, name, joinCode, ... }], onSelect(c): 줄을 눌렀을 때
+export function renderClassList(box, classes, onSelect) {
   if (classes.length === 0) {
     message(box, '아직 학급이 없어요. 위에서 학급 이름을 넣고 학급 만들기를 눌러 보세요.', 'muted');
     return;
@@ -36,6 +36,10 @@ export function renderClassList(box, classes) {
   classes.forEach((c) => {
     const row = body.insertRow();
     row.dataset.classId = c.id;
+    row.className = 'clickable';
+    row.tabIndex = 0;
+    row.addEventListener('click', () => onSelect(c));
+    row.addEventListener('keydown', (e) => { if (e.key === 'Enter') onSelect(c); });
     row.insertCell().textContent = c.name;
     row.insertCell().textContent = c.joinCode;
     const countCell = row.insertCell();
