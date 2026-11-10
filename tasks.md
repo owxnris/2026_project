@@ -254,3 +254,4 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
 - [ ] 11-2 그래픽 적용 (12주차, design.md 개정)
 - [ ] 11-3 기존 [미정] 게임 규칙: 문 개수, 충돌 시 깎이는 코인, 추락 시 코인, 문 퀴즈, 피드백, 서사
 - [ ] 11-4 검토 후보: 결과 CSV 내보내기, 효과음 ('틀린 문제 복습 활동'은 9단계 재도전으로 옮김)
+  - 구현됨 (js/teacher/questionBank.js·bankView.js·main.js, teacher.html, css/teacher.css) — 실제 questionBank.js를 가짜 Firestore에 붙여 시험 통과(12개 저장·필드 확인, 두 번째는 0개, 고친 기본 문제 유지, 지운 것만 복구, 직접 만든 문제 영향 없음), Live Server 확인 전

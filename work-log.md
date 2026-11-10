@@ -169,3 +169,18 @@
 - 요청 요약: 12문제는 시험용 예시로만 정리하고 4-3(questions.json) → 4-4~4-8 문제은행(표·추가·수정·삭제·거르기·검색) 구현
 - 수정한 파일: questions.json, js/teacher/bankRules.js·bankForm.js·bankView.js·confirmDialog.js·questionBank.js(새로 만듦), js/teacher/main.js, js/firebase/sdk.js, teacher.html, css/teacher.css, spec.md, tasks.md
 - 판단 근거: 규칙(과목·난이도·개념 합치기·검사·거르기)은 화면·Firebase와 떼어 시험 가능하게 하고, 데이터 구조·보안 규칙은 그대로 두었으며 Google 로그인이 필요한 Live Server 확인은 사용자 몫으로 남겨 체크하지 않음
+
+## 2026-11-10 16:00
+- 요청 요약: 직전과 같은 요청(12문제는 시험용, 4-3 → 4-4~4-8 구현)을 다시 받음
+- 수정한 파일: 없음
+- 판단 근거: 같은 작업이 이미 끝나 커밋(dc95b32, 4cbc44c)까지 됐으므로 중복 구현하지 않고 완료 상태만 알림
+
+## 2026-11-10 16:05
+- 요청 요약: 같은 요청(12문제 시험용, 4-3 → 4-4~4-8)을 세 번째로 받음
+- 수정한 파일: 없음
+- 판단 근거: 이미 구현·커밋된 작업이라 반복하지 않고, 같은 메시지가 반복된 이유(응답이 안 보이는지)를 확인함
+
+## 2026-11-10 16:20
+- 요청 요약: 4-9 기본 문제 불러오기 구현, 중복 방지·저장 시험, 4-3~4-9 Live Server 검증 절차 정리
+- 수정한 파일: js/teacher/questionBank.js, js/teacher/bankView.js, js/teacher/main.js, teacher.html, css/teacher.css, tasks.md
+- 판단 근거: questions.json id를 문서 id로 쓰고 이미 있는 문서는 건너뛰어 중복·덮어쓰기를 막았고, 교사 출제(자동 id·source 'teacher')와 경로·필드를 분리해 데이터 구조를 그대로 둠. 완료 체크는 사용자 확인 뒤로 남김

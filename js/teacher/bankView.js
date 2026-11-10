@@ -1,5 +1,5 @@
 // 문제은행 화면 (design.md 문제은행): 거르기 줄(과목·난이도·학습 개념·검색), 문제 표, 수정·삭제.
-// Firestore 저장 함수는 main.js에서 넘겨받는다 (store: { add, update, remove }).
+// Firestore 저장 함수는 main.js에서 넘겨받는다 (store: { add, update, remove, importDefaults }).
 import {
   SUBJECTS, DIFFICULTIES, conceptFilterOptions, filterQuestions,
 } from './bankRules.js';
@@ -102,6 +102,24 @@ function render() {
   $('q-list').replaceChildren(table);
 }
 
+// 기본 문제 불러오기: questions.json(기능 시험용 예시)을 내 문제은행에 넣는다. 이미 있는 문제는 건너뛴다.
+async function onImportDefaults() {
+  $('bank-error').textContent = '';
+  $('q-import-btn').disabled = true;
+  try {
+    const res = await fetch('questions.json');
+    if (!res.ok) throw new Error(`questions.json ${res.status}`);
+    const { added, skipped } = await store.importDefaults(await res.json());
+    showNotice(added > 0
+      ? `기본 문제 ${added}개를 불러왔어요${skipped > 0 ? ` (이미 있는 ${skipped}개는 건너뜀)` : ''}`
+      : '기본 문제가 이미 모두 있어요');
+  } catch (e) {
+    $('bank-error').textContent = `기본 문제를 불러오지 못했어요 (${e.code || e.message})`;
+  } finally {
+    $('q-import-btn').disabled = false;
+  }
+}
+
 // 실시간 구독에서 받은 내 문제 목록
 export function setQuestions(list) {
   questions = list;
@@ -146,6 +164,7 @@ export function setupBank(bankStore) {
     onSaved: showNotice,
     onToggle: (open) => { $('q-add-btn').hidden = open; },
   });
+  $('q-import-btn').addEventListener('click', onImportDefaults);
   $('q-add-btn').addEventListener('click', () => {
     $('bank-error').textContent = '';
     openForm();

@@ -5,7 +5,9 @@ import { createClass, watchMyClasses } from './classes.js';
 import { renderClassList, showClassListLoading, showClassListError } from './classList.js';
 import { showView, hideAllViews, setupMenu } from './nav.js';
 import { openClassDetail, setupClassDetail } from './classDetail.js';
-import { watchMyQuestions, addQuestion, updateQuestion, deleteQuestion } from './questionBank.js';
+import {
+  watchMyQuestions, addQuestion, updateQuestion, deleteQuestion, importDefaultQuestions,
+} from './questionBank.js';
 import {
   setupBank, setQuestions, showBankLoading, showBankError, resetBank,
 } from './bankView.js';
@@ -76,7 +78,9 @@ if (!isConfigured) {
 } else {
   setupMenu();
   setupClassDetail();
-  setupBank({ add: addQuestion, update: updateQuestion, remove: deleteQuestion });
+  setupBank({
+    add: addQuestion, update: updateQuestion, remove: deleteQuestion, importDefaults: importDefaultQuestions,
+  });
   watchTeacher(show);
   $('login-btn').addEventListener('click', async () => {
     showError('');

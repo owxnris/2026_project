@@ -116,7 +116,7 @@ main { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
 .tab.current { opacity: 1; border-bottom-color: var(--white); }
 
 /* 문제은행: 화면 제목 오른쪽 버튼, 거르기 줄, 양식, 줄의 글자 버튼 */
-.head-btn { margin-left: auto; }
+.head-buttons { margin-left: auto; display: flex; gap: 16px; }
 .filter-row { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 8px; }
 .filter-row .field { flex: 1 1 160px; }
 .filter-row .search-field { flex: 2 1 240px; }
