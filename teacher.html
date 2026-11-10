@@ -94,10 +94,89 @@
     <section id="bank-view" hidden>
       <div class="page-head">
         <h2 class="body-text">문제은행</h2>
+        <span class="small-text notice" id="bank-notice"></span>
+        <button class="btn primary head-btn" id="q-add-btn" type="button">문제 추가</button>
       </div>
-      <p class="small-text muted">문제은행은 4단계에서 만들어요.</p>
+
+      <form id="q-form" class="q-form" novalidate hidden>
+        <p class="body-text" id="q-form-title">문제 추가</p>
+        <div class="form-row">
+          <label class="field">
+            <span class="small-text">과목</span>
+            <select class="input" id="q-subject"></select>
+            <span class="small-text error" data-error="subject"></span>
+          </label>
+          <label class="field">
+            <span class="small-text">난이도</span>
+            <select class="input" id="q-difficulty"></select>
+            <span class="small-text error" data-error="difficulty"></span>
+          </label>
+        </div>
+        <p class="small-text muted" id="q-hint"></p>
+        <div class="form-row">
+          <label class="field">
+            <span class="small-text">학습 개념</span>
+            <select class="input" id="q-concept"></select>
+          </label>
+          <label class="field" id="q-new-concept-field" hidden>
+            <span class="small-text">새 개념</span>
+            <input class="input" id="q-new-concept" type="text" autocomplete="off" placeholder="예: 일차방정식">
+          </label>
+        </div>
+        <p class="small-text error" data-error="learningConcept"></p>
+        <label class="field">
+          <span class="small-text">문제</span>
+          <input class="input" id="q-question" type="text" autocomplete="off">
+          <span class="small-text error" data-error="question"></span>
+        </label>
+        <fieldset class="choices">
+          <legend class="small-text">보기 4개 — 정답 보기 앞의 동그라미를 고르세요</legend>
+          <div class="choice-row"><input type="radio" name="q-answer" value="0" aria-label="보기 1을 정답으로"><input class="input" data-choice="0" type="text" autocomplete="off" placeholder="보기 1"></div>
+          <div class="choice-row"><input type="radio" name="q-answer" value="1" aria-label="보기 2를 정답으로"><input class="input" data-choice="1" type="text" autocomplete="off" placeholder="보기 2"></div>
+          <div class="choice-row"><input type="radio" name="q-answer" value="2" aria-label="보기 3을 정답으로"><input class="input" data-choice="2" type="text" autocomplete="off" placeholder="보기 3"></div>
+          <div class="choice-row"><input type="radio" name="q-answer" value="3" aria-label="보기 4를 정답으로"><input class="input" data-choice="3" type="text" autocomplete="off" placeholder="보기 4"></div>
+          <p class="small-text error" data-error="choices"></p>
+          <p class="small-text error" data-error="answer"></p>
+        </fieldset>
+        <p class="small-text error" id="q-save-error"></p>
+        <div class="button-row">
+          <button class="btn primary" id="q-save-btn" type="submit">저장</button>
+          <button class="btn" id="q-cancel-btn" type="button">취소</button>
+        </div>
+      </form>
+
+      <div class="filter-row">
+        <label class="field">
+          <span class="small-text">과목</span>
+          <select class="input" id="f-subject"></select>
+        </label>
+        <label class="field">
+          <span class="small-text">난이도</span>
+          <select class="input" id="f-difficulty"></select>
+        </label>
+        <label class="field">
+          <span class="small-text">학습 개념</span>
+          <select class="input" id="f-concept"></select>
+        </label>
+        <label class="field search-field">
+          <span class="small-text">문제 내용 검색</span>
+          <input class="input" id="f-keyword" type="search" autocomplete="off" placeholder="문제 글로 찾기">
+        </label>
+      </div>
+      <p class="small-text error" id="bank-error"></p>
+      <div id="q-list"></div>
     </section>
   </main>
+
+  <div class="overlay" id="confirm" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-text">
+      <p class="body-text" id="confirm-text"></p>
+      <div class="button-row">
+        <button class="btn" id="confirm-cancel" type="button">취소</button>
+        <button class="btn danger" id="confirm-ok" type="button">삭제</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="js/teacher/main.js"></script>
 </body>

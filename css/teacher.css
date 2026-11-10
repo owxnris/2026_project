@@ -114,3 +114,58 @@ main { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
   cursor: pointer;
 }
 .tab.current { opacity: 1; border-bottom-color: var(--white); }
+
+/* 문제은행: 화면 제목 오른쪽 버튼, 거르기 줄, 양식, 줄의 글자 버튼 */
+.head-btn { margin-left: auto; }
+.filter-row { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 8px; }
+.filter-row .field { flex: 1 1 160px; }
+.filter-row .search-field { flex: 2 1 240px; }
+.q-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+.q-form .form-row { align-items: flex-start; }
+.choices { border: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.choices legend { margin-bottom: 8px; padding: 0; }
+.choice-row { display: flex; align-items: center; gap: 16px; }
+.choice-row .input { flex: 1; }
+.choice-row input[type="radio"] { width: 24px; height: 24px; margin: 0; accent-color: var(--good); cursor: pointer; }
+.button-row { display: flex; gap: 16px; }
+select.input:disabled { opacity: 0.4; }
+.row-actions { white-space: nowrap; text-align: right; }
+.link-btn {
+  border: none;
+  background: none;
+  color: var(--white);
+  font: inherit;
+  font-size: 16px;
+  padding: 0 8px;
+  cursor: pointer;
+}
+.link-btn.danger, .btn.danger { color: var(--bad); }
+.btn.danger { border-color: var(--bad); }
+
+/* 확인 상자: 뒤 화면은 배경색 80%로 덮는다 */
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(27, 31, 42, 0.8);
+}
+.dialog {
+  max-width: 560px;
+  padding: 32px;
+  border: 2px solid var(--white);
+  border-radius: 8px;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}

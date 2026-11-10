@@ -5,6 +5,10 @@ import { createClass, watchMyClasses } from './classes.js';
 import { renderClassList, showClassListLoading, showClassListError } from './classList.js';
 import { showView, hideAllViews, setupMenu } from './nav.js';
 import { openClassDetail, setupClassDetail } from './classDetail.js';
+import { watchMyQuestions, addQuestion, updateQuestion, deleteQuestion } from './questionBank.js';
+import {
+  setupBank, setQuestions, showBankLoading, showBankError, resetBank,
+} from './bankView.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -25,6 +29,20 @@ function stopClassListWatch() {
   stopClassList = null;
 }
 
+// 문제은행 실시간 구독. 학급 목록과 같이 로그인하면 시작하고 로그아웃 전에 끊는다.
+let stopBank = null;
+
+function startBankWatch() {
+  stopBankWatch();
+  showBankLoading();
+  stopBank = watchMyQuestions(setQuestions, showBankError);
+}
+
+function stopBankWatch() {
+  if (stopBank) stopBank();
+  stopBank = null;
+}
+
 const ERROR_TEXT = {
   'auth/unauthorized-domain': '이 주소는 로그인이 허용되지 않았어요. Firebase 콘솔 → Authentication → 설정 → 승인된 도메인에 추가해 주세요.',
   'auth/operation-not-allowed': 'Google 로그인이 꺼져 있어요. Firebase 콘솔 → Authentication에서 켜 주세요.',
@@ -43,9 +61,12 @@ function show(user) {
     $('teacher-name').textContent = user.displayName || user.email;
     $('welcome').textContent = `${user.displayName || '선생님'} 선생님, 환영합니다`;
     startClassList();
+    startBankWatch();
   } else {
     hideAllViews();
     stopClassListWatch();
+    stopBankWatch();
+    resetBank();
   }
 }
 
@@ -55,6 +76,7 @@ if (!isConfigured) {
 } else {
   setupMenu();
   setupClassDetail();
+  setupBank({ add: addQuestion, update: updateQuestion, remove: deleteQuestion });
   watchTeacher(show);
   $('login-btn').addEventListener('click', async () => {
     showError('');
@@ -67,6 +89,7 @@ if (!isConfigured) {
   });
   $('logout-btn').addEventListener('click', () => {
     stopClassListWatch();
+    stopBankWatch();
     logout();
   });
   $('class-form').addEventListener('submit', onCreateClass);
