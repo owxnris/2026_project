@@ -89,28 +89,28 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
 - [x] 4-1 난이도: 하·중·상 3단계와 구분 기준 (spec.md) (구 5-1)
 - [x] 4-2 학습 개념: 과목별 선택 목록(내 문제은행에서 모음) + 새 개념 직접 입력, 필수, 띄어쓰기·대소문자 중복 방지 (spec.md) (구 5-1a)
   - 기존 12문제의 난이도·학습 개념은 기능 시험용 값이다. 실제 수업의 분류는 교사가 문제를 등록할 때 정한다
-- [ ] 4-3 questions.json에 id(d01~d12)·difficulty·learningConcept 추가 (구 5-2)
+- [x] 4-3 questions.json에 id(d01~d12)·difficulty·learningConcept 추가 (구 5-2)
   - 확인: index.html에서 지금처럼 입장 퀴즈가 나오고 끝까지 플레이된다 / 콘솔 빨간 오류 없음
-  - 구현됨 (questions.json) — 12문제 모두 id·하중상·학습 개념 형식 검사 통과, 헤드리스 브라우저에서 시작 화면까지 오류 없이 열림. 끝까지 플레이하는 확인은 Live Server에서 사용자 확인 전
-- [ ] 4-4 문제 표: 과목·난이도·학습 개념·문제·정답, 실시간, 빈 목록 안내 (구 5-3)
+  - 구현됨 (questions.json) — 12문제 모두 id·하중상·학습 개념 형식 검사 통과, 헤드리스 브라우저에서 시작 화면까지 오류 없이 열림. 끝까지 플레이 Live Server 확인(사용자)
+- [x] 4-4 문제 표: 과목·난이도·학습 개념·문제·정답, 실시간, 빈 목록 안내 (구 5-3)
   - 확인: 문제가 없으면 빈 목록 안내 / Firestore 콘솔에서 teachers/{내 uid}/questions에 문서를 하나 넣으면 새로고침 없이 표에 보인다 / 다른 교사 계정에서는 보이지 않는다
-  - 구현됨 (js/teacher/questionBank.js·bankView.js, main.js, teacher.html, css/teacher.css, js/firebase/sdk.js) — 가짜 저장소로 실제 화면 모듈을 헤드리스 브라우저에서 시험 통과, Live Server 확인 전
-- [ ] 4-5 문제 추가 양식 (구 5-4)
+  - 구현됨 (js/teacher/questionBank.js·bankView.js, main.js, teacher.html, css/teacher.css, js/firebase/sdk.js) — 가짜 저장소로 실제 화면 모듈을 헤드리스 브라우저에서 시험 통과, Live Server 확인(사용자)
+- [x] 4-5 문제 추가 양식 (구 5-4)
   - 확인: 과목·난이도·학습 개념·문제·보기 4개·정답을 넣고 저장하면 표에 생긴다 / Firestore 문서 필드가 spec.md와 같다(source 'teacher', updatedAt) / 빈 칸·정답 미선택은 빨간 안내만, 문서 안 생김 / 보기끼리 글이 같아도 저장된다
   - 확인(학습 개념): 과목을 고르면 그 과목에서 쓴 개념만 목록에 나온다 / '새 개념 입력'으로 넣은 개념이 다음 문제부터 목록에 보인다 / '일차 방정식'처럼 띄어쓰기만 다르게 넣으면 이미 있는 '일차방정식'으로 저장되고 안내가 뜬다
-  - 구현됨 (js/teacher/bankForm.js·bankRules.js) — 저장 검사·개념 합치기·보기 중복 허용 시험 통과, Live Server 확인 전
-- [ ] 4-6 문제 수정 (구 5-5)
+  - 구현됨 (js/teacher/bankForm.js·bankRules.js) — 저장 검사·개념 합치기·보기 중복 허용 시험 통과, Live Server 확인(사용자)
+- [x] 4-6 문제 수정 (구 5-5)
   - 확인: 표에서 수정을 누르면 양식에 기존 값이 채워진다 / 저장하면 표와 Firestore에 반영되고 updatedAt이 바뀐다 / 취소하면 그대로
-  - 구현됨 (bankForm.js·questionBank.js) — 값 채우기·저장·source 유지 시험 통과, Live Server 확인 전
-- [ ] 4-7 문제 삭제, 확인 상자 (구 5-6)
+  - 구현됨 (bankForm.js·questionBank.js) — 값 채우기·저장·source 유지 시험 통과, Live Server 확인(사용자)
+- [x] 4-7 문제 삭제, 확인 상자 (구 5-6)
   - 확인: 삭제 → 확인 상자 / 취소하면 남고, 삭제하면 표와 Firestore에서 사라진다
-  - 구현됨 (js/teacher/confirmDialog.js·bankView.js) — 취소·삭제 시험 통과, Live Server 확인 전
-- [ ] 4-8 과목·난이도·학습 개념으로 걸러 보기, 문제 내용 검색창 (구 5-7)
+  - 구현됨 (js/teacher/confirmDialog.js·bankView.js) — 취소·삭제 시험 통과, Live Server 확인(사용자)
+- [x] 4-8 과목·난이도·학습 개념으로 걸러 보기, 문제 내용 검색창 (구 5-7)
   - 확인: 조건을 고르면 맞는 문제만 보이고, 조건을 풀면 전체가 보인다 / 검색창에 글자를 넣으면 문제 글에 그 글자가 있는 문제만 보인다 / 거르기와 검색이 함께 적용된다 / 맞는 문제가 없으면 빈 목록 안내
-  - 구현됨 (bankRules.js·bankView.js) — 거르기 3종·검색·함께 적용·빈 결과 안내 시험 통과, Live Server 확인 전
-- [ ] 4-9 기본 문제 불러오기: questions.json → 문제은행 (source 'default', 학습 개념 포함) (구 5-8)
+  - 구현됨 (bankRules.js·bankView.js) — 거르기 3종·검색·함께 적용·빈 결과 안내 시험 통과, Live Server 확인(사용자)
+- [x] 4-9 기본 문제 불러오기: questions.json → 문제은행 (source 'default', 학습 개념 포함) (구 5-8)
   - 확인: 누르면 12문제가 생긴다 / 두 번 눌러도 12문제만 있다 / 교사가 만든 문제는 그대로 남는다
-  - 구현됨 (js/teacher/questionBank.js·bankView.js·main.js, teacher.html, css/teacher.css) — 실제 questionBank.js를 가짜 Firestore에 붙여 시험 통과(12개 저장·필드 확인, 두 번째는 0개, 고친 기본 문제 유지, 지운 것만 복구, 직접 만든 문제 영향 없음), Live Server 확인 전
+  - 구현됨 (js/teacher/questionBank.js·bankView.js·main.js, teacher.html, css/teacher.css) — 실제 questionBank.js를 가짜 Firestore에 붙여 시험 통과(12개 저장·필드 확인, 두 번째는 0개, 고친 기본 문제 유지, 지운 것만 복구, 직접 만든 문제 영향 없음), Live Server 확인(사용자)
 
 ## 5. 수업 활동 관리 (구 6단계 교사 쪽)
 - 확인은 teacher.html → 학급 상세 → '활동' 탭에서 한다
