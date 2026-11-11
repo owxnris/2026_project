@@ -200,3 +200,15 @@ select.input:disabled { opacity: 0.4; }
 .preview-choices { margin: 12px 0; padding-left: 24px; display: flex; flex-direction: column; gap: 4px; }
 .preview-choices .answer { color: var(--good); }
 .link-btn.muted { cursor: default; }
+
+/* 좁은 화면(태블릿·작은 창, D-3): 표는 옆으로 밀어 볼 수 있게 하고, 제목 줄·양식·탭은 줄을 넘긴다 */
+div:has(> .table) { overflow-x: auto; }
+.table { min-width: 520px; }
+@media (max-width: 720px) {
+  .page-head { flex-wrap: wrap; }
+  .head-buttons { margin-left: 0; flex-wrap: wrap; }
+  .form-row { flex-direction: column; align-items: stretch; }
+  .tabs { gap: 16px; overflow-x: auto; }
+  .table th, .table td { padding: 8px 10px; }
+  main { padding: 16px 12px; }
+}

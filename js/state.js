@@ -40,7 +40,7 @@ export function resetPlay() {
   state.play = newPlay();
 }
 
-// 퀴즈 하나의 결과를 기록 (서버가 채점한 결과)
+// 퀴즈 하나의 결과를 기록 (기기에서 채점한 결과)
 export function recordQuiz(correct, quizType) {
   state.play.quizTotal += 1;
   state.totalQuiz += 1;

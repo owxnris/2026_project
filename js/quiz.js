@@ -75,8 +75,10 @@ export async function submitAnswer(item, chosen) {
     return { correct: chosen === item.local.answer, correctIndex: item.local.answer };
   }
   const d = await activityData();
+  const before = run.wrong.join();
   const res = answer(run, item.attemptId, chosen, d.answers[item.question.id], serverNow());
-  if (!res.duplicate) saveWrong(d.classId, d.activityId, run.wrong).catch(() => {}); // 복습 목록은 실패해도 게임을 막지 않는다
+  // 복습 목록은 바뀔 때만 쓴다 (무료 요금제 쓰기 한도). 실패해도 게임을 막지 않는다
+  if (!res.duplicate && run.wrong.join() !== before) saveWrong(d.classId, d.activityId, run.wrong).catch(() => {});
   return { correct: res.correct, correctIndex: res.correctIndex };
 }
 
@@ -115,4 +117,15 @@ export function finishRun(outcome, stats) {
       .finally(() => { finishing = null; });
   }
   return finishing;
+}
+
+// 창을 닫거나 다른 주소로 가면(pagehide) 끝나지 않은 판을 중도 종료로 저장해 본다. 브라우저가 닫히는 중이라 저장이 끝난다는 보장은 없다 (최선의 시도)
+// 탭 전환(visibilitychange)에는 반응하지 않는다 — 판이 계속되는 중이기 때문이다
+if (typeof window !== 'undefined') {
+  window.addEventListener('pagehide', (e) => {
+    if (e.persisted || !run || finishing) return;
+    const r = run;
+    run = null;
+    saveOutcome(r, 'abandoned').catch(() => {});
+  });
 }

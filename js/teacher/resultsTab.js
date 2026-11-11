@@ -1,5 +1,6 @@
 // 학급 화면 '결과' 탭 (design.md 결과 분석): 활동으로 거르기 → 학급 통계 → 학생별 결과(줄을 누르면 자세한 기록)
-// → 문제별 정답률 → 개념별 오답(취약 개념). 값은 서버가 만든 결과(results)에서 계산한다.
+// → 문제별 정답률 → 개념별 오답(취약 개념). 값은 저장된 결과(results)에서 계산한다.
+import { reasonText } from '../firebase/errors.js';
 import { onClassDataChange, getResults, getClassDataError, getStudents } from './classHub.js';
 import {
   OUTCOME_LABEL, percent, filterResults, questionIndex, studentSummary, questionStats, conceptStats,
@@ -101,7 +102,7 @@ function renderDetail(results, qi) {
 function render() {
   fillActivitySelect();
   const err = getClassDataError();
-  if (err) { message($('r-students'), `결과를 불러오지 못했어요 (${err.code || err.message})`, 'error'); return; }
+  if (err) { message($('r-students'), `결과를 불러오지 못했어요 (${reasonText(err)})`, 'error'); return; }
   const results = filterResults(getResults(), $('r-activity').value);
   const qi = questionIndex(getActivities());
 

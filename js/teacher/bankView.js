@@ -1,5 +1,6 @@
 // 문제은행 화면 (design.md 문제은행): 거르기 줄(과목·난이도·학습 개념·검색), 문제 표, 수정·삭제.
 // Firestore 저장 함수는 main.js에서 넘겨받는다 (store: { add, update, remove, importDefaults, share, reshare }).
+import { reasonText } from '../firebase/errors.js';
 import {
   SUBJECTS, DIFFICULTIES, conceptFilterOptions, filterQuestions,
 } from './bankRules.js';
@@ -72,7 +73,7 @@ async function onDelete(q) {
     if (isEditing(q.id)) closeForm();
     showNotice('삭제했어요');
   } catch (e) {
-    $('bank-error').textContent = `문제를 삭제하지 못했어요 (${e.code || e.message})`;
+    $('bank-error').textContent = `문제를 삭제하지 못했어요 (${reasonText(e)})`;
   }
 }
 
@@ -87,7 +88,7 @@ async function onShare(q) {
       showNotice('공유 문제은행에 올렸어요');
     }
   } catch (e) {
-    $('bank-error').textContent = e instanceof ShareError ? e.message : `공유하지 못했어요 (${e.code || e.message})`;
+    $('bank-error').textContent = e instanceof ShareError ? e.message : `공유하지 못했어요 (${reasonText(e)})`;
   }
 }
 
@@ -140,7 +141,7 @@ async function onImportDefaults() {
       ? `기본 문제 ${added}개를 불러왔어요${skipped > 0 ? ` (이미 있는 ${skipped}개는 건너뜀)` : ''}`
       : '기본 문제가 이미 모두 있어요');
   } catch (e) {
-    $('bank-error').textContent = `기본 문제를 불러오지 못했어요 (${e.code || e.message})`;
+    $('bank-error').textContent = `기본 문제를 불러오지 못했어요 (${reasonText(e)})`;
   } finally {
     $('q-import-btn').disabled = false;
   }
@@ -163,7 +164,7 @@ export function showBankLoading() {
 }
 
 export function showBankError(error) {
-  message(`문제은행을 불러오지 못했어요 (${error.code || error.message})`, 'error');
+  message(`문제은행을 불러오지 못했어요 (${reasonText(error)})`, 'error');
 }
 
 // 로그아웃할 때: 양식을 닫고 목록을 비운다

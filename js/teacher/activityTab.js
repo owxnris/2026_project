@@ -1,5 +1,6 @@
 // 학급 화면 '활동' 탭 (design.md): 활동 표(제목·문제 수·전체 시간·상태) + 활동 만들기 양식(문제 고르기 표).
 // 저장·구독 함수는 setupActivityTab에서 넘겨받는다 (store: { create, watch }).
+import { reasonText } from '../firebase/errors.js';
 import {
   SUBJECTS, DIFFICULTIES, conceptFilterOptions, filterQuestions,
 } from './bankRules.js';
@@ -96,7 +97,7 @@ export function showActivities(c) {
     renderList();
     changeListeners.forEach((fn) => fn());
   }, (e) => {
-    message($('act-list'), `활동 목록을 불러오지 못했어요 (${e.code || e.message})`, 'error');
+    message($('act-list'), `활동 목록을 불러오지 못했어요 (${reasonText(e)})`, 'error');
   });
 }
 
@@ -217,7 +218,7 @@ async function onSave(event) {
       showNotice('저장했어요');
     }
   } catch (e) {
-    $('act-save-error').textContent = `활동을 만들지 못했어요 (${e.code || e.message})`;
+    $('act-save-error').textContent = `활동을 만들지 못했어요 (${reasonText(e)})`;
   } finally {
     $('act-save-btn').disabled = false;
   }

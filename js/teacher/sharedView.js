@@ -1,6 +1,7 @@
 // 공유 문제은행 화면: 공유 이름, 거르기(과목·난이도·학습 개념·검색·내가 공유한 문제), 공유 문제 표,
 // 미리보기(보기·정답), 가져오기(내 문제은행으로 복사), 내가 공유한 문제는 공유 취소.
 // Firestore 함수는 setupSharedView에서 넘겨받는다 (store: { watch, getName, setName, importItem, unshare, myQuestions })
+import { reasonText } from '../firebase/errors.js';
 import {
   SUBJECTS, DIFFICULTIES, conceptFilterOptions, filterQuestions,
 } from './bankRules.js';
@@ -47,7 +48,7 @@ function textButton(label, onClick, cls = 'link-btn') {
 }
 
 function errorText(e) {
-  return e instanceof ShareError ? e.message : `처리하지 못했어요 (${e.code || e.message})`;
+  return e instanceof ShareError ? e.message : `처리하지 못했어요 (${reasonText(e)})`;
 }
 
 async function onImport(item) {
@@ -153,7 +154,7 @@ export function startShared(uid) {
     loaded = true;
     fillConcepts();
     render();
-  }, (e) => message(`공유 문제은행을 불러오지 못했어요 (${e.code || e.message})`, 'error'));
+  }, (e) => message(`공유 문제은행을 불러오지 못했어요 (${reasonText(e)})`, 'error'));
 }
 
 export function stopShared() {

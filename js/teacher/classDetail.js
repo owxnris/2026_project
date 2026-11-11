@@ -1,4 +1,5 @@
 // 학급 상세 화면: 학급 이름(바꾸기), 참여 코드, 탭 '학생 · 활동 · 결과' (탭 내용은 각 단계에서 채운다)
+import { reasonText } from '../firebase/errors.js';
 import { showView } from './nav.js';
 import { renameClass } from './classes.js';
 import { showActivities } from './activityTab.js';
@@ -58,7 +59,7 @@ async function onRename(event) {
       setTimeout(() => { $('detail-notice').textContent = ''; }, 2000);
     }
   } catch (e) {
-    $('rename-error').textContent = `이름을 바꾸지 못했어요 (${e.code || e.message})`;
+    $('rename-error').textContent = `이름을 바꾸지 못했어요 (${reasonText(e)})`;
   } finally {
     $('rename-save-btn').disabled = false;
   }

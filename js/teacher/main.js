@@ -1,4 +1,5 @@
 // 교사 플랫폼 진입점: 로그인 상태에 따라 화면을 바꾼다.
+import { reasonText } from '../firebase/errors.js';
 import { isConfigured } from '../firebase/app.js';
 import { watchTeacher, login, logout } from './auth.js';
 import { createClass, watchMyClasses } from './classes.js';
@@ -137,7 +138,7 @@ if (!isConfigured) {
       await login();
     } catch (e) {
       if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return;
-      showError(ERROR_TEXT[e.code] || `로그인하지 못했어요 (${e.code || e.message})`);
+      showError(ERROR_TEXT[e.code] || `로그인하지 못했어요 (${reasonText(e)})`);
     }
   });
   $('logout-btn').addEventListener('click', () => {
@@ -174,7 +175,7 @@ async function onCreateClass(event) {
     $('class-notice').textContent = '저장했어요';
     setTimeout(() => { $('class-notice').textContent = ''; }, 2000);
   } catch (e) {
-    $('class-error').textContent = `학급을 만들지 못했어요 (${e.code || e.message})`;
+    $('class-error').textContent = `학급을 만들지 못했어요 (${reasonText(e)})`;
   } finally {
     $('class-create-btn').disabled = false;
   }

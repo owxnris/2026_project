@@ -25,7 +25,7 @@ export function validateActivity({ title, minutes, pickedCount }) {
   return errors;
 }
 
-// 화면에 보일 상태. 종료 시각이 지난 'running'은 끝난 활동으로 본다 (서버 함수도 같은 기준)
+// 화면에 보일 상태. 종료 시각이 지난 'running'은 끝난 활동으로 본다 (학생 게임도 같은 기준)
 export function activityState(a, nowMs) {
   if (a.status === 'running' && a.endAt && a.endAt.toMillis() <= nowMs) return 'ended';
   return a.status;

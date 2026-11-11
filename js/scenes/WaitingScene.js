@@ -1,5 +1,6 @@
 // 대기 화면 (design.md): 학급 이름(본문), '선생님이 시작하면 게임이 열려요'(작은 안내). 정보 표시줄 없음
 // 학급의 진행 중 활동을 지켜보다가 시작되면(또는 이미 진행 중이면) 그 활동의 종료 시각으로 월드맵을 연다
+import { reasonText } from '../firebase/errors.js';
 import { CSS, LAYOUT } from '../config.js';
 import { watchRunningActivities } from '../firebase/student.js';
 import { serverNow } from '../firebase/clock.js';
@@ -34,7 +35,7 @@ export default class WaitingScene extends Phaser.Scene {
         if (this.scene.isActive()) this.scene.start('WorldMap');
       });
     }, (e) => {
-      this.error.setText(`활동 정보를 받지 못했어요 (${e.code || e.message})`);
+      this.error.setText(`활동 정보를 받지 못했어요 (${reasonText(e)})`);
     });
     this.events.once('shutdown', () => this.stop());
   }

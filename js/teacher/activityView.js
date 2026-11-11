@@ -1,5 +1,6 @@
 // 진행 중 화면 (design.md): 참여 코드·남은 시간(큰 숫자), 시작 또는 종료 버튼(지금 누를 수 있는 하나만 주 버튼).
-// 아래에 학생별 진행 상황·순위 표 (progress + 서버 결과)
+// 아래에 학생별 진행 상황·순위 표 (progress + 저장된 결과)
+import { reasonText } from '../firebase/errors.js';
 import { showView } from './nav.js';
 import {
   activityState, remainingSec, formatClock, otherRunning, STATUS_LABEL,
@@ -73,7 +74,7 @@ function failText(prefix, e) {
   const known = START_ERROR[reason];
   if (known) return known(e.details || {});
   const hint = ['permission-denied', 'failed-precondition'].includes(reason) ? RULES_HINT : '';
-  return `${prefix} (${reason})${hint}`;
+  return `${prefix} (${reasonText(e)})${hint}`;
 }
 
 async function onStart() {

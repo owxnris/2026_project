@@ -1,4 +1,5 @@
 // 학급 화면 '학생' 탭 (design.md): 참여한 학생 표(닉네임·참여 시각), 실시간
+import { reasonText } from '../firebase/errors.js';
 import { onClassDataChange, getStudents, getClassDataError } from './classHub.js';
 import { message, renderTable } from './tableUtil.js';
 
@@ -13,7 +14,7 @@ function when(ts) {
 function render() {
   const box = $('student-list');
   const err = getClassDataError();
-  if (err) { message(box, `학생 목록을 불러오지 못했어요 (${err.code || err.message})`, 'error'); return; }
+  if (err) { message(box, `학생 목록을 불러오지 못했어요 (${reasonText(err)})`, 'error'); return; }
   const list = getStudents();
   $('student-count').textContent = `참여한 학생 ${list.length}명`;
   if (list.length === 0) {

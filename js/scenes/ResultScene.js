@@ -1,7 +1,8 @@
 // mode 'clear': 던전 클리어 → 월드맵 / mode 'timeout': 전체 시간 종료 / mode 'ended': 교사가 활동 종료 → 최종 결과
 // 결과 화면 (design.md): 제목 → 별 3개 → 획득 내역 → 구분선 → 합계 → 보상 → 주 버튼
 // 별 기준(기본값, spec.md): 클리어 / 입장 퀴즈 3문제 모두 정답 / 충돌 0번
-// 온라인이면 끝난 판의 결과를 서버에 저장한다 (클리어 cleared / 시간 종료·교사 종료 failed). 실패하면 '다시 시도'
+// 온라인이면 끝난 판의 결과를 Firestore에 저장한다 (클리어 cleared / 시간 종료·교사 종료 failed). 실패하면 '다시 시도'
+import { reasonText } from '../firebase/errors.js';
 import { COLORS, CSS, LAYOUT, RULES } from '../config.js';
 import { DUNGEONS } from '../dungeons.js';
 import { state, checkTimeout } from '../state.js';
@@ -97,7 +98,7 @@ export default class ResultScene extends Phaser.Scene {
         : '결과를 저장했어요');
     } catch (e) {
       if (!this.alive) return;
-      status.setText(`결과를 저장하지 못했어요 (${errorReason(e)})`).setColor(CSS.bad);
+      status.setText(`결과를 저장하지 못했어요 (${reasonText(e)})`).setColor(CSS.bad);
       this.saveItems.push(createButton(this, cx + 330, 465, '다시 시도', () => this.save(outcome, stats), { w: 160, h: 40 }));
     }
   }

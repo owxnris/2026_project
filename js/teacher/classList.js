@@ -1,4 +1,5 @@
 // 학급 목록 표 그리기 (design.md 교사 플랫폼 UI 규칙: 표·빈 목록·불러오는 중)
+import { reasonText } from '../firebase/errors.js';
 import { countStudents } from './classes.js';
 
 function message(box, text, className) {
@@ -13,7 +14,7 @@ export function showClassListLoading(box) {
 }
 
 export function showClassListError(box, error) {
-  message(box, `학급 목록을 불러오지 못했어요 (${error.code || error.message})`, 'error');
+  message(box, `학급 목록을 불러오지 못했어요 (${reasonText(error)})`, 'error');
 }
 
 // classes: [{ id, name, joinCode, ... }], onSelect(c): 줄을 눌렀을 때

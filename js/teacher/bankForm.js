@@ -1,5 +1,6 @@
 // 문제 추가·수정 양식 (design.md 문제 추가·수정 양식).
 // 학습 개념은 고른 과목에서 이미 쓴 개념 중에 고르거나, '새 개념 입력'으로 직접 적는다.
+import { reasonText } from '../firebase/errors.js';
 import {
   SUBJECTS, DIFFICULTIES, DIFFICULTY_HINT, conceptsOf, normalizeConcept, findSameConcept, validateQuestion,
 } from './bankRules.js';
@@ -105,7 +106,7 @@ async function onSubmit(event) {
     closeForm();
     actions.onSaved(mergedInto ? `이미 있는 개념 '${mergedInto}'(으)로 저장했어요` : '저장했어요');
   } catch (e) {
-    $('q-save-error').textContent = `문제를 저장하지 못했어요 (${e.code || e.message})`;
+    $('q-save-error').textContent = `문제를 저장하지 못했어요 (${reasonText(e)})`;
   } finally {
     $('q-save-btn').disabled = false;
   }

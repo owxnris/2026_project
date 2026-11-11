@@ -1,4 +1,5 @@
 // 참여 화면 (design.md): 참여 코드·닉네임 입력창 2개를 세로로, 입장 버튼(주 버튼). 정보 표시줄 없음
+import { reasonText } from '../firebase/errors.js';
 import { CSS, LAYOUT } from '../config.js';
 import { joinClass, JoinError } from '../firebase/student.js';
 import { setClass } from '../session.js';
@@ -65,7 +66,7 @@ export default class JoinScene extends Phaser.Scene {
         this.code.setInvalid(true);
         this.error.setText(e.message);
       } else {
-        this.error.setText(`참여하지 못했어요 — 인터넷 연결을 확인하고 다시 눌러 주세요 (${e.code || e.message})`);
+        this.error.setText(`참여하지 못했어요 — 인터넷 연결을 확인하고 다시 눌러 주세요 (${reasonText(e)})`);
       }
       this.busy = false;
       this.button.setAlpha(1);

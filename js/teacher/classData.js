@@ -12,7 +12,7 @@ export function watchStudents(classId, onChange, onError) {
   }, onError);
 }
 
-// 결과는 서버 함수만 만든다. 교사는 학급의 결과를 모두 읽어 화면에서 계산한다
+// 결과는 학생 기기가 판이 끝날 때 만든다. 교사는 학급의 결과를 모두 읽어 화면에서 계산한다
 export function watchResults(classId, onChange, onError) {
   return onSnapshot(collection(db, 'classes', classId, 'results'), (snap) => onChange(listOf(snap)), onError);
 }

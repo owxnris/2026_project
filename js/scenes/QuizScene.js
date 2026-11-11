@@ -1,6 +1,7 @@
 // mode 'entry': 던전 입장 전 3문제 → 던전 시작
 // mode 'revive': 코인이 0개가 됐을 때 던전 위에 뜸 → 맞힐 때까지 계속 출제
 // 문제와 채점은 quiz.js가 맡는다 (화면은 답을 낸 뒤에야 정답 보기를 보여 준다)
+import { reasonText } from '../firebase/errors.js';
 import { COLORS, CSS, LAYOUT, RULES } from '../config.js';
 import { DUNGEONS } from '../dungeons.js';
 import { state, checkTimeout, recordQuiz } from '../state.js';
@@ -59,7 +60,7 @@ export default class QuizScene extends Phaser.Scene {
         this.showRunClosed();
         return;
       }
-      this.showError(`연결하지 못했어요 (${errorReason(e)})`, () => this.request(job, then));
+      this.showError(`연결하지 못했어요 (${reasonText(e)})`, () => this.request(job, then));
       return;
     }
     if (this.alive) then(res);

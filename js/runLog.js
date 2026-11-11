@@ -1,4 +1,4 @@
-// 던전 한 판의 진행 기록 (순수 함수, 브라우저 메모리). 서버 함수 대신 학생 기기에서 출제·채점·코인 계산을 한다.
+// 던전 한 판의 진행 기록 (순수 함수, 브라우저 메모리). Cloud Functions 없이 학생 기기에서 출제·채점·코인 계산을 한다.
 // Firestore와 상관없이 node --test로 시험한다. 저장은 quiz.js가 맡는다.
 import {
   RULES, pickQuestion, isLate, isValidChoice, grade, issueBlocker, updateWrong, publicQuestion,
