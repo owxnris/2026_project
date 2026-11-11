@@ -66,10 +66,35 @@ service cloud.firestore {
         allow update: if false;
       }
 
-      // 학습 활동: 교사가 쓰고, 학급 학생은 읽기만
+      // 학습 활동: 교사가 대기 상태로 만들고, 학급 학생은 읽기만
+      // 시작·종료(status·startAt·endAt)는 서버 함수(startActivity·endActivity)만 바꾼다 → 학급당 진행 중 1개를 서버가 보장
       match /activities/{activityId} {
         allow read: if ownsClass(classId) || inClass(classId);
-        allow write: if ownsClass(classId);
+        allow create: if ownsClass(classId)
+          && request.resource.data.keys().hasOnly(['title', 'totalTimeSec', 'status', 'startAt', 'endAt', 'questions', 'createdAt'])
+          && request.resource.data.status == 'waiting'
+          && request.resource.data.startAt == null
+          && request.resource.data.endAt == null
+          && request.resource.data.totalTimeSec is int
+          && request.resource.data.totalTimeSec > 0
+          && request.resource.data.questions is list
+          && request.resource.data.questions.size() > 0;
+        allow update: if false;
+        allow delete: if ownsClass(classId);
+
+        // 정답표: 소유 교사만 (활동과 같은 일괄 쓰기로 만든다). 학생은 읽을 수 없다. 서버 함수는 관리자 권한으로 읽는다
+        match /answerKey/{keyId} {
+          allow read, create: if ownsClass(classId);
+          allow update, delete: if false;
+        }
+
+        // 서버 채점 기록(판·문제): 서버 함수만 읽고 쓴다
+        match /runs/{runId} {
+          allow read, write: if false;
+          match /attempts/{attemptId} {
+            allow read, write: if false;
+          }
+        }
 
         // 실시간 진행 상황: 학생은 자기 문서만 쓴다
         match /progress/{studentUid} {
@@ -80,15 +105,10 @@ service cloud.firestore {
         }
       }
 
-      // 결과: 학생은 자기 결과를 추가만, 수정·삭제 불가
+      // 결과: 서버 함수(finishRun·중도 종료 처리)만 만든다. 학생 기기는 결과를 쓸 수 없다
       match /results/{resultId} {
         allow read: if ownsClass(classId);
-        allow create: if inClass(classId) && request.resource.data.studentUid == request.auth.uid
-          && request.resource.data.keys().hasOnly([
-               'studentUid', 'nickname', 'activityId', 'dungeon', 'cleared',
-               'quizCorrect', 'quizTotal', 'answers', 'coinsEarned', 'coinsSpent',
-               'abilities', 'dashesUsed', 'hits', 'falls', 'clearSec', 'createdAt'])
-          && exists(/databases/$(database)/documents/classes/$(classId)/activities/$(request.resource.data.activityId));
+        allow create: if false;
         allow update: if false;
         allow delete: if ownsClass(classId);
       }

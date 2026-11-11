@@ -7,3 +7,4 @@ export {
   getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, writeBatch,
   query, where, onSnapshot, getCountFromServer, updateDoc, addDoc, deleteDoc,
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+export { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js';
