@@ -214,3 +214,8 @@
 - 요청 요약: 학생별 맞춤 피드백(정답률·취약 개념·추천 문제·활동별 변화), 학급 분석(수준 분포·참여율·완료율·문제별·개념별·보충 요약), 교사 간 공유 문제은행(공유·검색·미리보기·가져오기·출처·권한)
 - 수정한 파일: js/teacher/(analysis.js, resultsTab.js, activityTab.js, bankView.js, sharedBank.js, sharedView.js, nav.js, main.js), teacher.html, css/teacher.css, firestore.rules, functions/test/analysis.test.js, spec.md, design.md, tasks.md
 - 판단 근거: 분석은 저장된 results만으로 규칙 계산하고 최소 데이터 기준 아래는 '데이터 부족'으로 표시했으며, 공유 문제은행은 별도 컬렉션·필드 제한 규칙·공유 이름으로 개인 정보와 학생 결과가 섞이지 않게 함. 시험 중 문제은행 삭제 안내 문구가 이전 편집 스크립트로 깨진 것을 발견해 고침
+
+## 2026-11-11 (실제 Firebase 배포 준비)
+- 요청 요약: Git·tasks·work-log로 진행 상황 확인, 규칙·함수 배포 준비(프로젝트·지역·환경 변수·규칙 점검), 사용자 단계 구분, 배포 후 검증 절차(V1~V8), 임계값·12-7·12-8 결정 사항 정리
+- 수정한 파일: verification.md(새 파일), functions/index.js·js/firebase/app.js(지역 주석), firestore.rules(게시 방법 주석), tasks.md
+- 판단 근거: CLI 로그인·결제·배포는 사용자 권한이라 실행하지 않고 멈춤. 함수 지역은 Firestore 위치와 달라도 동작하므로 '반드시 같아야 함'이던 주석을 '서버·앱 두 값만 같아야 함'으로 바로잡음. 실제 확인 칸은 비워 둠

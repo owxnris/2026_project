@@ -3,7 +3,7 @@
 import { initializeApp, getAuth, getFirestore, getFunctions } from './sdk.js';
 import { firebaseConfig } from './config.js';
 
-// 서버 함수 지역: functions/index.js의 REGION과 같아야 한다 (Firestore 데이터베이스 위치에 맞춘다)
+// 서버 함수 지역: functions/index.js의 REGION과 반드시 같아야 한다 (Firestore 위치와 같으면 더 빠르다)
 export const FUNCTIONS_REGION = 'asia-northeast3';
 
 export const isConfigured = Object.values(firebaseConfig).every((v) => v && !v.includes('[미정]'));

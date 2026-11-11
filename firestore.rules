@@ -1,5 +1,5 @@
 // 던전 대시 Firestore 보안 규칙 (초안)
-// Firebase 콘솔 → Firestore Database → 규칙 탭에 그대로 붙여 넣고 '게시'한다.
+// 게시: 프로젝트 폴더에서 firebase deploy --only firestore:rules (또는 Firebase 콘솔 → Firestore Database → 규칙 탭에 붙여 넣고 '게시').
 // 교사 = Google 로그인 사용자, 학생 = 익명 로그인 사용자.
 rules_version = '2';
 service cloud.firestore {

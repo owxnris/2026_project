@@ -146,6 +146,7 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
   - 확인: firebase projects:list에 gbl-dungeondash가 보인다 / Firestore 위치가 asia-northeast3이 아니면 functions/index.js·js/firebase/app.js의 지역을 바꾼다
 - [ ] 5-9 서버 채점 규칙과 시험: functions/grading.js(순수 함수)·handlers.js, 가짜 Firestore 시험 (functions/test, npm test)
   - 확인: 채점·중복 지급·시간 초과·입장 3문제·회복·코인 검사·결과 한 번만·중도 종료·진행 중 1개·권한 거부 25개 시험 통과 (실제 실행함)
+- 실제 Firebase 배포·검증 절차와 결과 기록: verification.md (V1~V8). 배포 전 점검은 끝났고(2026-11-11), Blaze·CLI 로그인·배포 명령은 사용자가 한다
 - [ ] 5-10 서버 함수 6개 배포: startActivity·endActivity·startRun·issueQuestion·submitAnswer·finishRun (functions/index.js)
   - 확인: functions 폴더 npm install → 프로젝트 폴더 firebase deploy --only functions,firestore:rules 성공 / Firebase 콘솔 Functions에 6개가 보인다 / 5-6·5-7·6-7·7-2 확인이 실제 서버로 된다
 
@@ -277,6 +278,7 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
 ## 12. 교사 협력·학습 분석 (2026-11-11 요청)
 - 확인은 teacher.html에서 한다. 공유 문제은행은 Google 계정 두 개(교사 A·B)로 확인한다
 - 자동 시험: functions/test/analysis.test.js(노드, 데이터 부족 기준 포함), 브라우저 teacher-full.e2e(교사 두 명 공유·가져오기, 맞춤 피드백·추천·보충 요약) 통과. Live Server 확인 전
+- 실제 Firebase 검증은 verification.md V2~V8 (규칙 거부는 실제 Firebase에서만 확인할 수 있다)
 - [ ] 12-1 학생별 맞춤 피드백: 정답률·학습 수준·취약 개념·잘하는 개념·시간 초과·활동별 변화 (규칙 기반, 데이터 부족 표시)
   - 확인: 결과 탭에서 학생을 누르면 피드백 문장이 실제 결과와 맞다 / 푼 문제가 5개 미만인 학생은 '데이터가 부족해요'
   - 구현됨 — js/teacher/analysis.js(studentFeedback·activityTrend·levelOf), resultsTab.js
