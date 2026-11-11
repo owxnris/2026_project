@@ -204,3 +204,8 @@
 - 요청 요약: 서버 채점·학급당 진행 중 활동 1개·중도 종료(cleared/failed/abandoned) 확정 → 문서 반영, Cloud Functions·Firebase 설정, 5단계 활동 관리, 학생 참여~활동 시작~서버 채점~코인 지급 연결, 보안 규칙·중복 방지, 연동 시험·커밋
 - 수정한 파일: functions/(index.js, handlers.js, grading.js, package.json, package-lock.json, test/), firebase.json, .firebaserc, .gitignore, firestore.rules, js/firebase/(sdk.js, app.js, server.js, student.js), js/teacher/(activities.js, activityRules.js, activityTab.js, activityView.js, classDetail.js, confirmDialog.js, nav.js, main.js), teacher.html, css/teacher.css, js/(main.js, state.js, session.js, quiz.js, ui.js), js/scenes/(JoinScene.js, WaitingScene.js, StartScene.js, QuizScene.js, DungeonScene.js, ResultScene.js), spec.md, tasks.md, design.md
 - 판단 근거: 규칙으로는 '학급당 진행 중 1개'와 채점을 강제할 수 없어 시작·종료·채점·결과 쓰기를 서버 함수(트랜잭션, attempt 단위 1회 채점, 결과 id=runId)로 옮기고, 서버 로직을 가짜 Firestore에 붙여 노드·헤드리스 브라우저 시험으로 검증함. 완료 체크는 사용자 확인 뒤로 남김
+
+## 2026-11-11 (6~10단계 연결)
+- 요청 요약: 임시 결정 반영 후 6~10단계(참여·재접속·중복 실행, 능력 구매·사용, 결과 화면, 진행 상황, 교사 학생 탭·순위·결과 분석, 안내 개선, 통합·회귀 시험) 묶어서 구현·시험·커밋
+- 수정한 파일: js/config.js, js/state.js, js/quiz.js, js/progress.js, js/ui.js, js/main.js, js/scenes/(ShopScene.js, DungeonScene.js, QuizScene.js, ResultScene.js, StartScene.js, WorldMapScene.js, WaitingScene.js), js/teacher/(analysis.js, classData.js, classHub.js, studentsTab.js, resultsTab.js, tableUtil.js, activityTab.js, activityView.js, classDetail.js, main.js), teacher.html, css/teacher.css, firestore.rules, functions/test/analysis.test.js, spec.md, tasks.md, design.md
+- 판단 근거: [미정] 항목은 기본값으로 정해 spec.md에 '지금 기본값'으로 적고, 분석은 서버가 만든 결과(results)만으로 계산해 데이터 흐름을 하나로 유지함. 전투는 spec.md에 없어 만들지 않음. 완료 체크는 사용자 확인 뒤로 남김
