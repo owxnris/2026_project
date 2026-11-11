@@ -84,3 +84,37 @@ export function createGuide(scene, str) {
     },
   };
 }
+
+// 입력창 (design.md: 배경색 채움 + 흰색 2px 테두리 + 모서리 8px, 높이 56px, 글자는 본문, 선택되면 금색 테두리)
+// Phaser DOM 요소라서 한글 입력이 된다. invalid(true)면 빨간 테두리
+export function createInput(scene, x, y, { placeholder = '', w = 400, inputMode = 'text' } = {}) {
+  const el = document.createElement('input');
+  el.type = 'text';
+  el.placeholder = placeholder;
+  el.autocomplete = 'off';
+  el.inputMode = inputMode;
+  let invalid = false;
+  const border = () => (invalid ? CSS.bad : document.activeElement === el ? CSS.good : CSS.player);
+  Object.assign(el.style, {
+    width: `${w}px`,
+    height: '56px',
+    boxSizing: 'border-box',
+    padding: '0 16px',
+    background: CSS.bg,
+    color: CSS.player,
+    border: `2px solid ${CSS.player}`,
+    borderRadius: '8px',
+    outline: 'none',
+    fontFamily: FONT,
+    fontSize: SIZE.body,
+  });
+  const paint = () => { el.style.borderColor = border(); };
+  el.addEventListener('focus', paint);
+  el.addEventListener('blur', paint);
+  scene.add.dom(x, y, el);
+  return {
+    el,
+    value: () => el.value.trim(),
+    setInvalid: (on) => { invalid = on; paint(); },
+  };
+}

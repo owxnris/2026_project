@@ -2,6 +2,7 @@ import { COLORS, CSS, LAYOUT, RULES, PHYS, GUIDE_TEXT } from '../config.js';
 import { DUNGEONS } from '../dungeons.js';
 import { state, checkTimeout, clearDungeon } from '../state.js';
 import { text, createHud, createGuide } from '../ui.js';
+import { playStats } from '../quiz.js';
 
 const { H } = LAYOUT;
 
@@ -26,6 +27,7 @@ export default class DungeonScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, L.width, H);
 
     this.buildCourse(L);
+    state.play.dungeonStartMs = Date.now();
 
     this.player = this.add.rectangle(L.start.x, L.start.y, 32, 48, COLORS.player);
     this.physics.add.existing(this.player);
@@ -122,6 +124,7 @@ export default class DungeonScene extends Phaser.Scene {
       return;
     }
     state.coins -= RULES.DASH_COST;
+    state.play.dashesUsed += 1;
     this.dashing = true;
     const body = this.player.body;
     body.setAllowGravity(false);
@@ -137,6 +140,7 @@ export default class DungeonScene extends Phaser.Scene {
   // 구멍에 빠지면 던전 출발지로 돌아간다.
   respawn() {
     if (this.dashing) this.endDash();
+    state.play.falls += 1;
     this.player.body.reset(this.level.start.x, this.level.start.y);
   }
 
@@ -144,6 +148,7 @@ export default class DungeonScene extends Phaser.Scene {
     if (this.invuln || this.clearing) return;
     if (this.dashing) this.endDash();
 
+    state.play.hits += 1;
     state.coins = Math.max(0, state.coins - RULES.HIT_COIN_LOSS);
     this.hud.flashCoins(CSS.bad);
     this.hud.update();
@@ -170,7 +175,8 @@ export default class DungeonScene extends Phaser.Scene {
   onClear() {
     if (this.clearing) return;
     this.clearing = true;
+    const stats = playStats(true); // 깃발에 닿은 순간의 기록 (클리어 시간 포함)
     clearDungeon(this.index);
-    this.scene.start('Result', { mode: 'clear', dungeon: this.index });
+    this.scene.start('Result', { mode: 'clear', dungeon: this.index, stats });
   }
 }
