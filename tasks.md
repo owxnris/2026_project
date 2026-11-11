@@ -181,7 +181,7 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
   - 구현됨 — js/session.js(종료 신호), state.js(checkTimeout), ResultScene.js('선생님이 활동을 끝냈어요') — 교사 종료는 시험 통과(game.e2e), 시간 종료는 Live Server 확인 전
 - [ ] 6-10 학생 권한 확인
   - 확인: 참여한 학생 창의 개발자 도구에서 answerKey 읽기, 다른 학급 읽기를 시도하면 거부된다
-  - 학생 앱이 answerKey를 읽지 않는 것은 시험으로 확인(game.e2e). 규칙 거부 자체는 배포 후 확인 (에뮬레이터 없음)
+  - 학생 앱이 answerKey를 읽지 않는 것은 시험으로 확인(game.e2e). 규칙 거부(정답표·판 기록·결과·학급 밖 읽기)는 Firestore 에뮬레이터 시험 통과(functions/test-rules). 실제 Firebase는 배포 후 확인
 - [ ] 6-11 재접속·중복 실행: 다시 들어오면 처음 닉네임과 깬 던전 수 유지, 같은 학생이 창 두 개로 하면 나중 창만 이어짐
   - 확인: 진행 중에 새로고침 → 참여 → 바로 월드맵, 깬 던전이 열려 있다 / 다른 닉네임을 넣어도 처음 닉네임 / 두 번째 창에서 던전을 시작하면 첫 창 퀴즈에 '다른 창에서 게임을 새로 시작해서 이 판은 끝났어요'
   - 구현됨 — js/progress.js(loadClearedCount), WaitingScene.js, QuizScene.js, firestore.rules(학생이 자기 progress 읽기). 시험: game.e2e, Live Server 확인 전
@@ -332,8 +332,9 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
   - 구현됨 — 6-11과 같음. 시험: game.e2e, Live Server 확인 전
 - [ ] 10-3 보안 규칙 시험: 다른 교사로 남의 학급 읽기, 학생으로 남의 결과 쓰기·수정, 코드 목록 조회, 정답표 읽기 (구 9-3)
   - 확인: 모두 막힌다
-  - firestore.rules 점검함(활동 쓰기 제한, runs 거부, 결과 서버만, progress 본인만). 규칙 시험은 에뮬레이터(Java)가 없어 실행하지 못함 — 배포 후 학생·다른 교사 계정으로 확인
+  - Firestore 에뮬레이터 규칙 시험 8묶음 통과(npm run test:rules: 다른 교사 결과·정답표 읽기, 학생 결과 쓰기, 코드 목록 조회, 활동 상태 변경 모두 거부). 실제 Firebase는 배포 후 verification.md로 확인
 - [ ] 10-4 학생 3명 이상 동시 진행 (구 9-4)
+  - 서버 함수 동시 실행 시험 통과(학생 3명, 판·코인·결과 분리 — functions/test/handlers.test.js). 실제 여러 기기는 확인 전
   - 확인: 순위·결과·진행 상황이 섞이지 않는다
 - [ ] 10-5 [미정] 교사 계정 허용 목록으로 제한할지 (구 9-6)
 - [ ] 10-6 [미정] 배포 방식 (Firebase Hosting 또는 GitHub Pages) (구 10-1)

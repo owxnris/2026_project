@@ -249,3 +249,25 @@ test('활동 시간이 끝난 뒤에는 새 문제를 낼 수 없다', async () 
   clock.ms += 600_001;
   await assert.rejects(h.issueQuestion(STUDENT, { ...r, quizType: 'entry' }), reason('activity-not-running'));
 });
+
+test('10-4 학생 3명 동시 진행: 판·코인·결과가 섞이지 않는다', async () => {
+  const { db, h } = setup();
+  ['S2', 'S3'].forEach((u, i) => db.docs.set(`classes/C1/students/${u}`, { nickname: `학생${i + 2}`, joinCode: '123456' }));
+  await h.startActivity(TEACHER, ids);
+  const play = async (uid, right) => {
+    const who = { uid, provider: 'anonymous' };
+    const { runId } = await h.startRun(who, { ...ids, dungeon: 0 });
+    const r = { ...ids, runId };
+    for (let i = 0; i < 3; i++) {
+      const q = await h.issueQuestion(who, { ...r, quizType: 'entry' });
+      await h.submitAnswer(who, { ...r, attemptId: q.attemptId, chosen: i < right ? KEY[q.question.id] : (KEY[q.question.id] + 1) % 4 });
+    }
+    const none = { abilities: { dash: 0, shield: false, doubleJump: false }, coinsSpent: 0, dashesUsed: 0, hits: 0, falls: 0, clearSec: 10 };
+    await h.finishRun(who, { ...r, outcome: 'cleared', stats: none });
+    return runId;
+  };
+  const runs = await Promise.all([play('S1', 3), play('S2', 1), play('S3', 0)]);
+  const res = runs.map((id) => db.docs.get(`classes/C1/results/${id}`));
+  assert.deepEqual(res.map((x) => [x.studentUid, x.quizCorrect, x.coinsEarned, x.quizTotal]), [['S1', 3, 30, 3], ['S2', 1, 10, 3], ['S3', 0, 0, 3]]);
+  assert.equal(new Set(runs).size, 3);
+});

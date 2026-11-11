@@ -219,3 +219,8 @@
 - 요청 요약: Git·tasks·work-log로 진행 상황 확인, 규칙·함수 배포 준비(프로젝트·지역·환경 변수·규칙 점검), 사용자 단계 구분, 배포 후 검증 절차(V1~V8), 임계값·12-7·12-8 결정 사항 정리
 - 수정한 파일: verification.md(새 파일), functions/index.js·js/firebase/app.js(지역 주석), firestore.rules(게시 방법 주석), tasks.md
 - 판단 근거: CLI 로그인·결제·배포는 사용자 권한이라 실행하지 않고 멈춤. 함수 지역은 Firestore 위치와 달라도 동작하므로 '반드시 같아야 함'이던 주석을 '서버·앱 두 값만 같아야 함'으로 바로잡음. 실제 확인 칸은 비워 둠
+
+## 2026-11-11 (배포 검증 마무리·개발 복귀)
+- 요청 요약: Firebase 배포·규칙 검토 마무리, 실제 확인/미확인 구분 기록, 미완료 작업 이어서 진행
+- 수정한 파일: functions/test-rules/rules.test.mjs(새), functions/package.json·package-lock.json(test:rules, 개발용 패키지), firebase.json(에뮬레이터·배포 제외), functions/test/handlers.test.js(동시 3명), verification.md, tasks.md
+- 판단 근거: CLI·결제가 없어 실제 배포는 못 하므로(함수 주소 404 확인) 임시 폴더의 Java로 Firestore 에뮬레이터를 돌려 실제 규칙 엔진에서 권한을 시험함. 실제 Firebase 확인 칸은 비워 둠
