@@ -23,5 +23,19 @@
     "ui": {
       "enabled": false
     }
+  },
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      ".firebaserc",
+      "**/.*",
+      "**/node_modules/**",
+      "functions/**",
+      "*.md",
+      "*.log",
+      "prompt.txt",
+      "firestore.rules"
+    ]
   }
 }

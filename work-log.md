@@ -224,3 +224,8 @@
 - 요청 요약: Firebase 배포·규칙 검토 마무리, 실제 확인/미확인 구분 기록, 미완료 작업 이어서 진행
 - 수정한 파일: functions/test-rules/rules.test.mjs(새), functions/package.json·package-lock.json(test:rules, 개발용 패키지), firebase.json(에뮬레이터·배포 제외), functions/test/handlers.test.js(동시 3명), verification.md, tasks.md
 - 판단 근거: CLI·결제가 없어 실제 배포는 못 하므로(함수 주소 404 확인) 임시 폴더의 Java로 Firestore 에뮬레이터를 돌려 실제 규칙 엔진에서 권한을 시험함. 실제 Firebase 확인 칸은 비워 둠
+
+## 2026-11-11 (미정 해소·완성도)
+- 요청 요약: 세부 승인 없이 완성도 기준으로 진행, [미정] 항목 기본값 결정·구현, 9단계 차별화, 3번째 던전, 배포 준비
+- 수정한 파일: functions/grading.js·handlers.js(틀린 문제 다시 내기, learners), functions/test/*(시험 추가), functions/test-rules/rules.test.mjs, firestore.rules(learners 서버만, 닉네임 10자), js/dungeons.js(얼어붙은 성), js/scenes/DungeonScene.js(문 체크포인트), js/scenes/JoinScene.js(닉네임 10자), firebase.json(hosting), spec.md, tasks.md, design.md
+- 판단 근거: 초등학생 좌절을 줄이는 체크포인트·흐름을 끊지 않는 퀴즈 배치, 정답 비노출과 충돌하는 오답 도감 대신 서버 복습 출제를 택함. 보안·개인정보에 닿는 교사 허용 목록(10-5·12-12)과 학생 피드백 공개(12-9)만 [미정]으로 남김

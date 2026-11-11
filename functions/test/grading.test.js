@@ -86,3 +86,14 @@ test('buildResult: 퀴즈 기록은 서버 attempts에서, wrongConcepts는 중�
   assert.equal(ab.hits, null);
   assert.equal(ab.quizTotal, 3, '중도 종료도 문제 풀이 기록은 남긴다');
 });
+
+import { updateWrong } from '../grading.js';
+test('복습: 틀린 문제를 절반 확률로 먼저, 맞히면 목록에서 빠진다', () => {
+  const qs = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
+  assert.equal(pickQuestion(qs, null, () => 0.1, ['c']).id, 'c', 'rand < 0.5 → 틀린 문제');
+  assert.notEqual(pickQuestion(qs, 'c', () => 0.1, ['c']).id, 'c', '바로 앞 문제는 다시 안 냄');
+  assert.equal(pickQuestion(qs, null, () => 0.9, ['c']).id, 'c', 'rand ≥ 0.5 → 전체에서 (0.9 → 마지막)');
+  assert.deepEqual(updateWrong(['a'], 'b', false), ['a', 'b']);
+  assert.deepEqual(updateWrong(['a', 'b'], 'a', true), ['b']);
+  assert.deepEqual(updateWrong(['a'], 'a', false), ['a']);
+});

@@ -90,6 +90,8 @@ test('학생 참여: 코드가 맞을 때 자기 문서만, 다시 쓰기 불가
   await assertFails(setDoc(doc(nw, 'classes/C1/students/NEW'), { nickname: '바꿈', joinCode: '123456', joinedAt: serverTimestamp() }));
   await assertFails(setDoc(doc(student('X'), 'classes/C1/students/X'), { nickname: 'x', joinCode: '999999', joinedAt: serverTimestamp() }));
   await assertFails(getDocs(collection(nw, 'joinCodes')));
+  await assertFails(setDoc(doc(student('LONG'), 'classes/C1/students/LONG'), { nickname: '열한글자닉네임입니다요', joinCode: '123456', joinedAt: serverTimestamp() }), '닉네임 11자 거부');
+  await assertFails(getDoc(doc(student('ST'), 'classes/C1/activities/A1/learners/ST')), '복습 기록은 서버만');
 });
 
 test('교사: 활동은 대기 상태로만 만들고, 시작·종료(status 변경)는 서버만. 결과는 소유 교사만 읽기', async () => {

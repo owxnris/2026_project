@@ -5,6 +5,7 @@ import { setClass } from '../session.js';
 import { text, createButton, createInput } from '../ui.js';
 
 const cx = LAYOUT.W / 2;
+const NICKNAME_MAX = 10; // firestore.rules 학생 문서 nickname 길이와 같다
 
 export default class JoinScene extends Phaser.Scene {
   constructor() { super('Join'); }
@@ -19,7 +20,8 @@ export default class JoinScene extends Phaser.Scene {
     text(this, cx, 150, '참여 코드', 'small').setOrigin(0.5);
     this.code = createInput(this, cx, 195, { placeholder: '숫자 6자리', inputMode: 'numeric' });
     text(this, cx, 255, '닉네임', 'small').setOrigin(0.5);
-    this.nick = createInput(this, cx, 300, { placeholder: '선생님이 알아볼 수 있는 이름' });
+    this.nick = createInput(this, cx, 300, { placeholder: '선생님이 알아볼 수 있는 이름 (10자까지)' });
+    this.nick.el.maxLength = NICKNAME_MAX;
     this.error = text(this, cx, 350, '', 'small', CSS.bad).setOrigin(0.5);
     this.button = createButton(this, cx, 420, '입장', () => this.submit(), { primary: true });
 
@@ -43,6 +45,11 @@ export default class JoinScene extends Phaser.Scene {
     if (!nickname) {
       this.nick.setInvalid(true);
       this.error.setText('닉네임을 입력해 주세요.');
+      return;
+    }
+    if (nickname.length > NICKNAME_MAX) {
+      this.nick.setInvalid(true);
+      this.error.setText(`닉네임은 ${NICKNAME_MAX}자까지 쓸 수 있어요.`);
       return;
     }
     this.busy = true;

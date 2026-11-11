@@ -271,3 +271,21 @@ test('10-4 학생 3명 동시 진행: 판·코인·결과가 섞이지 않는다
   assert.deepEqual(res.map((x) => [x.studentUid, x.quizCorrect, x.coinsEarned, x.quizTotal]), [['S1', 3, 30, 3], ['S2', 1, 10, 3], ['S3', 0, 0, 3]]);
   assert.equal(new Set(runs).size, 3);
 });
+
+test('9-5 복습 기록: 틀린 문제는 learners에 남고, 다시 맞히면 빠진다', async () => {
+  const { db, h, r } = await playing();
+  const q = await h.issueQuestion(STUDENT, { ...r, quizType: 'entry' });
+  await h.submitAnswer(STUDENT, { ...r, attemptId: q.attemptId, chosen: (KEY[q.question.id] + 1) % 4 });
+  assert.deepEqual(db.docs.get(`${A}/A1/learners/S1`).wrong, [q.question.id]);
+  // 같은 문제를 다시 받을 때까지 (복습 우선이라 금방 나온다)
+  let again;
+  for (let i = 0; i < 2 && !again; i++) {
+    const n = await h.issueQuestion(STUDENT, { ...r, quizType: 'entry' });
+    if (n.question.id === q.question.id) again = n;
+    else await h.submitAnswer(STUDENT, { ...r, attemptId: n.attemptId, chosen: KEY[n.question.id] });
+  }
+  if (again) {
+    await h.submitAnswer(STUDENT, { ...r, attemptId: again.attemptId, chosen: KEY[q.question.id] });
+    assert.deepEqual(db.docs.get(`${A}/A1/learners/S1`).wrong, []);
+  }
+});

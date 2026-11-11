@@ -76,11 +76,12 @@ service cloud.firestore {
       match /students/{studentUid} {
         allow read: if ownsClass(classId) || request.auth.uid == studentUid;
         // 이미 참여한 학생이 다시 쓰면 update라서 막힌다 → 앱에서 먼저 문서가 있는지 확인한다
-        // 닉네임 길이 제한 [미정] — 지금은 빈 문자열만 막는다
+        // 닉네임은 1~10자 (JoinScene과 같다). 겹치는 닉네임은 막지 않는다 (학생은 uid로 구분)
         allow create: if signedIn() && request.auth.uid == studentUid
           && request.resource.data.keys().hasOnly(['nickname', 'joinCode', 'joinedAt'])
           && request.resource.data.nickname is string
           && request.resource.data.nickname.size() > 0
+          && request.resource.data.nickname.size() <= 10
           && request.resource.data.joinCode is string
           && get(/databases/$(database)/documents/joinCodes/$(request.resource.data.joinCode)).data.classId == classId;
         allow delete: if ownsClass(classId);
@@ -115,6 +116,11 @@ service cloud.firestore {
           match /attempts/{attemptId} {
             allow read, write: if false;
           }
+        }
+
+        // 학생별 복습 기록(틀린 문제): 서버 함수만
+        match /learners/{studentUid} {
+          allow read, write: if false;
         }
 
         // 실시간 진행 상황: 학생은 자기 문서만 쓰고 읽는다 (다시 들어올 때 깬 던전 수를 이어 받기 위해)

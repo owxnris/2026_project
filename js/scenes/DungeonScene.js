@@ -30,6 +30,7 @@ export default class DungeonScene extends Phaser.Scene {
     this.stunUntil = 0;
     this.clearing = false;
     this.airJumped = false;
+    this.checkpoint = 0; // 지나간 문 수 (0 = 출발지)
   }
 
   create() {
@@ -106,6 +107,10 @@ export default class DungeonScene extends Phaser.Scene {
     if (checkTimeout(this) || this.clearing) return;
 
     const passed = this.level.doors.filter((d) => this.player.x > d.x).length;
+    if (passed > this.checkpoint) {
+      this.checkpoint = passed;
+      this.guide.notice(`문 ${passed} 통과! 떨어지면 여기서 다시 시작해요`, CSS.good);
+    }
     this.hud.setTitle(`${this.dungeon.name} · 문 ${passed}/${this.level.doors.length}`);
     this.hud.update();
 
@@ -160,11 +165,13 @@ export default class DungeonScene extends Phaser.Scene {
     this.player.body.setAllowGravity(true);
   }
 
-  // 구멍에 빠지면 던전 출발지로 돌아간다.
+  // 구멍에 빠지면 마지막으로 지나간 문(없으면 출발지)으로 돌아간다. 코인은 줄지 않는다.
   respawn() {
     if (this.dashing) this.endDash();
     state.play.falls += 1;
-    this.player.body.reset(this.level.start.x, this.level.start.y);
+    const d = this.level.doors[this.checkpoint - 1];
+    const at = d ? { x: d.x, y: d.y - 50 } : this.level.start;
+    this.player.body.reset(at.x, at.y);
   }
 
   onHit(player, obstacle) {

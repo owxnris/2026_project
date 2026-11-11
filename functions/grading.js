@@ -6,6 +6,7 @@ export const RULES = {
   ANSWER_GRACE_SEC: 3, // 네트워크 지연 여유. 문제를 낸 뒤 15+3초가 지나면 시간 초과(오답)
   COIN_PER_CORRECT: 10,
   DUNGEON_COUNT: 3,
+  REVIEW_RATE: 0.5, // 틀린 문제 다시 내기: 그 학생이 이 활동에서 틀리고 아직 다시 맞히지 못한 문제를 절반 확률로 먼저
 };
 
 export const ABILITY_PRICE = { dash: 10, shield: 15, doubleJump: 20 };
@@ -23,9 +24,18 @@ export function isActivityRunning(activity, nowMs) {
 }
 
 // 바로 앞 문제와 다른 문제를 무작위로 고른다 (문제가 하나뿐이면 그 문제).
-export function pickQuestion(questions, lastId, rand = Math.random) {
+// wrongIds: 그 학생이 틀리고 아직 다시 맞히지 못한 문제 — 절반 확률로 이 중에서 먼저 고른다 (복습)
+export function pickQuestion(questions, lastId, rand = Math.random, wrongIds = []) {
+  const review = questions.filter((q) => wrongIds.includes(q.id) && q.id !== lastId);
+  if (review.length && rand() < RULES.REVIEW_RATE) return review[Math.floor(rand() * review.length)];
   const pool = questions.length > 1 ? questions.filter((q) => q.id !== lastId) : questions;
   return pool[Math.floor(rand() * pool.length)];
+}
+
+// 틀린 문제 목록 갱신: 틀리면 넣고, 맞히면 뺀다
+export function updateWrong(wrongIds, questionId, correct) {
+  const rest = wrongIds.filter((id) => id !== questionId);
+  return correct ? rest : [...rest, questionId];
 }
 
 export function isLate(issuedAtMs, nowMs) {

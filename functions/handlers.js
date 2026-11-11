@@ -2,7 +2,7 @@
 // 관리자 권한은 보안 규칙을 거치지 않으므로, 누가 부를 수 있는지는 여기서 모두 확인한다.
 import {
   RULES, isActivityRunning, pickQuestion, isLate, isValidChoice, grade, issueBlocker,
-  statsError, buildResult, publicQuestion,
+  statsError, buildResult, publicQuestion, updateWrong,
 } from './grading.js';
 
 export class CallError extends Error {
@@ -27,6 +27,8 @@ export function createHandlers({ db, ts, now }) {
   const classPath = (c) => `classes/${c}`;
   const actPath = (c, a) => `classes/${c}/activities/${a}`;
   const runPath = (c, a, r) => `${actPath(c, a)}/runs/${r}`;
+  // 학생별 복습 기록 (서버 전용): { wrong: [틀리고 아직 다시 맞히지 못한 문제 id] }
+  const learnerPath = (c, a, uid) => `${actPath(c, a)}/learners/${uid}`;
 
   // 교사(Google 로그인)이고 그 학급의 주인인지
   async function needOwner(auth, classId) {
@@ -184,13 +186,15 @@ export function createHandlers({ db, ts, now }) {
         }
         const blocker = issueBlocker(run, quizType);
         if (blocker) throw new CallError('failed-precondition', '지금은 문제를 받을 수 없어요', { reason: blocker });
+        const learnerSnap = await tx.get(db.doc(learnerPath(classId, activityId, auth.uid)));
+        const wrongIds = learnerSnap.exists ? learnerSnap.data().wrong : [];
 
         const t = ts(nowMs);
         if (open) {
           // 답하지 않고 시간이 지난 직전 문제는 시간 초과(오답)로 기록한다
           tx.update(db.doc(`${runPath(classId, activityId, runId)}/attempts/${open.id}`), { chosen: null, correct: false, answeredAt: t });
         }
-        const q = pickQuestion(act.questions, run.lastQuestionId);
+        const q = pickQuestion(act.questions, run.lastQuestionId, Math.random, wrongIds);
         const attemptRef = db.collection(`${runPath(classId, activityId, runId)}/attempts`).doc();
         tx.set(attemptRef, {
           questionId: q.id,
@@ -231,6 +235,8 @@ export function createHandlers({ db, ts, now }) {
         const a = aSnap.data();
         const keySnap = await tx.get(keyRef);
         const correctIndex = keySnap.data().answers[a.questionId];
+        const learnerRef = db.doc(learnerPath(classId, activityId, auth.uid));
+        const learnerSnap = await tx.get(learnerRef);
 
         if (a.answeredAt !== null) {
           return { correct: a.correct, chosen: a.chosen, correctIndex, coinsEarned: run.coinsEarned, duplicate: true, serverNow: nowMs };
@@ -242,6 +248,8 @@ export function createHandlers({ db, ts, now }) {
         const runUpdate = { coinsEarned };
         if (run.openAttemptId === attemptId) Object.assign(runUpdate, { openAttemptId: null, openIssuedAt: null });
         tx.update(runRef, runUpdate);
+        const wrong = updateWrong(learnerSnap.exists ? learnerSnap.data().wrong : [], a.questionId, g.correct);
+        tx.set(learnerRef, { wrong });
         return { correct: g.correct, chosen: g.chosen, correctIndex, coinsEarned, duplicate: false, serverNow: nowMs };
       });
     },
