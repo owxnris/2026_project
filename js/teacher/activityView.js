@@ -4,7 +4,7 @@ import { showView } from './nav.js';
 import {
   activityState, remainingSec, formatClock, otherRunning, STATUS_LABEL,
 } from './activityRules.js';
-import { serverNow, errorReason } from '../firebase/server.js';
+import { serverNow, errorReason } from '../firebase/clock.js';
 import { confirmDelete } from './confirmDialog.js';
 import { onClassDataChange, getStudents, getResults } from './classHub.js';
 import { ranking, filterResults } from './analysis.js';
@@ -43,7 +43,7 @@ const START_ERROR = {
   'already-running': (d) => `진행 중인 활동 '${d.title}'이(가) 있어요. 그 활동을 종료한 뒤 시작할 수 있어요.`,
   'not-waiting': () => '이미 시작했거나 끝난 활동이에요.',
 };
-const SERVER_HINT = ' — 서버 함수가 배포되었는지 확인해 주세요';
+const RULES_HINT = ' — Firestore 규칙이 최신으로 게시되었는지 확인해 주세요 (verification.md)';
 
 function activity() {
   return store.getActivities().find((a) => a.id === activityId);
@@ -72,13 +72,13 @@ function failText(prefix, e) {
   const reason = errorReason(e);
   const known = START_ERROR[reason];
   if (known) return known(e.details || {});
-  const hint = ['internal', 'not-found', 'unavailable', 'unknown'].includes(reason) ? SERVER_HINT : '';
+  const hint = ['permission-denied', 'failed-precondition'].includes(reason) ? RULES_HINT : '';
   return `${prefix} (${reason})${hint}`;
 }
 
 async function onStart() {
   $('av-error').textContent = '';
-  // 화면에서 먼저 확인 (서버 함수도 한 번 더 확인한다)
+  // 화면에서 먼저 확인 (startActivity도 한 번 더 확인한다)
   const other = otherRunning(store.getActivities(), activityId, serverNow());
   if (other) {
     $('av-error').textContent = START_ERROR['already-running'](other);

@@ -2,7 +2,7 @@
 // 학급의 진행 중 활동을 지켜보다가 시작되면(또는 이미 진행 중이면) 그 활동의 종료 시각으로 월드맵을 연다
 import { CSS, LAYOUT } from '../config.js';
 import { watchRunningActivities } from '../firebase/student.js';
-import { serverNow } from '../firebase/server.js';
+import { serverNow } from '../firebase/clock.js';
 import { session, enterActivity } from '../session.js';
 import { resetGame, restoreCleared } from '../state.js';
 import { loadClearedCount } from '../progress.js';

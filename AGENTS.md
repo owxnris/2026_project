@@ -69,7 +69,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 작업 목록 tasks.md가 있으면 함께 읽고, 작업을 마치면 해당 항목에 체크한다.
 명세에 없는 기능은 만들지 않는다. 명세와 다르게 만들어야 하면 먼저 묻는다.
 Phaser 3는 CDN으로 불러오고, npm과 빌드 도구는 사용하지 않는다.
-예외: 서버 채점용 Cloud Functions(functions/ 폴더)에 한해 Node.js·npm·Firebase CLI를 쓴다. 학생용 게임과 교사 플랫폼은 지금처럼 CDN만 쓰고, functions/ 밖에는 npm 패키지나 빌드 단계를 들이지 않는다.
+Cloud Functions·Blaze 요금제는 쓰지 않는다 (Firebase Spark 무료 요금제만). 학생용 게임과 교사 플랫폼은 CDN만 쓴다. 예외: 개발용 시험 폴더 tests/에 한해 Node.js·npm·Firebase CLI를 쓴다 (노드 시험, 규칙 에뮬레이터). tests/ 밖에는 npm 패키지나 빌드 단계를 들이지 않고, tests/는 배포물에 넣지 않는다.
 VS Code의 Live Server로 index.html을 열어 실행할 수 있어야 한다.
 화면은 [모바일 세로 / PC 가로] 비율을 기준으로 한다.
 git 명령은 실행하지 않는다. 커밋과 push는 사용자가 직접 한다.

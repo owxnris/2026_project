@@ -1,7 +1,7 @@
 // 한 판 동안 유지되는 진행 상태와 전체 제한 시간.
-// 남은 시간은 활동의 종료 시각(서버 시각) 기준이다. serverNow()는 서버 함수 응답으로 맞춘 시각 (Firebase가 없으면 기기 시각)
+// 남은 시간은 활동의 종료 시각(서버 시각) 기준이다. serverNow()는 Firestore 서버 시각으로 맞춘 시각 (맞추기 전이거나 Firebase가 없으면 기기 시각)
 import { RULES } from './config.js';
-import { serverNow } from './firebase/server.js';
+import { serverNow } from './firebase/clock.js';
 import { session } from './session.js';
 
 export const state = {

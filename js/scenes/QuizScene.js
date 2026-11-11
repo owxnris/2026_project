@@ -1,13 +1,13 @@
 // mode 'entry': 던전 입장 전 3문제 → 던전 시작
 // mode 'revive': 코인이 0개가 됐을 때 던전 위에 뜸 → 맞힐 때까지 계속 출제
-// 문제와 채점은 quiz.js가 맡는다 (온라인이면 서버 채점: 학생 기기는 답을 낸 뒤에야 정답 보기를 안다)
+// 문제와 채점은 quiz.js가 맡는다 (화면은 답을 낸 뒤에야 정답 보기를 보여 준다)
 import { COLORS, CSS, LAYOUT, RULES } from '../config.js';
 import { DUNGEONS } from '../dungeons.js';
 import { state, checkTimeout, recordQuiz } from '../state.js';
 import { reportProgress } from '../progress.js';
 import { session } from '../session.js';
 import { beginRun, nextQuestion, submitAnswer } from '../quiz.js';
-import { errorReason } from '../firebase/server.js';
+import { errorReason } from '../firebase/clock.js';
 import { text, createButton, createHud } from '../ui.js';
 
 const { W, H, GUIDE_H } = LAYOUT;
@@ -42,7 +42,7 @@ export default class QuizScene extends Phaser.Scene {
     this.items = [];
   }
 
-  // 서버 요청 하나: 기다리는 동안 안내, 실패하면 빨간 안내와 '다시 시도'
+  // Firestore 요청 하나: 기다리는 동안 안내, 실패하면 빨간 안내와 '다시 시도'
   async request(job, then) {
     let res;
     try {
@@ -55,11 +55,11 @@ export default class QuizScene extends Phaser.Scene {
         return;
       }
       if (reason === 'run-finished') {
-        // 같은 학생이 다른 창(기기)에서 새 판을 시작하면 이 판은 서버가 중도 종료로 닫는다
+        // 이 판은 이미 끝났다 (예: 다른 창에서 새 판을 시작함)
         this.showRunClosed();
         return;
       }
-      this.showError(`서버와 연결하지 못했어요 (${errorReason(e)})`, () => this.request(job, then));
+      this.showError(`연결하지 못했어요 (${errorReason(e)})`, () => this.request(job, then));
       return;
     }
     if (this.alive) then(res);
@@ -68,7 +68,7 @@ export default class QuizScene extends Phaser.Scene {
   showError(msg, retry) {
     this.errorItems?.forEach((it) => it.destroy());
     const t = text(this, W / 2, 470, msg, 'small', CSS.bad).setOrigin(0.5);
-    // 다시 보내도 서버가 같은 문제의 답을 한 번만 채점하므로 코인이 두 번 오르지 않는다
+    // 다시 시도해도 같은 문제의 답은 한 번만 채점하므로 코인이 두 번 오르지 않는다
     this.retry = () => {
       this.errorItems.forEach((it) => it.destroy());
       this.errorItems = [];
@@ -81,7 +81,7 @@ export default class QuizScene extends Phaser.Scene {
   showRunClosed() {
     this.clearItems();
     this.answered = true;
-    this.items.push(text(this, W / 2, 200, '다른 창에서 게임을 새로 시작해서 이 판은 끝났어요', 'body', CSS.bad).setOrigin(0.5));
+    this.items.push(text(this, W / 2, 200, '이 판은 이미 끝났어요 (다른 창에서 새로 시작했을 수 있어요)', 'body', CSS.bad).setOrigin(0.5));
     this.items.push(createButton(this, W / 2, 300, '월드맵으로', () => {
       this.scene.stop('Dungeon');
       this.scene.start('WorldMap');

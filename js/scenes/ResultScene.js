@@ -7,7 +7,7 @@ import { DUNGEONS } from '../dungeons.js';
 import { state, checkTimeout } from '../state.js';
 import { leaveActivity } from '../session.js';
 import { hasOpenRun, finishRun, playStats } from '../quiz.js';
-import { errorReason } from '../firebase/server.js';
+import { errorReason } from '../firebase/clock.js';
 import { text, createButton, createHud } from '../ui.js';
 
 const { W } = LAYOUT;

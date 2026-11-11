@@ -4,7 +4,7 @@ import {
   SUBJECTS, DIFFICULTIES, conceptFilterOptions, filterQuestions,
 } from './bankRules.js';
 import { validateActivity, activityState, STATUS_LABEL } from './activityRules.js';
-import { serverNow } from '../firebase/server.js';
+import { serverNow } from '../firebase/clock.js';
 
 const $ = (id) => document.getElementById(id);
 

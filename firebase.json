@@ -2,20 +2,6 @@
   "firestore": {
     "rules": "firestore.rules"
   },
-  "functions": [
-    {
-      "source": "functions",
-      "codebase": "default",
-      "runtime": "nodejs22",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "test",
-        "*.log",
-        "test-rules"
-      ]
-    }
-  ],
   "emulators": {
     "firestore": {
       "port": 8080
@@ -31,11 +17,11 @@
       ".firebaserc",
       "**/.*",
       "**/node_modules/**",
-      "functions/**",
       "*.md",
       "*.log",
       "prompt.txt",
-      "firestore.rules"
+      "firestore.rules",
+      "tests/**"
     ]
   }
 }

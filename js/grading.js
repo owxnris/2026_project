@@ -1,5 +1,5 @@
-// 서버 채점 규칙 (순수 함수). Firestore와 상관없이 node --test로 시험한다.
-// 수치는 spec.md와 js/config.js(RULES)와 같아야 한다.
+// 채점·출제 규칙 (순수 함수). Firestore·Phaser와 상관없이 node --test로 시험한다. 학생 기기(브라우저)에서 실행된다.
+// 수치는 spec.md와 js/config.js(RULES), firestore.rules의 결과 검사와 같아야 한다.
 export const RULES = {
   ENTRY_QUIZ_COUNT: 3,
   QUIZ_TIME_SEC: 15,
@@ -11,7 +11,7 @@ export const RULES = {
 
 export const ABILITY_PRICE = { dash: 10, shield: 15, doubleJump: 20 };
 
-// 학생에게 보내는 문제: 이 키만 보낸다 (정답 answer는 절대 넣지 않는다)
+// 화면에 보여 주는 문제: 이 키만 쓴다 (정답 answer는 넣지 않는다)
 export const PUBLIC_QUESTION_KEYS = ['id', 'subject', 'question', 'choices'];
 
 export function publicQuestion(q) {
@@ -53,7 +53,7 @@ export function grade(chosen, correctIndex, late) {
 }
 
 // 새 문제를 낼 수 있는지. 안 되면 이유 코드를 돌려준다.
-// (답하지 않은 직전 문제가 아직 15+3초 안이면 새 문제 대신 그 문제를 다시 보낸다 — handlers.js)
+// (답하지 않은 직전 문제가 아직 시간 안이면 새 문제 대신 그 문제를 다시 보낸다 — runLog.js)
 // run: { status, entryIssued }
 export function issueBlocker(run, quizType) {
   if (run.status !== 'playing') return 'run-finished';
@@ -70,7 +70,7 @@ export function abilityCost(ab) {
 
 const isCount = (n) => Number.isInteger(n) && n >= 0;
 
-// 게임이 보낸 플레이 기록 검사. 코인은 서버가 센 획득 코인을 넘게 쓸 수 없다.
+// 플레이 기록 검사. 코인은 획득 코인을 넘게 쓸 수 없다.
 // 맞으면 null, 틀리면 이유 문자열
 export function statsError(outcome, s, coinsEarned) {
   if (outcome !== 'cleared' && outcome !== 'failed') return 'outcome';
@@ -86,8 +86,8 @@ export function statsError(outcome, s, coinsEarned) {
   return null;
 }
 
-// 한 판의 결과 문서 (spec.md results). 퀴즈 기록·코인은 서버 기록(attempts·run)에서만 만든다.
-// outcome 'abandoned'는 게임이 기록을 보내지 못한 판이라 플레이 기록이 null이다.
+// 한 판의 결과 문서 (spec.md results). 퀴즈 기록·코인은 그 판의 문제 풀이 기록(attempts·run)에서 만든다.
+// outcome 'abandoned'는 플레이 기록을 남기지 못한 판이라 플레이 기록이 null이다.
 export function buildResult({ run, attempts, student, activityId, outcome, stats }) {
   const answers = attempts.map((a) => ({
     questionId: a.questionId,

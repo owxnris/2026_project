@@ -229,3 +229,14 @@
 - 요청 요약: 세부 승인 없이 완성도 기준으로 진행, [미정] 항목 기본값 결정·구현, 9단계 차별화, 3번째 던전, 배포 준비
 - 수정한 파일: functions/grading.js·handlers.js(틀린 문제 다시 내기, learners), functions/test/*(시험 추가), functions/test-rules/rules.test.mjs, firestore.rules(learners 서버만, 닉네임 10자), js/dungeons.js(얼어붙은 성), js/scenes/DungeonScene.js(문 체크포인트), js/scenes/JoinScene.js(닉네임 10자), firebase.json(hosting), spec.md, tasks.md, design.md
 - 판단 근거: 초등학생 좌절을 줄이는 체크포인트·흐름을 끊지 않는 퀴즈 배치, 정답 비노출과 충돌하는 오답 도감 대신 서버 복습 출제를 택함. 보안·개인정보에 닿는 교사 허용 목록(10-5·12-12)과 학생 피드백 공개(12-9)만 [미정]으로 남김
+
+## 2026-11-11 (대기 화면 질문)
+- 요청 요약: 학생 대기 중일 때 교사가 어떻게 승인하는지 질문
+- 수정한 파일: 없음 (prompt.txt, work-log.md만)
+- 판단 근거: 승인 단계는 없고 교사가 활동을 시작하면 열리는 구조라 사용 방법과 서버 함수 미배포 상태를 안내함
+
+
+[2026-11-11 16:21]
+- 요청 요약: 활동 만들기에서 permission-denied 발생 문의
+- 수정한 파일: 없음 (원인 분석: 콘솔에 올라간 규칙이 저장소 규칙과 다름)
+- 판단 근거: 저장소 규칙은 에뮬레이터에서 활동+정답표 일괄 생성이 통과하므로, 미배포 규칙(answerKey 항목 없음)이 원인일 가능성이 가장 큼

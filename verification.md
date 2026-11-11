@@ -2,36 +2,29 @@
 
 가짜 Firebase 시험(자동)과 실제 Firebase 확인을 구분해 적는다. **실제 Firebase에서 직접 확인한 항목만 '실제 확인'에 체크한다.**
 - 프로젝트: `gbl-dungeondash` (.firebaserc, js/firebase/config.js)
-- 서버 함수 지역: `asia-northeast3` (functions/index.js `REGION` = js/firebase/app.js `FUNCTIONS_REGION`, 두 값이 다르면 호출이 실패한다)
+- 요금제: **Spark(무료) 그대로**. Cloud Functions·Blaze를 쓰지 않는다. 서버 코드가 없고, 규칙(firestore.rules)과 학생 기기가 일을 나눈다 (spec.md '정답 노출과 보안 한계')
 
 ## 1. 배포 전 점검 (2026-11-11, 코드 수준에서 확인함)
 | 항목 | 상태 |
 |---|---|
 | .firebaserc 기본 프로젝트 = config.js projectId | 같음 (gbl-dungeondash) |
-| 함수 지역: 서버·앱 두 곳 | 같음 (asia-northeast3). Firestore 위치와 달라도 동작은 한다 (같으면 더 빠름) |
-| 실행 환경 | firebase.json `nodejs22`, package.json engines node 22 |
-| 패키지 | firebase-functions 6.6.0, firebase-admin 13.10.0 (functions/node_modules 설치됨) |
-| 환경 변수·비밀 값 | 쓰지 않음 (process.env·defineSecret 없음). 관리자 SDK는 배포 환경의 기본 권한으로 동작 |
-| 함수 목록 | index.js를 불러오면 6개: startActivity, endActivity, startRun, issueQuestion, submitAnswer, finishRun |
-| 배포에서 빼는 파일 | functions/test, node_modules (firebase.json ignore) |
-| 보안 규칙 | Firestore 에뮬레이터(실제 규칙 엔진)에서 컴파일·시험 통과 8묶음 (functions/test-rules, `npm run test:rules`, Java·firebase-tools 필요). 규칙 하나를 일부러 풀면 시험이 실패하는 것도 확인함 |
+| Cloud Functions 의존 | 없음 (functions/ 폴더·firebase.json functions·SDK functions import 삭제. 검색: `grep -rn "httpsCallable\|getFunctions\|callServer" js` 결과 없음) |
+| 보안 규칙 | Firestore 에뮬레이터(실제 규칙 엔진)에서 컴파일·시험 통과 11묶음 (tests/test-rules, `npm run test:rules`, Java·firebase-tools 필요) |
 | 복합 색인 | 필요 없음 (쿼리는 같음(==) 조건만 씀) |
-| 자동 시험 | functions 노드 시험 36개 통과 (이 점검 때 다시 실행) |
+| 자동 시험 | 노드 28개(tests/test), 브라우저 흐름 game 52·teacher 73·dungeon 11·bank 40·import 16·offline 5 |
+| 무료 사용량 | Spark 일일 한도(쓰기 2만·읽기 5만) 안인지는 수업 규모로 확인해야 한다. 쓰기는 진행 상황(progress)이 코인·던전이 바뀔 때만(최대 1초에 1번), 결과는 판마다 1개, 복습 기록은 답할 때마다 1개다. 학생 30명이 한 수업에 하면 대략 수천 건 (확인 전, 아래 U5) |
 
 ## 2. 사용자가 직접 할 일 (여기서 멈춤)
 | 순서 | 할 일 | 비고 |
 |---|---|---|
-| U1 | Firebase 콘솔 → 요금제 **Blaze**로 변경, 결제 계정 연결 | 결제 설정 — 직접 |
-| U2 | Google Cloud 콘솔 → 결제 → **예산 알림** (예: 월 5,000원) | 알림만 오고 사용을 멈추지 않는다 |
-| U3 | Firestore Database → 데이터베이스 **위치** 확인 | asia-northeast3이 아니어도 그대로 배포해도 된다. 바꾸고 싶으면 알려 주면 두 곳을 함께 고친다 |
-| U4 | `npm install -g firebase-tools` → `firebase login` | 이 컴퓨터에는 아직 CLI가 없다 |
-| U5 | 프로젝트 폴더에서 `firebase projects:list` | gbl-dungeondash가 보이면 권한 확인됨 |
-| U6 | `cd functions` → `npm install` → `npm test` → `cd ..` | 시험 36개 통과 확인 |
-| U7 | **`firebase deploy --only firestore:rules,functions`** | 실제 배포 (규칙은 바로 적용된다). 첫 배포 때 API 사용 설정·이미지 정리 정책을 물으면 기본값(예)으로 |
-| U8 | 오류가 나면 출력 전체를 알려 주기 | 규칙 컴파일 오류, 권한 오류(IAM), 결제 미설정 등 |
+| U1 | Firebase 콘솔 → Authentication → 로그인 방법에서 **Google**과 **익명** 사용 설정 확인 | 요금제는 Spark 그대로 두면 된다 |
+| U2 | Firestore Database가 만들어져 있는지 확인 | 위치는 아무 곳이어도 된다 |
+| U3 | **규칙 게시**: Firestore Database → 규칙 탭에 `firestore.rules` 전체를 붙여 넣고 **게시** | 예전 초안 규칙이 남아 있으면 활동 만들기가 permission-denied로 막힌다. 명령으로 하려면 U4 후 `firebase deploy --only firestore:rules` |
+| U4 | (선택) `npm install -g firebase-tools` → `firebase login` → 프로젝트 폴더에서 `firebase deploy --only firestore:rules,hosting` | 콘솔에 붙여 넣기만 해도 게임은 Live Server로 돌릴 수 있다 |
+| U5 | 수업 중 Firestore 콘솔 → 사용량 탭에서 쓰기·읽기 횟수 확인 | 한도를 넘기면 그날은 요청이 거부된다. 넘길 것 같으면 알려 주면 진행 상황 쓰기 간격을 늘린다 |
+| U6 | 오류가 나면 화면의 빨간 글(괄호 안 코드)을 알려 주기 | permission-denied면 규칙이 최신인지 먼저 확인 |
 
-- 규칙만 먼저 시험하고 싶으면 `firebase deploy --only firestore:rules` (함수 없이도 공유 문제은행 권한 V2~V6은 확인할 수 있다. 활동 시작·퀴즈는 함수가 있어야 한다)
-- 되돌리기: 함수 삭제 `firebase functions:delete 함수이름 --region asia-northeast3`, 규칙은 콘솔 규칙 탭의 이전 버전 기록에서 되돌린다
+- 되돌리기: 규칙은 콘솔 규칙 탭의 이전 버전 기록에서 되돌린다
 
 ## 3. 배포 후 검증 절차
 준비: VS Code Live Server로 `teacher.html`과 `index.html`을 연다.
@@ -46,14 +39,13 @@ const s = await import('./js/firebase/sdk.js'); const { db, auth } = await impor
 const tryIt = (p) => p.then(() => '성공함(막혀야 하면 문제!)', (e) => e.code);
 ```
 
-### V1. Cloud Functions 6개 등록·실행
-1. Firebase 콘솔 → Functions: startActivity·endActivity·startRun·issueQuestion·submitAnswer·finishRun 6개, 지역 asia-northeast3
-2. 교사 A: 학급 만들기 → 문제은행 '기본 문제 불러오기' → 활동 만들기(문제 3개, 5분) → 활동 줄 → 시작 → 상태 '진행 중', 남은 시간 감소 (startActivity)
-3. 학생 S1: index.html → 시작 → 참여 코드·닉네임 → 월드맵 → 던전 → 입장 퀴즈 3문제 (startRun·issueQuestion·submitAnswer)
-4. 깃발까지 가서 '결과를 저장했어요' (finishRun) → Firestore `classes/{학급}/results/{runId}` 문서 1개
-5. 교사 A: 종료 → 학생 화면 '선생님이 활동을 끝냈어요' (endActivity)
-6. 콘솔 → Functions → 로그에 오류가 없는지
-- 기대: 모두 동작. 실패하면 학생·교사 화면의 빨간 안내 글(괄호 안 코드)과 Functions 로그를 기록
+### V1. 활동 시작부터 결과 저장까지 (Cloud Functions 없이)
+1. 교사 A: 학급 만들기 → 문제은행 '기본 문제 불러오기' → 활동 만들기(문제 3개, 5분) → 활동 줄 → 시작 → 상태 '진행 중', 남은 시간 감소 (Firestore 규칙이 활동 문서의 status·startAt·endAt 변경을 허용해야 한다)
+2. 학생 S1: index.html → 시작 → 참여 코드·닉네임 → 월드맵 → 던전 → 입장 퀴즈 3문제 (활동 문서·answerKey 읽기)
+3. 깃발까지 가서 '결과를 저장했어요' → Firestore `classes/{학급}/results/{S1uid_…}` 문서 1개 (coinsEarned = quizCorrect × 10)
+4. 교사 A: 종료 → 학생 화면 '선생님이 활동을 끝냈어요'
+5. 같은 결과를 다시 저장할 수 없는지: S1 콘솔 `await tryIt(s.setDoc(s.doc(db,'classes','학급ID','results','그문서ID'), { studentUid: auth.currentUser.uid }))` → `'permission-denied'`
+- 기대: 모두 동작. 실패하면 학생·교사 화면의 빨간 안내 글(괄호 안 코드)을 기록
 
 ### V2. 공유 문제은행 교사 A/B 권한 분리
 1. 교사 A: 공유 문제은행 → 공유 이름 '과학 선생님' 저장 → 문제은행에서 직접 만든 문제 하나 '공유'
@@ -81,9 +73,9 @@ await tryIt(s.setDoc(s.doc(s.collection(db, 'sharedQuestions')), { subject: '과
 ```js
 await tryIt(s.getDoc(s.doc(db, 'sharedQuestions', id)));                       // 'permission-denied'
 await tryIt(s.setDoc(s.doc(s.collection(db, 'sharedQuestions')), { question: 'x' }));  // 'permission-denied'
-// 함께 확인하면 좋은 학생 권한 (6-10·10-3)
-await tryIt(s.getDoc(s.doc(db, 'classes', '학급ID', 'activities', '활동ID', 'answerKey', 'main')));  // 'permission-denied'
-await tryIt(s.setDoc(s.doc(db, 'classes', '학급ID', 'results', 'fake'), { studentUid: auth.currentUser.uid }));  // 'permission-denied'
+// 함께 확인하면 좋은 학생 권한 (6-10·10-3). 학급 밖·남의 데이터는 막힌다
+await tryIt(s.getDoc(s.doc(db, 'classes', '다른학급ID', 'activities', '활동ID', 'answerKey', 'main')));  // 'permission-denied' (내 학급의 정답표는 읽힌다 — 기기 채점, 알려진 한계)
+await tryIt(s.setDoc(s.doc(db, 'classes', '학급ID', 'results', 'fake'), { studentUid: auth.currentUser.uid }));  // 'permission-denied' (형식이 안 맞는 결과)
 ```
 
 ### V6. 공유 문서에 이메일·실명 미저장
@@ -105,22 +97,22 @@ await tryIt(s.setDoc(s.doc(s.collection(db, 'sharedQuestions')), { subject: '과
 4. 두 번째 활동에서도 3문제 이상 풀면 '활동별 변화' 줄이 나온다
 
 ### V8. 응답 데이터가 부족할 때 '데이터 부족'
-1. 학생 S2: 입장 퀴즈 3문제만 풀고 끝내기 (또는 다른 창에서 새로 시작해 중도 종료)
+1. 학생 S2: 입장 퀴즈 3문제만 풀고 교사가 활동을 종료 (실패로 저장됨)
 2. 교사 A 결과 탭: S2 줄 정답률·학습 수준 '데이터 부족', 자세한 기록 피드백 '데이터가 부족해요', 추천 없음
 3. 학급 전체 푼 문제가 10개 미만인 학급에서는 '다음 수업 보충 학습 요약'이 '데이터가 부족해요'
 4. 3번 미만 푼 문제·개념의 정답률 칸이 '데이터 부족 (n번)'
 
 ## 4. 검증 결과 기록
-- 배포 상태(2026-11-11 16시): **배포 안 됨** — startActivity 주소 요청이 404. Firebase CLI가 이 컴퓨터에 없어 사용자 단계 U1~U7이 남음
-- '자동 시험'은 가짜 Firebase(실제 서버 코드 + 메모리 저장소) 위의 시험, '규칙 에뮬레이터'는 실제 규칙 엔진을 로컬에서 돌린 시험이다. 둘 다 실제 Firebase 확인은 아니다
+- 배포 상태(2026-11-11): 규칙이 게시됐는지 **확인 전**. 사용자가 올린 규칙은 예전 초안(answerKey 항목 없음)이었다 → 위 U3 필요
+- '자동 시험'은 가짜 Firebase(메모리 저장소 + 실제 화면 코드) 위의 시험, '규칙 에뮬레이터'는 실제 규칙 엔진을 로컬에서 돌린 시험이다. 둘 다 실제 Firebase 확인은 아니다
 
 | 항목 | 자동 시험 (코드 수준) | 규칙 에뮬레이터 | 실제 Firebase 확인 | 날짜·메모 |
 |---|---|---|---|---|
-| V1 함수 6개 등록·실행 | 통과 (노드 25개, 브라우저 흐름) | - | [ ] 확인 전 | |
-| V2 교사 A/B 권한 분리 | 화면 흐름 통과. 규칙 거부는 시험 못 함 | 통과 | [ ] 확인 전 | |
-| V3 원본·복사본 독립 | 통과 (teacher-full.e2e) | 통과 (복사본은 가져온 교사만 읽고 고침) | [ ] 확인 전 | |
-| V4 비소유자 삭제 차단 | 화면에 버튼 없음만 확인. 규칙 거부는 시험 못 함 | 통과 | [ ] 확인 전 | |
-| V5 학생 공유 문제은행 차단 | 시험 못 함 (규칙 전용) | 통과 (학생·비로그인 읽기·쓰기 거부) | [ ] 확인 전 | |
-| V6 이메일·실명 미저장 | 공유 문서 필드·이메일 공유 이름 거부 통과. 규칙 거부는 시험 못 함 | 통과 (이메일 공유 이름·email 필드 거부) | [ ] 확인 전 | |
-| V7 실제 응답 기반 피드백·추천 | 통과 (노드 계산 시험, 브라우저 흐름) | - | [ ] 확인 전 | |
-| V8 데이터 부족 표시 | 통과 (노드·브라우저) | - | [ ] 확인 전 | |
+| V1 활동 시작~결과 저장 | 통과 (game.e2e 52, 노드 28) | 통과 (시작·종료 시각 규칙, 결과 한 번만·값 검사) | [ ] 확인 전 | |
+| V2 교사 A/B 권한 분리 | 화면 흐름 통과 | 통과 | [ ] 확인 전 | |
+| V3 원본·복사본 독립 | 통과 (teacher-full.e2e) | 통과 | [ ] 확인 전 | |
+| V4 비소유자 삭제 차단 | 화면에 버튼 없음만 확인 | 통과 | [ ] 확인 전 | |
+| V5 학생 공유 문제은행 차단 | - | 통과 | [ ] 확인 전 | |
+| V6 이메일·실명 미저장 | 통과 | 통과 | [ ] 확인 전 | |
+| V7 실제 응답 기반 피드백·추천 | 통과 | - | [ ] 확인 전 | |
+| V8 데이터 부족 표시 | 통과 | - | [ ] 확인 전 | |
