@@ -127,10 +127,10 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
 - [x] 5-3 firestore.rules: answerKey는 소유 교사만, 활동은 대기 상태로만 만들기 + 시작·종료는 허용된 변경만(교사), answerKey는 소유 교사 쓰기·같은 학급 학생 읽기, results는 학생 본인 번호로 한 번만(형식·코인 범위 검사), learners는 본인만 → 게시 (구 6-1a)
   - 확인: 게시 후 5-2 활동 만들기가 그대로 된다 (학생 쪽 거부 확인은 6-10)
   - 구현됨 — firestore.rules, firebase.json — 규칙 에뮬레이터 시험 11묶음 통과(2026-11-11, 재작성). 게시는 사용자(콘솔 규칙 탭에 붙여 넣고 '게시', 또는 firebase deploy --only firestore:rules) — 예전 초안 규칙이 올라가 있으면 활동 만들기가 permission-denied로 막힌다
-- [ ] 5-4 활동 탭: 활동 표(제목·문제 수·전체 시간·상태), 실시간 (구 6-2)
+- [x] 5-4 활동 탭: 활동 표(제목·문제 수·전체 시간·상태), 실시간 (구 6-2)
   - 확인: 만든 활동이 '대기'(흰색)로 바로 보인다 / 다른 학급 상세에는 보이지 않는다
   - 구현됨 — activityTab.js — 시험 통과(teacher.e2e), Live Server 확인 전
-- [ ] 5-5 진행 중 화면 뼈대: 참여 코드·남은 시간(큰 숫자), 시작 버튼 (구 6-3)
+- [x] 5-5 진행 중 화면 뼈대: 참여 코드·남은 시간(큰 숫자), 시작 버튼 (구 6-3)
   - 확인: 활동 줄을 누르면 열린다 / 주 버튼은 '시작' 하나
   - 구현됨 — js/teacher/activityView.js, nav.js, classDetail.js — 순위 표 자리는 8-3에서 채움. 시험 통과(teacher.e2e), Live Server 확인 전
 - [x] 5-6 활동 시작: status 'running', startAt(Firestore 서버 시각)·endAt = startAt + 전체 시간 (구 6-4)
@@ -156,13 +156,13 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
 - [x] 6-1 닉네임: 1~10자, 겹쳐도 됨 (결정(2026-11-11))
   - 구현됨 — JoinScene.js(10자 안내·입력 제한), firestore.rules(nickname.size() <= 10, 에뮬레이터 시험 통과). 참여 화면 안내는 Live Server 확인 전
   - 지금 기본값: 앞뒤 공백을 지우고 비어 있지만 않으면 받는다. 다시 참여하면 처음 닉네임을 그대로 쓴다
-- [ ] 6-2 Phaser 입력창: main.js DOM 설정, ui.js 입력창 함수 (구 4-1)
+- [x] 6-2 Phaser 입력창: main.js DOM 설정, ui.js 입력창 함수 (구 4-1)
   - 확인: 입력창에 한글·숫자를 칠 수 있다 / 입력 중 Space·Shift가 게임 조작으로 처리되지 않는다
   - 구현됨 — js/main.js(dom), js/ui.js(createInput) — 시험 통과(game.e2e: 값 입력·검사), 한글 입력은 Live Server 확인 전
-- [ ] 6-3 참여 장면(JoinScene): 코드·닉네임 입력창, 입장 버튼 (구 4-3)
+- [x] 6-3 참여 장면(JoinScene): 코드·닉네임 입력창, 입장 버튼 (구 4-3)
   - 확인: 시작 → 참여 화면, design.md 배치대로
   - 구현됨 — js/scenes/JoinScene.js, StartScene.js — 시험 통과(game.e2e), Live Server 확인 전
-- [ ] 6-4 참여 처리: 익명 로그인 → 코드 조회 → 학생 문서(이미 있으면 그대로 사용) (구 4-4)
+- [x] 6-4 참여 처리: 익명 로그인 → 코드 조회 → 학생 문서(이미 있으면 그대로 사용) (구 4-4)
   - 확인: 교사 학급 코드로 들어가면 Firestore에 students/{uid}(nickname·joinCode·joinedAt) / 틀린 코드는 빨간 안내 / 새로고침 후 다시 참여해도 학생 문서는 하나
   - 구현됨 — js/firebase/student.js(joinClass), js/session.js — 시험 통과(game.e2e), Live Server 확인 전
 - [x] 6-5 Firebase 없이 단독 플레이: 설정값이 없을 때(개발·시험)만 허용 (결정(2026-11-11)) — questions.json에 정답이 있어 정답 비노출의 예외가 됨 (구 4-5)
@@ -171,7 +171,7 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
 
   - 확인: 학생이 참여하면 교사 화면에 바로 줄이 생기고 학급 목록의 학생 수도 바뀐다
   - 구현됨 — js/teacher/studentsTab.js·classHub.js·classData.js. 학급 목록의 학생 수는 목록을 다시 그릴 때(새로고침·학급 추가) 바뀐다. 시험: teacher-full.e2e(실제 teacher.html + main.js), Live Server 확인 전
-- [ ] 6-7 대기 장면(WaitingScene): 활동 상태를 지켜보다 시작 신호를 받으면 월드맵으로 (구 6-7)
+- [x] 6-7 대기 장면(WaitingScene): 활동 상태를 지켜보다 시작 신호를 받으면 월드맵으로 (구 6-7)
   - 확인: 활동이 대기 중이면 대기 화면 / 교사가 시작하면 학생 화면이 몇 초 안에 월드맵으로 / 이미 진행 중일 때 참여하면 바로 월드맵
   - 구현됨 — js/scenes/WaitingScene.js — 시험 통과(game.e2e), Live Server 확인 전
 - [ ] 6-8 남은 시간을 활동 endAt(서버 시각) 기준으로 (state.js) (구 6-9)
@@ -190,10 +190,10 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
 ## 7. 게임 연동 (구 6-8·6-8a, 7단계, 8-1·8-3~8-6)
 - 확인은 교사가 활동을 시작한 상태에서 학생 창(index.html)으로 플레이하며 한다
 
-- [ ] 7-1 활동 문제로 출제 (questions.js가 활동 문제를 받음) (구 6-8)
+- [x] 7-1 활동 문제로 출제 (questions.js가 활동 문제를 받음) (구 6-8)
   - 확인: 교사가 고른 문제만 나온다 / 활동 문서(문제 목록)에 정답이 없다 (정답표는 같은 학급 학생만 읽는다 — 알려진 한계)
   - 구현됨 — js/runLog.js(출제), js/quiz.js, QuizScene.js — 시험 통과(runLog 노드 시험, game.e2e), 규칙 게시·Live Server 확인 전
-- [ ] 7-2 채점 연결 (5-0에서 정한 방식: 학생 기기 채점) (구 6-8a)
+- [x] 7-2 채점 연결 (5-0에서 정한 방식: 학생 기기 채점) (구 6-8a)
   - 확인: 맞히면 코인 +10과 금색 테두리, 틀리면 빨간 테두리와 정답 보기 / 시간 초과는 오답
   - 확인(연결): 인터넷이 끊긴 채 문제·정답표를 받으면 빨간 안내와 '다시 시도', 다시 연결해 누르면 이어진다 / 같은 문제의 답은 한 번만 채점돼 코인이 한 번만 오른다
   - 구현됨 — js/runLog.js(채점), quiz.js, QuizScene.js — 시험 통과(입장·회복 퀴즈, 중복 제출), 규칙 게시·Live Server 확인 전
@@ -203,7 +203,7 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
 - [ ] 7-5 config.js에 능력 목록(대시 10/1회, 보호막 15, 이단 점프 20) (구 7-2)
   - 확인: 기존 게임 동작이 그대로다
   - 구현됨 — js/config.js ABILITIES (대시 10·보호막 15·이단 점프 20, 서버 grading.js와 같음)
-- [ ] 7-6 능력 구매 장면(ShopScene): 입장 퀴즈 → 능력 구매 → 던전 (구 7-3)
+- [x] 7-6 능력 구매 장면(ShopScene): 입장 퀴즈 → 능력 구매 → 던전 (구 7-3)
   - 확인: 입장 퀴즈 뒤 능력 구매 화면, 던전 입장 버튼으로 던전 시작 / design.md 배치대로
   - 구현됨 — js/scenes/ShopScene.js. 시험: game.e2e, Live Server 확인 전
 - [ ] 7-7 구매 처리: 코인 차감, 부족한 능력 흐리게·안내 (구 7-4)
@@ -232,7 +232,7 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
 - [ ] 7-15 결과 화면 새 배치: 별·획득 내역·합계·보상 (구 8-4)
   - 확인: design.md 배치대로, 7-13에서 정한 값이 보인다
   - 구현됨 — js/scenes/ResultScene.js. Live Server 확인 전
-- [ ] 7-16 결과 저장(results), 실패 시 다시 시도 안내 (구 8-5)
+- [x] 7-16 결과 저장(results), 실패 시 다시 시도 안내 (구 8-5)
   - 확인: 던전 한 판마다 Firestore results 문서가 하나 생기고 필드가 spec.md와 같다 / 인터넷을 끊고 끝내면 다시 시도 안내, 다시 연결하면 저장
   - 구현됨 — quiz.js saveOutcome·runStore.js saveResult(문서 번호 = 판 번호, 만들기만 되므로 중복 없음), ResultScene.js(저장 중·저장했어요·다시 시도) — cleared·failed·abandoned 결과와 필드·규칙 시험 통과(game.e2e, 규칙 에뮬레이터), 인터넷 끊김은 Live Server 확인 전
 - [ ] 7-17 진행 상황 갱신(progress): 던전 입장·클리어·코인 변화 때 (구 8-6)
@@ -249,7 +249,7 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
 - [ ] 8-3 진행 중 화면: 학생별 진행 상황·순위 실시간 표 (구 8-7)
   - 확인: 학생이 던전을 깨면 교사 화면 순위가 바로 바뀐다
   - 구현됨 — activityView.js(진행 상황 + 서버 결과), analysis.js ranking. 시험: teacher-full.e2e(실제 teacher.html + main.js), Live Server 확인 전
-- [ ] 8-4 결과 탭: 학생별 결과 표(맞힌 수·정답률·클리어한 던전) (구 8-8)
+- [x] 8-4 결과 탭: 학생별 결과 표(맞힌 수·정답률·클리어한 던전) (구 8-8)
   - 확인: 저장된 결과가 학생별로 합쳐져 보이고, 계산 값이 Firestore 결과와 맞다
   - 구현됨 — js/teacher/resultsTab.js·analysis.js. 계산은 노드 시험(analysis.test.js)과 시험: teacher-full.e2e(실제 teacher.html + main.js), Live Server 확인 전
 - [ ] 8-5 학생 자세한 기록: 판별 던전 기록(클리어·시간·충돌·추락·산 능력), 틀린 문제 (구 8-9)
