@@ -11,8 +11,19 @@ export const state = {
   endTime: 0,
   timedOut: false,
   // 던전 한 판의 플레이 기록 (결과 저장용)
-  play: { hits: 0, falls: 0, dashesUsed: 0, dungeonStartMs: 0 },
+  play: newPlay(),
+  // 이번 활동 전체의 퀴즈 기록 (최종 결과 화면용)
+  totalCorrect: 0,
+  totalQuiz: 0,
 };
+
+// abilities: 이번 판에 산 능력 (보호막·이단 점프는 산 판에만), dashLeft: 남은 대시, shieldLeft: 보호막이 남았는지
+function newPlay() {
+  return {
+    hits: 0, falls: 0, dashesUsed: 0, dungeonStartMs: 0, quizCorrect: 0, quizTotal: 0, entryCorrect: 0,
+    abilities: { dash: 0, shield: false, doubleJump: false }, dashLeft: 0, shieldLeft: false,
+  };
+}
 
 // endTimeMs: 활동 종료 시각(서버 시각). 없으면 예전처럼 지금부터 임시 300초
 export function resetGame(endTimeMs = serverNow() + RULES.TOTAL_TIME_SEC * 1000) {
@@ -21,10 +32,28 @@ export function resetGame(endTimeMs = serverNow() + RULES.TOTAL_TIME_SEC * 1000)
   state.cleared = [];
   state.endTime = endTimeMs;
   state.timedOut = false;
+  state.totalCorrect = 0;
+  state.totalQuiz = 0;
 }
 
 export function resetPlay() {
-  state.play = { hits: 0, falls: 0, dashesUsed: 0, dungeonStartMs: 0 };
+  state.play = newPlay();
+}
+
+// 퀴즈 하나의 결과를 기록 (서버가 채점한 결과)
+export function recordQuiz(correct, quizType) {
+  state.play.quizTotal += 1;
+  state.totalQuiz += 1;
+  if (!correct) return;
+  state.play.quizCorrect += 1;
+  state.totalCorrect += 1;
+  if (quizType === 'entry') state.play.entryCorrect += 1;
+}
+
+// 다시 들어온 학생: 이미 깬 던전 수만큼 해금 (던전은 차례대로 열리므로 앞에서부터 clearedCount개)
+export function restoreCleared(clearedCount) {
+  for (let i = 0; i < clearedCount; i++) state.cleared[i] = true;
+  state.unlocked = Math.max(state.unlocked, clearedCount);
 }
 
 export function remainingSeconds() {

@@ -26,7 +26,6 @@ export const RULES = {
   ENTRY_QUIZ_COUNT: 3,
   QUIZ_TIME_SEC: 15,
   COIN_PER_CORRECT: 10,
-  DASH_COST: 10,
   HIT_COIN_LOSS: 10, // [임시] spec에서 [미정]
 };
 
@@ -40,4 +39,11 @@ export const PHYS = {
   HIT_STUN_MS: 300,
 };
 
-export const GUIDE_TEXT = '←→ 이동 · Space 점프 · Shift 대시(코인 10)';
+// 능력 (spec.md 능력 구매). 가격은 functions/grading.js ABILITY_PRICE와 같아야 한다
+export const ABILITIES = [
+  { key: 'dash', name: '대시', price: 10, effect: '짧게 빠르게 이동 (Shift). 산 횟수만큼 쓸 수 있어요', repeat: true },
+  { key: 'shield', name: '보호막', price: 15, effect: '장애물 충돌 1번을 막아 줘요' },
+  { key: 'doubleJump', name: '이단 점프', price: 20, effect: '공중에서 Space를 한 번 더 눌러 점프해요' },
+];
+
+export const GUIDE_TEXT = '←→ 이동 · Space 점프 · 능력은 입장 퀴즈 뒤에 코인으로 사요';

@@ -75,12 +75,20 @@ export function createHud(scene, title) {
 
 // 아래: 작은 안내 한 줄
 export function createGuide(scene, str) {
+  let base = str;
   scene.add.rectangle(0, H - GUIDE_H, W, GUIDE_H, COLORS.bg).setOrigin(0).setScrollFactor(0).setDepth(10);
   const t = text(scene, W / 2, H - GUIDE_H / 2, str, 'small').setOrigin(0.5).setScrollFactor(0).setDepth(10);
+  let timer = null;
   return {
     notice: (msg, color) => {
       t.setText(msg).setColor(color);
-      scene.time.delayedCall(1000, () => t.setText(str).setColor(CSS.player));
+      if (timer) timer.remove();
+      timer = scene.time.delayedCall(1500, () => { timer = null; t.setText(base).setColor(CSS.player); });
+    },
+    // 기본 안내를 바꾼다 (예: 남은 대시 횟수)
+    setBase: (next) => {
+      base = next;
+      if (!timer) t.setText(base);
     },
   };
 }

@@ -3,7 +3,8 @@
 // 문제와 채점은 quiz.js가 맡는다 (온라인이면 서버 채점: 학생 기기는 답을 낸 뒤에야 정답 보기를 안다)
 import { COLORS, CSS, LAYOUT, RULES } from '../config.js';
 import { DUNGEONS } from '../dungeons.js';
-import { state, checkTimeout } from '../state.js';
+import { state, checkTimeout, recordQuiz } from '../state.js';
+import { reportProgress } from '../progress.js';
 import { session } from '../session.js';
 import { beginRun, nextQuestion, submitAnswer } from '../quiz.js';
 import { errorReason } from '../firebase/server.js';
@@ -48,8 +49,14 @@ export default class QuizScene extends Phaser.Scene {
       res = await job();
     } catch (e) {
       if (!this.alive) return;
-      if (errorReason(e) === 'activity-not-running') {
+      const reason = errorReason(e);
+      if (reason === 'activity-not-running') {
         session.ended = true; // 활동이 끝났다 → checkTimeout이 최종 결과 화면으로 보낸다
+        return;
+      }
+      if (reason === 'run-finished') {
+        // 같은 학생이 다른 창(기기)에서 새 판을 시작하면 이 판은 서버가 중도 종료로 닫는다
+        this.showRunClosed();
         return;
       }
       this.showError(`서버와 연결하지 못했어요 (${errorReason(e)})`, () => this.request(job, then));
@@ -61,12 +68,24 @@ export default class QuizScene extends Phaser.Scene {
   showError(msg, retry) {
     this.errorItems?.forEach((it) => it.destroy());
     const t = text(this, W / 2, 470, msg, 'small', CSS.bad).setOrigin(0.5);
-    const b = createButton(this, W / 2 + 330, 470, '다시 시도', () => {
+    // 다시 보내도 서버가 같은 문제의 답을 한 번만 채점하므로 코인이 두 번 오르지 않는다
+    this.retry = () => {
       this.errorItems.forEach((it) => it.destroy());
       this.errorItems = [];
       retry();
-    }, { w: 160, h: 40 });
+    };
+    const b = createButton(this, W / 2 + 330, 470, '다시 시도', this.retry, { w: 160, h: 40 });
     this.errorItems = [t, b];
+  }
+
+  showRunClosed() {
+    this.clearItems();
+    this.answered = true;
+    this.items.push(text(this, W / 2, 200, '다른 창에서 게임을 새로 시작해서 이 판은 끝났어요', 'body', CSS.bad).setOrigin(0.5));
+    this.items.push(createButton(this, W / 2, 300, '월드맵으로', () => {
+      this.scene.stop('Dungeon');
+      this.scene.start('WorldMap');
+    }, { primary: true }));
   }
 
   showQuestion() {
@@ -107,6 +126,9 @@ export default class QuizScene extends Phaser.Scene {
       this.options[correctIndex].setBorder(COLORS.good);
       if (chosen !== null && !correct) this.options[chosen].setBorder(COLORS.bad);
       if (correct) state.coins += RULES.COIN_PER_CORRECT;
+      recordQuiz(correct, this.mode);
+      if (correct) reportProgress();
+      this.items.push(text(this, W / 2, 470, correct ? `정답! 코인 +${RULES.COIN_PER_CORRECT}` : (chosen === null ? '시간 초과 — 금색 테두리가 정답이에요' : '오답 — 금색 테두리가 정답이에요'), 'small', correct ? CSS.good : CSS.bad).setOrigin(0.5));
       this.hud.update();
       this.time.delayedCall(1000, () => this.next(correct));
     });
@@ -117,7 +139,7 @@ export default class QuizScene extends Phaser.Scene {
     if (this.mode === 'entry') {
       this.count += 1;
       if (this.count < RULES.ENTRY_QUIZ_COUNT) this.showQuestion();
-      else this.scene.start('Dungeon', { dungeon: this.dungeon });
+      else this.scene.start('Shop', { dungeon: this.dungeon });
     } else if (correct) {
       this.scene.stop();
       this.scene.resume('Dungeon');

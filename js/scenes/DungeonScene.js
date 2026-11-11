@@ -1,8 +1,19 @@
-import { COLORS, CSS, LAYOUT, RULES, PHYS, GUIDE_TEXT } from '../config.js';
+import { COLORS, CSS, LAYOUT, RULES, PHYS } from '../config.js';
 import { DUNGEONS } from '../dungeons.js';
 import { state, checkTimeout, clearDungeon } from '../state.js';
 import { text, createHud, createGuide } from '../ui.js';
 import { playStats } from '../quiz.js';
+import { reportProgress } from '../progress.js';
+
+// 안내 줄: 조작과 가진 능력 (예: ←→ 이동 · Space 점프 · Shift 대시(남은 2회) · 보호막 · 이단 점프)
+function guideText() {
+  const p = state.play;
+  const parts = ['←→ 이동', 'Space 점프'];
+  if (p.abilities.dash > 0) parts.push(`Shift 대시(남은 ${p.dashLeft}회)`);
+  if (p.shieldLeft) parts.push('보호막');
+  if (p.abilities.doubleJump) parts.push('이단 점프(공중에서 Space)');
+  return parts.join(' · ');
+}
 
 const { H } = LAYOUT;
 
@@ -18,6 +29,7 @@ export default class DungeonScene extends Phaser.Scene {
     this.invuln = false;
     this.stunUntil = 0;
     this.clearing = false;
+    this.airJumped = false;
   }
 
   create() {
@@ -39,7 +51,8 @@ export default class DungeonScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.flagPole, this.onClear, null, this);
 
     this.hud = createHud(this, '');
-    this.guide = createGuide(this, GUIDE_TEXT);
+    this.guide = createGuide(this, guideText());
+    reportProgress(this.index);
 
     this.keys = this.input.keyboard.createCursorKeys();
     this.shift = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
@@ -114,17 +127,27 @@ export default class DungeonScene extends Phaser.Scene {
     }
 
     const onGround = body.blocked.down || body.touching.down;
-    if (Phaser.Input.Keyboard.JustDown(this.keys.space) && onGround) body.setVelocityY(-PHYS.JUMP_SPEED);
+    if (onGround) this.airJumped = false;
+    if (Phaser.Input.Keyboard.JustDown(this.keys.space)) {
+      if (onGround) body.setVelocityY(-PHYS.JUMP_SPEED);
+      else if (state.play.abilities.doubleJump && !this.airJumped) {
+        this.airJumped = true; // 이단 점프: 공중에서 한 번 더
+        body.setVelocityY(-PHYS.JUMP_SPEED);
+      }
+    }
     if (Phaser.Input.Keyboard.JustDown(this.shift)) this.tryDash();
   }
 
+  // 대시: 산 횟수만큼 쓸 수 있고, 쓸 때 코인은 줄지 않는다
   tryDash() {
-    if (state.coins < RULES.DASH_COST) {
-      this.guide.notice('코인이 부족해서 대시를 쓸 수 없어요 — 퀴즈를 맞혀야 코인을 얻어요', CSS.bad);
+    const p = state.play;
+    if (p.dashLeft <= 0) {
+      this.guide.notice(p.abilities.dash > 0 ? '대시를 다 썼어요' : '대시를 사지 않았어요 — 입장 퀴즈 뒤 능력 구매에서 살 수 있어요', CSS.bad);
       return;
     }
-    state.coins -= RULES.DASH_COST;
-    state.play.dashesUsed += 1;
+    p.dashLeft -= 1;
+    p.dashesUsed += 1;
+    this.guide.setBase(guideText());
     this.dashing = true;
     const body = this.player.body;
     body.setAllowGravity(false);
@@ -149,8 +172,17 @@ export default class DungeonScene extends Phaser.Scene {
     if (this.dashing) this.endDash();
 
     state.play.hits += 1;
-    state.coins = Math.max(0, state.coins - RULES.HIT_COIN_LOSS);
-    this.hud.flashCoins(CSS.bad);
+    const shielded = state.play.shieldLeft;
+    if (shielded) {
+      // 보호막: 충돌 1번은 코인이 줄지 않는다
+      state.play.shieldLeft = false;
+      this.guide.setBase(guideText());
+      this.guide.notice('보호막이 충돌을 막았어요', CSS.good);
+    } else {
+      state.coins = Math.max(0, state.coins - RULES.HIT_COIN_LOSS);
+      this.hud.flashCoins(CSS.bad);
+      reportProgress();
+    }
     this.hud.update();
 
     const dir = Math.sign(player.x - (obstacle.x + obstacle.width / 2)) || -this.facing;
@@ -165,7 +197,7 @@ export default class DungeonScene extends Phaser.Scene {
       player.setAlpha(1);
     });
 
-    if (state.coins === 0) {
+    if (!shielded && state.coins === 0) {
       this.scene.pause();
       this.scene.launch('Quiz', { mode: 'revive' });
       this.scene.bringToTop('Quiz'); // 던전 위에 그려지도록
@@ -177,6 +209,7 @@ export default class DungeonScene extends Phaser.Scene {
     this.clearing = true;
     const stats = playStats(true); // 깃발에 닿은 순간의 기록 (클리어 시간 포함)
     clearDungeon(this.index);
+    reportProgress(null);
     this.scene.start('Result', { mode: 'clear', dungeon: this.index, stats });
   }
 }

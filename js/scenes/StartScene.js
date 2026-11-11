@@ -16,7 +16,8 @@ export default class StartScene extends Phaser.Scene {
     const cx = LAYOUT.W / 2;
     text(this, cx, 170, '던전 대시', 'big').setOrigin(0.5);
     text(this, cx, 215, 'DUNGEON DASH', 'small').setOrigin(0.5);
-    text(this, cx, 255, '퀴즈로 코인을 모으고, 대시로 장애물 코스를 돌파하세요', 'small').setOrigin(0.5);
+    text(this, cx, 255, '퀴즈로 코인을 모으고, 능력을 사서 장애물 코스를 돌파하세요', 'small').setOrigin(0.5);
+    text(this, cx, 410, '던전 고르기 → 입장 퀴즈 3문제(정답마다 코인 10) → 능력 구매 → 깃발까지 달리기', 'small').setOrigin(0.5).setAlpha(0.6);
     createButton(this, cx, 330, '시작', () => {
       leaveActivity();
       if (session.online) {
