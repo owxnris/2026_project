@@ -116,42 +116,65 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
 - 확인은 teacher.html → 학급 상세 → '활동' 탭에서 한다
 
 - [x] 5-0 채점 방식: 서버 채점(Cloud Functions). functions/ 폴더에 한해 Node.js·npm·Firebase CLI 허용 (AGENTS.md) (구 6-0)
-  - [미정] 서버 채점 세부 설계(데이터 흐름, 추가 데이터, 보안 규칙 변경, 작업 배치) — 승인 후 spec.md·tasks.md에 반영
+  - [x] 세부 설계 승인: spec.md '서버 채점 흐름', 데이터 구조(runs·attempts, 결과 outcome), 권한 표
 - [x] 5-1 동시 활동 수: 학급당 진행 중 활동 1개. 진행 중인 활동이 있으면 다른 활동 시작 불가 (구 6-6)
-  - [미정] 진행 중인 활동이 있을 때 새 활동 '만들기'(대기 상태)도 막을지
+  - [x] 대기 활동은 여러 개 미리 만들 수 있고 '시작'만 막는다
+  - [x] 중도 종료: 결과를 cleared / failed / abandoned로 나누고 문제 풀이 기록을 남긴다
 - [ ] 5-2 활동 만들기: 제목·전체 시간, 문제 고르기 표(과목·난이도·학습 개념 거르기, 여러 과목 혼합 가능) → 활동 문서(문제 복사, 학습 개념 유지, 정답 제외) + 정답표(answerKey/main) 한 번에 저장 (구 6-1)
   - 확인: 저장하면 Firestore activities 문서의 questions에 learningConcept는 있고 answer는 없다 / answerKey/main에 문제별 정답이 있다 / status 'waiting' / 빈 제목·시간 없음·문제 0개는 빨간 안내
-- [ ] 5-3 firestore.rules: answerKey는 소유 교사만, results에 wrongConcepts 허용 → 콘솔에 게시 (구 6-1a)
+  - 구현됨 — js/teacher/activityTab.js·activities.js·activityRules.js, teacher.html, css/teacher.css — 전체 시간은 분으로 입력. 가짜 Firestore로 실제 화면 모듈 시험 통과(teacher.e2e), Live Server 확인 전
+- [ ] 5-3 firestore.rules: answerKey는 소유 교사만, 활동은 대기 상태로만 만들기(시작·종료는 서버 함수), runs·attempts 전면 거부, results는 서버만 만들기 → 게시 (구 6-1a)
   - 확인: 게시 후 5-2 활동 만들기가 그대로 된다 (학생 쪽 거부 확인은 6-10)
+  - 구현됨 — firestore.rules, firebase.json(firestore 규칙 경로) — 규칙 시험(에뮬레이터)은 Java가 없어 실행하지 못함. 게시는 사용자(콘솔에 붙여 넣기 또는 firebase deploy --only firestore:rules)
 - [ ] 5-4 활동 탭: 활동 표(제목·문제 수·전체 시간·상태), 실시간 (구 6-2)
   - 확인: 만든 활동이 '대기'(흰색)로 바로 보인다 / 다른 학급 상세에는 보이지 않는다
+  - 구현됨 — activityTab.js — 시험 통과(teacher.e2e), Live Server 확인 전
 - [ ] 5-5 진행 중 화면 뼈대: 참여 코드·남은 시간(큰 숫자), 시작 버튼 (구 6-3)
   - 확인: 활동 줄을 누르면 열린다 / 주 버튼은 '시작' 하나
+  - 구현됨 — js/teacher/activityView.js, nav.js, classDetail.js — 순위 표 자리는 8-3에서 채움. 시험 통과(teacher.e2e), Live Server 확인 전
 - [ ] 5-6 활동 시작: status 'running', startAt·endAt(서버 시각) (구 6-4)
   - 확인: 시작 → 남은 시간이 1초씩 줄고 상태가 '진행 중'(금색) / Firestore에 startAt·endAt / 새로고침해도 남은 시간이 이어진다
+  - 확인(진행 중 1개): 진행 중인 활동이 있으면 다른 활동의 시작을 누를 때 빨간 안내가 뜨고 시작되지 않는다 / 대기 활동은 그동안에도 만들 수 있다
+  - 구현됨 — 서버 함수 startActivity(진행 중 확인을 트랜잭션으로), activityView.js(화면에서도 먼저 확인) — 시험 통과(functions 노드 시험, teacher.e2e), 배포·Live Server 확인 전
 - [ ] 5-7 활동 종료: status 'ended' (구 6-5)
-  - 확인: 종료 → 상태 '종료'(흰색 40%) / 종료 버튼은 확인 상자를 거친다
+  - 확인: 종료 → 상태 '종료'(흰색 40%) / 종료 버튼은 확인 상자를 거친다 / 그 뒤 다른 활동을 시작할 수 있다
+  - 구현됨 — 서버 함수 endActivity(끝나지 않은 학생 판을 abandoned로 남김), confirmDialog.js(확인 버튼 글자 '종료') — 시험 통과, 배포·Live Server 확인 전
   - [미정] 시간이 다 되면 status를 자동으로 'ended'로 바꿀지, 누가 바꿀지 (교사 화면이 닫혀 있을 수 있음)
+    - 지금 기본값: 종료 시각이 지나면 교사 화면·학생 게임·서버 함수 모두 끝난 활동으로 본다. 문서의 status는 다음 활동을 시작할 때 서버가 'ended'로 바꾼다 (따로 정하면 바꾼다)
+- [ ] 5-8 Firebase 설정 (사용자): Blaze 요금제·예산 알림, Firestore 위치 확인(함수 지역과 맞추기), Firebase CLI 설치·로그인
+  - 확인: firebase projects:list에 gbl-dungeondash가 보인다 / Firestore 위치가 asia-northeast3이 아니면 functions/index.js·js/firebase/app.js의 지역을 바꾼다
+- [ ] 5-9 서버 채점 규칙과 시험: functions/grading.js(순수 함수)·handlers.js, 가짜 Firestore 시험 (functions/test, npm test)
+  - 확인: 채점·중복 지급·시간 초과·입장 3문제·회복·코인 검사·결과 한 번만·중도 종료·진행 중 1개·권한 거부 25개 시험 통과 (실제 실행함)
+- [ ] 5-10 서버 함수 6개 배포: startActivity·endActivity·startRun·issueQuestion·submitAnswer·finishRun (functions/index.js)
+  - 확인: functions 폴더 npm install → 프로젝트 폴더 firebase deploy --only functions,firestore:rules 성공 / Firebase 콘솔 Functions에 6개가 보인다 / 5-6·5-7·6-7·7-2 확인이 실제 서버로 된다
 
 ## 6. 학생 참여 시스템 (구 4단계 + 6-7·6-9·6-10)
 - 확인은 index.html(학생)과 teacher.html(교사)을 함께 연다. 학생 여러 명은 일반 창·시크릿 창·다른 브라우저로 만든다 (익명 사용자가 서로 다름)
 
 - [ ] 6-1 [미정] 닉네임 길이 제한, 닉네임이 겹칠 때 처리 (구 4-2)
+  - 지금 기본값: 앞뒤 공백을 지우고 비어 있지만 않으면 받는다. 다시 참여하면 처음 닉네임을 그대로 쓴다
 - [ ] 6-2 Phaser 입력창: main.js DOM 설정, ui.js 입력창 함수 (구 4-1)
   - 확인: 입력창에 한글·숫자를 칠 수 있다 / 입력 중 Space·Shift가 게임 조작으로 처리되지 않는다
+  - 구현됨 — js/main.js(dom), js/ui.js(createInput) — 시험 통과(game.e2e: 값 입력·검사), 한글 입력은 Live Server 확인 전
 - [ ] 6-3 참여 장면(JoinScene): 코드·닉네임 입력창, 입장 버튼 (구 4-3)
   - 확인: 시작 → 참여 화면, design.md 배치대로
+  - 구현됨 — js/scenes/JoinScene.js, StartScene.js — 시험 통과(game.e2e), Live Server 확인 전
 - [ ] 6-4 참여 처리: 익명 로그인 → 코드 조회 → 학생 문서(이미 있으면 그대로 사용) (구 4-4)
   - 확인: 교사 학급 코드로 들어가면 Firestore에 students/{uid}(nickname·joinCode·joinedAt) / 틀린 코드는 빨간 안내 / 새로고침 후 다시 참여해도 학생 문서는 하나
+  - 구현됨 — js/firebase/student.js(joinClass), js/session.js — 시험 통과(game.e2e), Live Server 확인 전
 - [ ] 6-5 [미정] Firebase 없이 단독 플레이 허용 여부 — questions.json에 정답이 있어 정답 비노출의 예외가 됨 (구 4-5)
+  - 지금: 설정값이 없을 때만 예전처럼 questions.json으로 혼자 플레이(js/quiz.js 예비 흐름). 설정값이 있으면 반드시 참여 → 서버 채점
 - [ ] 6-6 교사 학급 상세 '학생' 탭: 참여한 학생 실시간 표 (구 4-6)
   - 확인: 학생이 참여하면 교사 화면에 바로 줄이 생기고 학급 목록의 학생 수도 바뀐다
 - [ ] 6-7 대기 장면(WaitingScene): 활동 상태를 지켜보다 시작 신호를 받으면 월드맵으로 (구 6-7)
   - 확인: 활동이 대기 중이면 대기 화면 / 교사가 시작하면 학생 화면이 몇 초 안에 월드맵으로 / 이미 진행 중일 때 참여하면 바로 월드맵
+  - 구현됨 — js/scenes/WaitingScene.js — 시험 통과(game.e2e), Live Server 확인 전
 - [ ] 6-8 남은 시간을 활동 endAt(서버 시각) 기준으로 (state.js) (구 6-9)
   - 확인: 교사 진행 중 화면과 학생 화면의 남은 시간이 1초 이내로 같다
+  - 구현됨 — js/state.js, js/firebase/server.js(서버 함수 응답으로 서버 시각 맞춤) — 시험 통과(endTime = endAt), 두 기기 비교는 Live Server 확인 전
 - [ ] 6-9 활동 종료 신호 → 학생 최종 결과 화면 (구 6-10)
   - 확인: 교사가 종료하면 모든 학생 화면이 최종 결과로 넘어간다 / 시간이 다 돼도 넘어간다
+  - 구현됨 — js/session.js(종료 신호), state.js(checkTimeout), ResultScene.js('선생님이 활동을 끝냈어요') — 교사 종료는 시험 통과(game.e2e), 시간 종료는 Live Server 확인 전
 - [ ] 6-10 학생 권한 확인
   - 확인: 참여한 학생 창의 개발자 도구에서 answerKey 읽기, 다른 학급 읽기를 시도하면 거부된다
 
@@ -160,8 +183,11 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
 
 - [ ] 7-1 활동 문제로 출제 (questions.js가 활동 문제를 받음) (구 6-8)
   - 확인: 교사가 고른 문제만 나온다 / 학생 창 개발자 도구(네트워크·콘솔)에서 받은 문제 데이터에 정답이 없다
-- [ ] 7-2 채점 연결 (5-0에서 정한 방식) (구 6-8a)
+  - 구현됨 — 서버 함수 issueQuestion, js/quiz.js, QuizScene.js — 응답 키 검사·정답표 읽기 없음 시험 통과, 배포·Live Server 확인 전
+- [ ] 7-2 채점 연결 (5-0에서 정한 방식: 서버 채점) (구 6-8a)
   - 확인: 맞히면 코인 +10과 금색 테두리, 틀리면 빨간 테두리와 정답 보기 / 시간 초과는 오답
+  - 확인(서버): 인터넷이 끊긴 채 답하면 빨간 안내와 '다시 시도', 다시 연결해 누르면 코인이 한 번만 오른다
+  - 구현됨 — 서버 함수 submitAnswer, QuizScene.js(실패 시 다시 시도) — 시험 통과(입장·회복 퀴즈, 중복 제출), 배포·Live Server 확인 전
 - [x] 7-3 능력 종류·가격·대시와의 관계 정하기 (spec.md) (구 7-0)
 - [ ] 7-4 [미정] 능력을 산 뒤 재도전할 때의 처리 (구 7-1)
 - [ ] 7-5 config.js에 능력 목록(대시 10/1회, 보호막 15, 이단 점프 20) (구 7-2)
@@ -183,10 +209,12 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
 - [ ] 7-13 [미정] 별 기준, 획득 내역 항목, 합계 계산, 보상 내용 (구 8-1)
 - [ ] 7-14 한 판 기록 모으기: 문제별 기록(questionId·learningConcept·고른 답·정답 여부·입장/회복), wrongConcepts, 코인, 능력, 대시, 충돌, 추락, 클리어 시간 (구 8-3)
   - 확인: 한 판을 하고 콘솔에 출력한 기록이 실제 플레이와 맞다
+  - 일부 구현됨 — 퀴즈 기록·wrongConcepts·코인은 서버(attempts·run)가, 대시·충돌·추락·클리어 시간은 js/quiz.js playStats가 모은다. 능력 구매(7-6) 뒤에 abilities를 실제 구매로 바꾼다
 - [ ] 7-15 결과 화면 새 배치: 별·획득 내역·합계·보상 (구 8-4)
   - 확인: design.md 배치대로, 7-13에서 정한 값이 보인다
 - [ ] 7-16 결과 저장(results), 실패 시 다시 시도 안내 (구 8-5)
   - 확인: 던전 한 판마다 Firestore results 문서가 하나 생기고 필드가 spec.md와 같다 / 인터넷을 끊고 끝내면 다시 시도 안내, 다시 연결하면 저장
+  - 구현됨 — 서버 함수 finishRun, ResultScene.js(저장 중·저장했어요·다시 시도) — cleared·failed·abandoned 결과와 필드 시험 통과, 인터넷 끊김은 Live Server 확인 전
 - [ ] 7-17 진행 상황 갱신(progress): 던전 입장·클리어·코인 변화 때 (구 8-6)
   - 확인: 플레이하는 동안 Firestore progress/{uid} 값이 바뀐다
 

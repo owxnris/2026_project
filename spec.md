@@ -52,6 +52,10 @@
   - 문제마다 학습 개념(learningConcept, 예: '일차방정식')을 붙인다. 학생의 오답은 문제와 학습 개념 단위로 기록해 교사가 취약 개념을 분석한다
   - 정답은 학생에게 노출하지 않는다. 학생 기기가 받는 문제 데이터에는 정답을 넣지 않는다 (서버 채점 — 아래 '정답 비노출' 참고)
   - 한 학급에서 진행 중('running')인 활동은 하나뿐이다. 진행 중인 활동이 있으면 다른 활동을 시작할 수 없고, 학생은 그 학급의 진행 중인 활동에 참여한다
+    - 대기('waiting') 활동은 진행 중인 활동이 있어도 여러 개 미리 만들 수 있다. 막는 것은 '시작'뿐이다
+    - 시작·종료는 서버 함수(startActivity·endActivity)가 한다. 서버가 한 번에(트랜잭션) 확인하므로 동시에 눌러도 하나만 시작된다
+    - 종료 시각(endAt)이 지난 활동은 status가 아직 'running'이어도 끝난 활동으로 본다 (교사 화면은 '종료'로 보이고, 서버는 다음 활동을 시작할 때 'ended'로 바꾼다)
+  - 던전 한 판의 결과는 세 가지로 남긴다: 클리어(cleared) / 실패(failed — 전체 시간이 끝남) / 중도 종료(abandoned — 판을 끝내지 않고 새 판을 시작했거나, 창을 닫았거나, 교사가 활동을 종료함). 어느 경우든 그 판에서 푼 문제 기록은 결과에 남는다
   - questions.json은 기본 문제(시험용 예시 데이터, 여러 과목 혼합)로 쓴다. 교사 문제은행으로 불러올 수 있고, Firebase 없이 시험할 때의 예비 문제로도 쓴다
   - 정답 1개당 코인 10개. 코인은 퀴즈를 맞혀야만 얻는다
   - 퀴즈를 다 틀려도 입장 가능. 코스는 능력 없이도 클리어할 수 있게 만든다
@@ -126,10 +130,10 @@ classes/{classId}/students/{studentUid}
 
 classes/{classId}/activities/{activityId}         학습 활동
   title: 문자열
-  totalTimeSec: 숫자        전체 시간(초)
-  status: 'waiting' | 'running' | 'ended'
-  startAt: 시각 | null      시작 버튼을 누른 시각
-  endAt: 시각 | null        startAt + totalTimeSec
+  totalTimeSec: 숫자        전체 시간(초). 교사 양식에서는 분(1 이상 정수)으로 입력한다
+  status: 'waiting' | 'running' | 'ended'   교사 앱은 'waiting'으로만 만든다. 바꾸는 것은 서버 함수뿐
+  startAt: 시각 | null      시작 버튼을 누른 시각 (서버 함수가 서버 시각으로 기록)
+  endAt: 시각 | null        startAt + totalTimeSec (교사가 일찍 종료해도 바꾸지 않는다 — 종료는 status로 안다)
   questions: 배열           문제은행에서 복사한 문제 { id, subject, difficulty, learningConcept, question, choices }
                             정답(answer)은 넣지 않는다 — 학생이 이 문서를 읽기 때문
   createdAt: 시각
@@ -138,6 +142,28 @@ classes/{classId}/activities/{activityId}/answerKey/main   활동 정답표 (학
   answers: { [questionId]: 숫자 0~3 }   활동을 만들 때 문제은행에서 함께 복사
   (서버 함수가 관리자 권한으로 읽어 채점한다. 학생은 읽을 수 없다)
 
+classes/{classId}/activities/{activityId}/runs/{runId}      서버 채점 기록: 던전 한 판 (서버 함수만 읽고 쓴다)
+  studentUid: 문자열
+  dungeon: 숫자
+  status: 'playing' | 'finished'
+  outcome: 'cleared' | 'failed' | 'abandoned'   (끝난 뒤)
+  entryIssued: 숫자         이 판에서 낸 입장 퀴즈 수 (3까지)
+  coinsEarned: 숫자         서버가 채점해 준 코인 합계
+  openAttemptId: 문자열 | null   답을 기다리는 문제
+  openIssuedAt: 시각 | null
+  lastQuestionId: 문자열 | null  바로 앞 문제 (같은 문제를 연달아 내지 않음)
+  startedAt: 시각
+  finishedAt: 시각 | null
+
+classes/{classId}/activities/{activityId}/runs/{runId}/attempts/{attemptId}   낸 문제 하나 (서버 함수만)
+  questionId: 문자열
+  learningConcept: 문자열
+  quizType: 'entry' | 'revive'
+  issuedAt: 시각            문제를 낸 서버 시각 (15초 제한의 기준)
+  answeredAt: 시각 | null   채점한 시각 — 값이 있으면 다시 채점하지 않는다
+  chosen: 0~3 | null        null = 시간 초과
+  correct: 참/거짓 | null    (채점 전 null)
+
 classes/{classId}/activities/{activityId}/progress/{studentUid}   실시간 진행 상황 (덮어씀)
   nickname: 문자열
   currentDungeon: 숫자 | null   지금 있는 던전 번호 (월드맵이면 null)
@@ -145,30 +171,33 @@ classes/{classId}/activities/{activityId}/progress/{studentUid}   실시간 진�
   coins: 숫자
   updatedAt: 시각
 
-classes/{classId}/results/{resultId}              던전 한 판의 결과 (추가만)
+classes/{classId}/results/{runId}                 던전 한 판의 결과 (서버 함수만 만든다, 문서 id = runId → 한 판에 결과 하나)
   studentUid: 문자열
   nickname: 문자열
   activityId: 문자열
   dungeon: 숫자             던전 번호 (0 잊혀진 숲, 1 용암 광산, 2 얼어붙은 성)
-  cleared: 참/거짓
+  outcome: 'cleared' | 'failed' | 'abandoned'   클리어 / 실패(시간 종료) / 중도 종료
+  cleared: 참/거짓          outcome이 'cleared'일 때만 참 (기존 필드 유지)
   quizCorrect: 숫자         맞힌 문제 수 (입장·회복 퀴즈 합)
   quizTotal: 숫자           푼 문제 수
   answers: 배열             푼 문제마다 하나 (같은 문제를 다시 풀면 또 하나)
                             { questionId, learningConcept, chosen: 0~3 | null(시간 초과), correct: 참/거짓,
                               quizType: 'entry' | 'revive' }
   wrongConcepts: 문자열 배열   이 판에서 틀린 학습 개념 (중복 없이) — 개념별 조회용
-  coinsEarned: 숫자
-  coinsSpent: 숫자
-  abilities: { dash: 산 횟수, shield: 참/거짓, doubleJump: 참/거짓 }
-  dashesUsed: 숫자
-  hits: 숫자                장애물 충돌 횟수
-  falls: 숫자               구멍 추락 횟수
+  coinsEarned: 숫자         서버가 채점한 정답 × 10
+  coinsSpent: 숫자 | null
+  abilities: { dash: 산 횟수, shield: 참/거짓, doubleJump: 참/거짓 } | null
+  dashesUsed: 숫자 | null
+  hits: 숫자 | null         장애물 충돌 횟수
+  falls: 숫자 | null        구멍 추락 횟수
   clearSec: 숫자 | null     클리어까지 걸린 초
+  (outcome 'abandoned'는 게임이 플레이 기록을 보내지 못한 판이라 coinsSpent~clearSec가 null이다. 퀴즈 기록은 남는다)
   createdAt: 시각
 ```
 
 - 결과 화면의 별·합계 계산, 순위 기준은 [미정]이다. 정해지면 위 결과 문서에서 계산하고, 필드가 더 필요하면 이 구조를 먼저 고친다.
 - 기존 구조에서 바뀐 것: 문제은행·활동 문제에 learningConcept 추가, 활동 문제에서 answer를 빼서 answerKey로 분리, 결과 answers 항목 확장, 결과에 wrongConcepts 추가
+- 서버 채점으로 바뀐 것: runs·attempts 추가(서버 전용), 결과에 outcome 추가, 결과 문서 id를 runId로, 결과는 서버만 만든다, 중도 종료 판의 플레이 기록은 null
 
 ## 문제은행 규칙
 ### 과목 (13개, 정해진 목록에서만 고른다)
@@ -220,9 +249,36 @@ classes/{classId}/results/{resultId}              던전 한 판의 결과 (추�
 - 채점 방식: 서버 채점 (Cloud Functions)으로 정했다
   - 학생이 고른 답을 서버 함수로 보내면 서버가 정답표로 채점해 정답 여부·정답 보기를 돌려준다
   - 코인 지급과 오답 기록은 서버가 정한다. 같은 답을 여러 번 보내도 보상은 한 번만 준다
-  - 서버 함수의 세부 흐름·추가 데이터·보안 규칙 변경은 [미정] — 설계 승인 후 이 절과 데이터 구조에 반영한다
+  - 세부 흐름은 아래 '서버 채점 흐름'
 - 답을 고른 뒤 정답 보기를 보여 주는 기존 피드백(design.md)은 그대로 둔다. '노출하지 않음'은 답을 고르기 전과 데이터 안의 정답을 뜻한다
 - Firebase 없이 혼자 하는 예비 흐름(questions.json)은 파일에 정답이 들어 있다. 이 흐름을 예외로 둘지 [미정]
+
+## 서버 채점 흐름 (Cloud Functions, functions/ 폴더)
+학생 게임과 교사 플랫폼은 서버 함수(호출형, httpsCallable)를 부른다. 서버 함수는 관리자 권한으로 Firestore를 읽고 쓰므로, 누가 부를 수 있는지는 함수 안에서 모두 확인한다.
+| 함수 | 부르는 사람 | 하는 일 |
+|---|---|---|
+| startActivity | 소유 교사 | 대기 활동을 시작. 학급에 진행 중인 다른 활동이 있으면 거부. startAt·endAt을 서버 시각으로 |
+| endActivity | 소유 교사 | 활동 종료. 끝나지 않은 학생 판은 중도 종료(abandoned)로 결과에 남김 |
+| startRun | 그 학급 학생 | 진행 중인 활동에서 던전 한 판 시작 (입장 퀴즈 직전). 끝내지 않은 이전 판은 중도 종료로 닫음 |
+| issueQuestion | 판의 주인 | 활동 문제 중 하나를 서버가 골라 정답 없이 보냄 (id·과목·문제·보기만) |
+| submitAnswer | 판의 주인 | 정답표로 채점, 정답이면 코인 +10. 정답 여부와 정답 보기 번호를 돌려줌 |
+| finishRun | 판의 주인 | 판을 끝내고 결과 문서를 만듦 (cleared / failed) |
+
+- 중복 지급 방지: 문제 하나(attempt)는 한 번만 채점한다. 같은 답을 다시 보내면 처음 결과를 그대로 돌려주고 코인을 더 주지 않는다 (네트워크 재시도에 안전)
+- 문제 고르기 방지: 답하지 않은 문제가 있는데 다시 받으면 같은 문제를 보낸다 (남은 시간만). 입장 퀴즈는 한 판에 3문제까지, 회복 퀴즈는 입장 퀴즈 3문제를 받은 뒤에만
+- 시간: 서버가 문제를 낸 시각부터 15초 + 네트워크 여유 3초가 지나 낸 답은 시간 초과(오답). 답하지 않고 넘어간 문제도 시간 초과로 기록
+- 진행 중 활동이 아니면(종료됨·종료 시각 지남) 새 판·새 문제를 거부한다. 이미 낸 문제의 답은 받는다
+- 결과: 퀴즈 기록·정답 수·오답 개념·획득 코인은 서버 기록에서 만든다. 결과 문서 id가 runId라 한 판에 결과는 하나. 이미 끝난 판의 finishRun은 아무것도 바꾸지 않는다
+- 게임이 보내는 플레이 기록 검사: 쓴 코인 = 능력 가격 합(대시 10×횟수 + 보호막 15 + 이단 점프 20), 쓴 코인 ≤ 서버가 준 코인, 쓴 대시 ≤ 산 대시, 횟수는 0 이상 정수
+  - 능력 구매(7-6) 전 지금 게임은 대시를 쓸 때마다 10코인을 내므로, 대시 1회 사용 = 대시 1회 구매로 보낸다
+- 서버 시각: 함수 응답마다 서버 시각을 받아 기기 시계와의 차이를 맞춘다. 남은 시간은 활동 endAt − 서버 시각 (첫 서버 호출 전에는 기기 시계)
+- 함수 지역: Firestore 데이터베이스 위치와 같은 지역 (기본 asia-northeast3 서울 — functions/index.js와 js/firebase/app.js 두 곳)
+- 알려진 한계 (서버가 확인할 수 없는 것)
+  - 클리어 여부·클리어 시간·충돌·추락 횟수는 게임(학생 기기)이 계산해 보낸다
+  - 능력 구매·충돌로 코인이 줄어드는 것은 학생 기기에서 일어난다. 서버는 위 검사만 한다
+  - 회복 퀴즈는 실제 충돌 없이도 요청할 수 있다. 다만 서버가 채점한 정답으로만 코인이 생기므로 '문제를 더 푸는 것'과 같다
+  - 던전 해금 순서는 게임이 지킨다 (서버는 던전 번호 범위만 확인)
+  - progress 문서의 코인은 화면 표시용이다. 순위·분석은 서버가 만든 결과(results)로 계산한다
 
 ## 학습 분석 (교사)
 - 분석 데이터: 학급 결과(results)의 answers 항목을 교사 화면에서 모아 계산한다 (따로 저장하지 않는다)
@@ -241,14 +297,15 @@ classes/{classId}/results/{resultId}              던전 한 판의 결과 (추�
 | joinCodes/{code} | 만들기(학급과 함께), 자기가 만든 코드만 삭제 | 코드 하나 조회 | 코드 하나 조회 (목록 불가) |
 | classes/{id} | 읽기·쓰기 (ownerUid 변경 불가) | 읽기 | 불가 |
 | students/{uid} | 읽기·삭제 | 본인 문서 만들기(코드가 맞을 때), 본인 문서 읽기 | 불가 |
-| activities | 읽기·쓰기 | 읽기 | 불가 |
-| activities/answerKey | 읽기·쓰기 | 불가 | 불가 (서버 함수만 관리자 권한으로 읽음) |
+| activities | 대기 상태로 만들기·읽기·삭제 (시작·종료는 서버 함수) | 읽기 | 불가 |
+| activities/answerKey | 만들기(활동과 함께)·읽기 | 불가 | 불가 (서버 함수만 관리자 권한으로 읽음) |
+| activities/runs, attempts | 불가 | 불가 | 불가 (서버 함수만) |
 | progress/{uid} | 읽기·삭제 | 본인 문서 쓰기 | 불가 |
-| results | 읽기·삭제 | 본인 결과 추가 (수정·삭제 불가) | 불가 |
+| results | 읽기·삭제 | 불가 (서버 함수가 만든다) | 불가 |
 
-- 학생이 쓰는 문서(students·progress·results)는 위 데이터 구조의 필드만 허용한다
+- 학생이 쓰는 문서(students·progress)는 위 데이터 구조의 필드만 허용한다
 - 알려진 한계
-  - 서버 채점을 만들기 전까지는 결과 값(정답 여부·오답 개념 포함)을 학생 기기가 정해서 저장한다. 서버 채점 설계가 승인되면 이 권한을 바꾼다
+  - 결과의 플레이 기록 일부는 학생 기기가 보낸 값이다 (위 '서버 채점 흐름'의 알려진 한계)
   - Google 계정이 있으면 누구나 교사로 로그인해 학급을 만들 수 있다. 교사 계정을 허용 목록으로 제한할지 [미정]
 
 ## 필수 기능

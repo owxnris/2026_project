@@ -199,3 +199,8 @@
 - 요청 요약: 5-0 서버 채점(Cloud Functions) 채택, 5-1 학급당 진행 중 활동 1개 결정 반영, 서버 채점 데이터 흐름·Firebase 설정·비용 설명
 - 수정한 파일: spec.md, tasks.md, AGENTS.md
 - 판단 근거: 결정 사항만 문서에 반영하고, 서버 채점에 필요한 새 데이터(runs·attempts)와 결과 쓰기 권한 변경은 데이터 구조 변경이라 설계안으로 제시해 승인 후 반영하기로 함
+
+## 2026-11-11 (5단계 구현)
+- 요청 요약: 서버 채점·학급당 진행 중 활동 1개·중도 종료(cleared/failed/abandoned) 확정 → 문서 반영, Cloud Functions·Firebase 설정, 5단계 활동 관리, 학생 참여~활동 시작~서버 채점~코인 지급 연결, 보안 규칙·중복 방지, 연동 시험·커밋
+- 수정한 파일: functions/(index.js, handlers.js, grading.js, package.json, package-lock.json, test/), firebase.json, .firebaserc, .gitignore, firestore.rules, js/firebase/(sdk.js, app.js, server.js, student.js), js/teacher/(activities.js, activityRules.js, activityTab.js, activityView.js, classDetail.js, confirmDialog.js, nav.js, main.js), teacher.html, css/teacher.css, js/(main.js, state.js, session.js, quiz.js, ui.js), js/scenes/(JoinScene.js, WaitingScene.js, StartScene.js, QuizScene.js, DungeonScene.js, ResultScene.js), spec.md, tasks.md, design.md
+- 판단 근거: 규칙으로는 '학급당 진행 중 1개'와 채점을 강제할 수 없어 시작·종료·채점·결과 쓰기를 서버 함수(트랜잭션, attempt 단위 1회 채점, 결과 id=runId)로 옮기고, 서버 로직을 가짜 Firestore에 붙여 노드·헤드리스 브라우저 시험으로 검증함. 완료 체크는 사용자 확인 뒤로 남김
