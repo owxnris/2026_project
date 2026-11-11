@@ -274,6 +274,35 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
   - 확인: 학생마다 다른 취약 개념이 보인다
   - 구현됨 — resultsTab.js 자세한 기록의 개념별 오답·틀린 문제. 시험: teacher-full.e2e(실제 teacher.html + main.js), Live Server 확인 전
 
+## 12. 교사 협력·학습 분석 (2026-11-11 요청)
+- 확인은 teacher.html에서 한다. 공유 문제은행은 Google 계정 두 개(교사 A·B)로 확인한다
+- 자동 시험: functions/test/analysis.test.js(노드, 데이터 부족 기준 포함), 브라우저 teacher-full.e2e(교사 두 명 공유·가져오기, 맞춤 피드백·추천·보충 요약) 통과. Live Server 확인 전
+- [ ] 12-1 학생별 맞춤 피드백: 정답률·학습 수준·취약 개념·잘하는 개념·시간 초과·활동별 변화 (규칙 기반, 데이터 부족 표시)
+  - 확인: 결과 탭에서 학생을 누르면 피드백 문장이 실제 결과와 맞다 / 푼 문제가 5개 미만인 학생은 '데이터가 부족해요'
+  - 구현됨 — js/teacher/analysis.js(studentFeedback·activityTrend·levelOf), resultsTab.js
+- [ ] 12-2 취약 개념 추천 문제 → 추천 문제로 활동 만들기
+  - 확인: 추천 문제가 취약 개념과 같은 과목·개념이다 / 버튼을 누르면 그 문제가 골라진 활동 만들기 양식이 열린다
+  - 구현됨 — analysis.js recommendQuestions, activityTab.js openFormWith
+- [ ] 12-3 학급 분석: 학습 수준 분포, 활동별 참여율·완료율, 문제별·개념별 정답률(데이터 부족 표시), 다음 수업 보충 학습 요약
+  - 확인: 값이 Firestore 결과와 맞다 / 결과가 적으면 '데이터 부족'
+  - 구현됨 — analysis.js(participation·supplementSummary·levelDistribution·rateText), resultsTab.js, teacher.html
+- [ ] 12-4 공유 문제은행 데이터·규칙: sharedQuestions, 개인 문제 source 'shared'·origin·sharedId, teachers shareName, firestore.rules(교사만 읽기, 올린 교사만 고치기·지우기, 필드 제한)
+  - 확인: 배포 후 교사 B가 교사 A의 공유 문제를 지우거나 고치려 하면 거부된다 / 학생 계정은 공유 문제를 읽을 수 없다
+  - 구현됨 — js/teacher/sharedBank.js, firestore.rules. 규칙 시험은 에뮬레이터(Java)가 없어 실행하지 못함
+- [ ] 12-5 공유하기: 공유 이름 정하기(이메일 불가), 내 문제 '공유'·'공유 갱신', 공유 취소
+  - 확인: 공유 이름 없이 공유하면 안내 / 공유하면 공유 문제은행에 보이고 출처는 공유 이름 / Firestore 공유 문서에 이메일·실명이 없다
+  - 구현됨 — sharedBank.js, sharedView.js, bankView.js(출처 칸·공유 버튼)
+- [ ] 12-6 공유 문제 찾기·미리보기·가져오기 (복사, 출처 표시, 한 번만, 개념 합치기)
+  - 확인: 교사 B가 과목·난이도·개념·검색으로 찾고, 미리보기로 정답을 보고, 가져오면 내 문제은행에 '공유: 이름'으로 생긴다 / 가져온 문제를 고쳐도 원본은 그대로 / 활동 만들기에서 바로 고를 수 있다
+  - 구현됨 — sharedView.js, sharedBank.js importShared
+- [ ] 12-7 design.md 공유 문제은행·결과 탭 분석 배치 — 사용자 승인 전
+- 아직 만들지 않은 것 (필요하면 spec.md에 정한 뒤)
+  - [ ] 12-8 [미정] 학습 수준·데이터 부족 기준값 확정 (지금 기본값: 수준 5문제·80%/50%, 정답률 3번, 보충 요약 10문제)
+  - [ ] 12-9 [미정] 학생에게 맞춤 피드백 보여 주기 (지금은 교사만 봄. 학생이 자기 결과를 읽게 하려면 규칙 변경 필요 — 9-2와 함께)
+  - [ ] 12-10 [미정] 교사가 피드백에 글을 덧붙이거나 저장하기 (지금은 저장하지 않고 화면에서 계산)
+  - [ ] 12-11 [미정] 공유 문제 신고·평가·가져간 횟수, 공유 문제가 많을 때 나눠 불러오기
+  - [ ] 12-12 [미정] 공유 문제은행을 읽을 수 있는 교사 제한 (10-5 교사 허용 목록과 함께)
+
 ## 9. 차별화 기능 (spec.md 반영·승인 후)
 - 지금 spec.md에 없는 기능이다. 각 기능은 먼저 spec.md에 규칙과 데이터 구조를 정하고 승인받은 뒤 만든다
 - 모두 7단계 결과 데이터(answers·wrongConcepts)를 실제로 쓰는 기능으로 만든다

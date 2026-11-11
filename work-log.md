@@ -209,3 +209,8 @@
 - 요청 요약: 임시 결정 반영 후 6~10단계(참여·재접속·중복 실행, 능력 구매·사용, 결과 화면, 진행 상황, 교사 학생 탭·순위·결과 분석, 안내 개선, 통합·회귀 시험) 묶어서 구현·시험·커밋
 - 수정한 파일: js/config.js, js/state.js, js/quiz.js, js/progress.js, js/ui.js, js/main.js, js/scenes/(ShopScene.js, DungeonScene.js, QuizScene.js, ResultScene.js, StartScene.js, WorldMapScene.js, WaitingScene.js), js/teacher/(analysis.js, classData.js, classHub.js, studentsTab.js, resultsTab.js, tableUtil.js, activityTab.js, activityView.js, classDetail.js, main.js), teacher.html, css/teacher.css, firestore.rules, functions/test/analysis.test.js, spec.md, tasks.md, design.md
 - 판단 근거: [미정] 항목은 기본값으로 정해 spec.md에 '지금 기본값'으로 적고, 분석은 서버가 만든 결과(results)만으로 계산해 데이터 흐름을 하나로 유지함. 전투는 spec.md에 없어 만들지 않음. 완료 체크는 사용자 확인 뒤로 남김
+
+## 2026-11-11 (교사 협력·학습 분석)
+- 요청 요약: 학생별 맞춤 피드백(정답률·취약 개념·추천 문제·활동별 변화), 학급 분석(수준 분포·참여율·완료율·문제별·개념별·보충 요약), 교사 간 공유 문제은행(공유·검색·미리보기·가져오기·출처·권한)
+- 수정한 파일: js/teacher/(analysis.js, resultsTab.js, activityTab.js, bankView.js, sharedBank.js, sharedView.js, nav.js, main.js), teacher.html, css/teacher.css, firestore.rules, functions/test/analysis.test.js, spec.md, design.md, tasks.md
+- 판단 근거: 분석은 저장된 results만으로 규칙 계산하고 최소 데이터 기준 아래는 '데이터 부족'으로 표시했으며, 공유 문제은행은 별도 컬렉션·필드 제한 규칙·공유 이름으로 개인 정보와 학생 결과가 섞이지 않게 함. 시험 중 문제은행 삭제 안내 문구가 이전 편집 스크립트로 깨진 것을 발견해 고침
