@@ -115,8 +115,10 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
 ## 5. 수업 활동 관리 (구 6단계 교사 쪽)
 - 확인은 teacher.html → 학급 상세 → '활동' 탭에서 한다
 
-- [ ] 5-0 [미정] 채점 방식: 서버 채점(Cloud Functions, Blaze 요금제·Firebase CLI 허용 필요) / 학생 기기 채점 — 정답 비노출 방안. 5-2 전에 정한다 (구 6-0)
-- [ ] 5-1 [미정] 한 학급에서 동시에 진행할 수 있는 활동 수 (구 6-6)
+- [x] 5-0 채점 방식: 서버 채점(Cloud Functions). functions/ 폴더에 한해 Node.js·npm·Firebase CLI 허용 (AGENTS.md) (구 6-0)
+  - [미정] 서버 채점 세부 설계(데이터 흐름, 추가 데이터, 보안 규칙 변경, 작업 배치) — 승인 후 spec.md·tasks.md에 반영
+- [x] 5-1 동시 활동 수: 학급당 진행 중 활동 1개. 진행 중인 활동이 있으면 다른 활동 시작 불가 (구 6-6)
+  - [미정] 진행 중인 활동이 있을 때 새 활동 '만들기'(대기 상태)도 막을지
 - [ ] 5-2 활동 만들기: 제목·전체 시간, 문제 고르기 표(과목·난이도·학습 개념 거르기, 여러 과목 혼합 가능) → 활동 문서(문제 복사, 학습 개념 유지, 정답 제외) + 정답표(answerKey/main) 한 번에 저장 (구 6-1)
   - 확인: 저장하면 Firestore activities 문서의 questions에 learningConcept는 있고 answer는 없다 / answerKey/main에 문제별 정답이 있다 / status 'waiting' / 빈 제목·시간 없음·문제 0개는 빨간 안내
 - [ ] 5-3 firestore.rules: answerKey는 소유 교사만, results에 wrongConcepts 허용 → 콘솔에 게시 (구 6-1a)
