@@ -71,3 +71,75 @@ test('학생 한 명: 판은 오래된 순, 틀린 문제와 고른 답', () => 
   assert.equal(d1.wrongQuestions[0].lastChosen, '시간 초과');
   assert.equal(d1.runs[0].createdAt.toMillis(), 1);
 });
+
+// ── 맞춤 피드백·학급 분석 ──
+import {
+  levelOf, levelDistribution, activityTrend, recommendQuestions, studentFeedback, participation, supplementSummary, rateText,
+} from '../../js/teacher/analysis.js';
+
+const acts2 = [
+  { id: 'A1', title: '1차', status: 'ended', startAt: ts(10), questions: activities[0].questions },
+  { id: 'A2', title: '2차', status: 'ended', startAt: ts(20), questions: activities[1].questions },
+  { id: 'A3', title: '대기', status: 'waiting', questions: [] },
+];
+const bank = [
+  { id: 'q2', subject: '과학', learningConcept: '광합성', question: '광합성 장소' },
+  { id: 'q9', subject: '과학', learningConcept: '광합성', question: '새 광합성 문제' },
+  { id: 'q8', subject: '과학', learningConcept: '광합성', question: '맞힌 적 있는 문제' },
+  { id: 'q1', subject: '수학', learningConcept: '곱셈', question: '2×3' },
+];
+
+test('데이터 부족: 기준보다 적으면 값을 만들지 않는다', () => {
+  assert.equal(levelOf(4, 4), null, '5문제 미만은 수준 없음');
+  assert.equal(levelOf(4, 5), '상');
+  assert.equal(levelOf(3, 5), '중');
+  assert.equal(levelOf(2, 5), '하');
+  assert.equal(rateText(1, 2), '데이터 부족 (2번)');
+  assert.equal(rateText(2, 3), '67%');
+  const fb = studentFeedback(results, 'S2', qi, bank, acts2); // S2: 3문제
+  assert.equal(fb.enough, false);
+  assert.equal(fb.recommend.length, 0);
+  assert.match(fb.lines[0].text, /데이터가 부족해요/);
+  assert.deepEqual(supplementSummary(results.slice(0, 2), qi).enough, false, '6문제는 학급 요약 부족');
+});
+
+test('학생 피드백: 수준·취약 개념·추천 문제(틀린 문제 먼저)', () => {
+  const extra = [...results, { studentUid: 'S2', nickname: '바다', activityId: 'A1', dungeon: 0, outcome: 'failed', quizCorrect: 0, quizTotal: 3, coinsEarned: 0, createdAt: ts(5),
+    answers: [ans('q2', '광합성', false), ans('q2', '광합성', false, null), ans('q1', '곱셈', false, null)] }];
+  const fb = studentFeedback(extra, 'S2', qi, bank, acts2); // S2: 6문제, 맞힌 1
+  assert.equal(fb.enough, true);
+  assert.equal(fb.level, '하');
+  assert.deepEqual(fb.weak.map((c) => c.learningConcept), ['광합성'], '수학·곱셈은 2번뿐이라 판단 안 함');
+  assert.equal(fb.recommend[0].id, 'q2', '틀린 문제가 먼저');
+  assert.ok(fb.lines.some((l) => l.kind === 'time'), '시간 초과 2/6 → 30% 이상 안내');
+  assert.ok(fb.lines.some((l) => l.kind === 'lack' && /활동별 변화/.test(l.text)), 'A2는 1문제라 변화 부족');
+});
+
+test('활동별 변화: 활동마다 3문제 이상일 때만, 10%p 기준', () => {
+  const rs = [
+    { studentUid: 'S1', activityId: 'A1', quizCorrect: 1, quizTotal: 4, answers: [] },
+    { studentUid: 'S1', activityId: 'A2', quizCorrect: 3, quizTotal: 4, answers: [] },
+  ];
+  const t = activityTrend(rs, 'S1', acts2);
+  assert.deepEqual(t.rows.map((r) => r.title), ['1차', '2차']);
+  assert.equal(t.change, '올랐어요');
+  assert.equal(activityTrend([{ ...rs[0] }, { ...rs[1], quizTotal: 2, quizCorrect: 2 }], 'S1', acts2).change, null);
+});
+
+test('추천 문제: 취약 개념만, 틀린 → 안 푼 → 맞힌 순', () => {
+  const answered = new Map([['q2', 'wrong'], ['q8', 'right']]);
+  const r = recommendQuestions([{ subject: '과학', learningConcept: '광합성' }], bank, answered);
+  assert.deepEqual(r.map((q) => q.id), ['q2', 'q9', 'q8']);
+  assert.deepEqual(recommendQuestions([], bank), []);
+});
+
+test('참여율·완료율, 수준 분포, 학급 보충 요약', () => {
+  const p = participation(results, 4, acts2);
+  assert.deepEqual(p.map((x) => [x.title, x.joined, x.done, x.joinRate, x.doneRate]), [['1차', 2, 1, 0.5, 0.5], ['2차', 1, 0, 0.25, 0]]);
+  assert.equal(participation(results, 0, acts2)[0].joinRate, null);
+  assert.deepEqual(levelDistribution(studentSummary(results)), { 상: 1, 중: 0, 하: 0, 부족: 1 });
+  const big = [...results, ...results];
+  const s = supplementSummary(big, qi);
+  assert.equal(s.enough, true);
+  assert.ok(s.lines[0].startsWith('보충할 개념: 과학 · 광합성'));
+});

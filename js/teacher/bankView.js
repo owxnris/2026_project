@@ -1,5 +1,5 @@
 // 문제은행 화면 (design.md 문제은행): 거르기 줄(과목·난이도·학습 개념·검색), 문제 표, 수정·삭제.
-// Firestore 저장 함수는 main.js에서 넘겨받는다 (store: { add, update, remove, importDefaults }).
+// Firestore 저장 함수는 main.js에서 넘겨받는다 (store: { add, update, remove, importDefaults, share, reshare }).
 import {
   SUBJECTS, DIFFICULTIES, conceptFilterOptions, filterQuestions,
 } from './bankRules.js';
@@ -7,9 +7,17 @@ import {
   setupBankForm, openForm, closeForm, isEditing, refreshConcepts,
 } from './bankForm.js';
 import { confirmDelete } from './confirmDialog.js';
+import { ShareError } from './sharedBank.js';
 
 const $ = (id) => document.getElementById(id);
-const COLUMNS = ['과목', '난이도', '학습 개념', '문제', '정답', ''];
+const COLUMNS = ['과목', '난이도', '학습 개념', '문제', '정답', '출처', ''];
+
+// 출처: 직접 만든 문제 / 기본 문제 / 공유 문제은행에서 가져온 문제(작성자 공유 이름)
+function sourceText(q) {
+  if (q.source === 'shared') return `공유: ${q.origin?.authorName ?? ''}`;
+  if (q.source === 'default') return '기본 문제';
+  return q.sharedId ? '직접 만듦 · 공유함' : '직접 만듦';
+}
 
 let questions = [];
 let loaded = false;
@@ -57,7 +65,7 @@ function textButton(label, onClick, danger = false) {
 }
 
 async function onDelete(q) {
-  const ok = await confirmDelete(`'${q.question}' 문제를 삭제할까요? 이미 만든 활동에는 남아 있어요.`);
+  const ok = await confirmDelete(`'${q.question}' 문제를 삭제할까요? 이미 만든 활동과 공유 문제은행에 올린 문제는 남아 있어요.`);
   if (!ok) return;
   try {
     await store.remove(q.id);
@@ -65,6 +73,21 @@ async function onDelete(q) {
     showNotice('삭제했어요');
   } catch (e) {
     $('bank-error').textContent = `문제를 삭제하지 못했어요 (${e.code || e.message})`;
+  }
+}
+
+async function onShare(q) {
+  $('bank-error').textContent = '';
+  try {
+    if (q.sharedId) {
+      await store.reshare(q);
+      showNotice('공유 문제를 지금 내용으로 고쳤어요');
+    } else {
+      await store.share(q);
+      showNotice('공유 문제은행에 올렸어요');
+    }
+  } catch (e) {
+    $('bank-error').textContent = e instanceof ShareError ? e.message : `공유하지 못했어요 (${e.code || e.message})`;
   }
 }
 
@@ -92,12 +115,15 @@ function render() {
   shown.forEach((q) => {
     const row = body.insertRow();
     row.dataset.questionId = q.id;
-    [q.subject, q.difficulty, q.learningConcept, q.question, q.choices[q.answer]].forEach((value) => {
+    [q.subject, q.difficulty, q.learningConcept, q.question, q.choices[q.answer], sourceText(q)].forEach((value) => {
       row.insertCell().textContent = value ?? '';
     });
     const actionsCell = row.insertCell();
     actionsCell.className = 'row-actions';
-    actionsCell.append(textButton('수정', () => openForm(q)), textButton('삭제', () => onDelete(q), true));
+    actionsCell.append(textButton('수정', () => openForm(q)));
+    // 공유: 직접 만든 문제만. 이미 공유했으면 지금 내용으로 공유 문제를 고친다
+    if (q.source === 'teacher') actionsCell.append(textButton(q.sharedId ? '공유 갱신' : '공유', () => onShare(q)));
+    actionsCell.append(textButton('삭제', () => onDelete(q), true));
   });
   $('q-list').replaceChildren(table);
 }

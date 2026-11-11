@@ -189,3 +189,14 @@ select.input:disabled { opacity: 0.4; }
 .weak, .outcome-failed { color: var(--bad); }
 .outcome-cleared { color: var(--good); }
 .outcome-abandoned { opacity: 0.6; }
+
+/* 맞춤 피드백·보충 요약 목록, 공유 문제은행 미리보기 */
+.feedback-list { margin: 0 0 16px; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.fb-weak, .fb-time { color: var(--bad); }
+.fb-good { color: var(--good); }
+.fb-lack { opacity: 0.6; }
+.share-name-row { margin-bottom: 4px; }
+.preview-row td { background: rgba(245, 245, 245, 0.1); }
+.preview-choices { margin: 12px 0; padding-left: 24px; display: flex; flex-direction: column; gap: 4px; }
+.preview-choices .answer { color: var(--good); }
+.link-btn.muted { cursor: default; }

@@ -21,7 +21,16 @@ import { setupActivityView, openActivityView, closeActivityView } from './activi
 import { watchStudents, watchResults, watchProgress } from './classData.js';
 import { setupClassHub, closeClassData } from './classHub.js';
 import { setupStudentsTab } from './studentsTab.js';
-import { setupResultsTab } from './resultsTab.js';
+import { setupResultsTab, refreshResults } from './resultsTab.js';
+import {
+  watchShared, getShareName, setShareName, shareQuestion, updateSharedFrom, unshare, importShared,
+} from './sharedBank.js';
+import {
+  setupSharedView, startShared, stopShared, refreshShared,
+} from './sharedView.js';
+import { openFormWith } from './activityTab.js';
+
+let myQuestions = []; // 내 문제은행 최신 목록 (활동 만들기·추천·공유 문제은행이 함께 쓴다)
 
 // 학급 화면의 실시간 구독(활동·학생·결과·진행 상황)을 모두 끊는다 (로그아웃 전)
 function stopClassWatches() {
@@ -57,8 +66,11 @@ function startBankWatch() {
   showBankLoading();
   // 문제은행 목록은 문제은행 화면과 활동 만들기(문제 고르기)가 함께 쓴다
   stopBank = watchMyQuestions((list) => {
+    myQuestions = list;
     setQuestions(list);
     setActivityBank(list);
+    refreshShared();
+    refreshResults();
   }, showBankError);
 }
 
@@ -86,11 +98,13 @@ function show(user) {
     $('welcome').textContent = `${user.displayName || '선생님'} 선생님, 환영합니다`;
     startClassList();
     startBankWatch();
+    startShared(user.uid);
   } else {
     hideAllViews();
     stopClassListWatch();
     stopBankWatch();
     stopClassWatches();
+    stopShared();
     resetBank();
   }
 }
@@ -103,12 +117,19 @@ if (!isConfigured) {
   setupClassDetail();
   setupBank({
     add: addQuestion, update: updateQuestion, remove: deleteQuestion, importDefaults: importDefaultQuestions,
+    share: shareQuestion, reshare: updateSharedFrom,
   });
   setupActivityTab({ create: createActivity, watch: watchActivities }, openActivityView);
   setupActivityView({ start: startActivity, end: endActivity, getActivities, watchProgress }, backToActivities);
   setupClassHub({ watchStudents, watchResults });
   setupStudentsTab();
-  setupResultsTab(getActivities, onActivitiesChange);
+  setupResultsTab(getActivities, onActivitiesChange, () => myQuestions, (ids, title) => {
+    backToActivities();
+    openFormWith(ids, title);
+  });
+  setupSharedView({
+    watch: watchShared, getName: getShareName, setName: setShareName, importItem: importShared, unshare, myQuestions: () => myQuestions,
+  });
   watchTeacher(show);
   $('login-btn').addEventListener('click', async () => {
     showError('');
@@ -123,6 +144,7 @@ if (!isConfigured) {
     stopClassListWatch();
     stopBankWatch();
     stopClassWatches();
+    stopShared();
     logout();
   });
   $('class-form').addEventListener('submit', onCreateClass);

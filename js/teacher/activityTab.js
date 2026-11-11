@@ -179,6 +179,15 @@ function openForm() {
   $('act-title').focus();
 }
 
+// 결과 탭의 추천에서: 활동 만들기 양식을 그 문제를 고른 채로 연다 (문제은행에 있는 문제만)
+export function openFormWith(questionIds, title) {
+  openForm();
+  const ids = new Set(bank.map((q) => q.id));
+  questionIds.filter((id) => ids.has(id)).forEach((id) => picked.add(id));
+  $('act-title').value = title;
+  renderPicker();
+}
+
 function closeForm() {
   $('act-form').hidden = true;
   $('act-add-btn').hidden = false;

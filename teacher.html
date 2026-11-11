@@ -13,6 +13,7 @@
       <nav class="menu" id="menu" hidden>
         <button class="menu-item" type="button" data-view="classes">학급</button>
         <button class="menu-item" type="button" data-view="bank">문제은행</button>
+        <button class="menu-item" type="button" data-view="shared">공유 문제은행</button>
       </nav>
     </div>
     <div class="topbar-right" id="account" hidden>
@@ -141,6 +142,14 @@
           </label>
         </div>
         <p class="small-text" id="r-summary"></p>
+        <p class="small-text" id="r-levels"></p>
+
+        <h3 class="small-text section-title">다음 수업 보충 학습 요약 <span class="muted">— 저장된 결과로 계산</span></h3>
+        <ul id="r-supplement" class="feedback-list"></ul>
+        <button class="btn" id="r-supplement-btn" type="button" hidden>보충 개념 문제로 활동 만들기</button>
+
+        <h3 class="small-text section-title">활동별 참여율·완료율 <span class="muted">— 완료: 던전을 하나 이상 클리어</span></h3>
+        <div id="r-participation"></div>
 
         <h3 class="small-text section-title">학생별 결과 <span class="muted">— 줄을 누르면 자세한 기록</span></h3>
         <div id="r-students"></div>
@@ -150,6 +159,13 @@
             <p class="body-text" id="r-detail-name"></p>
             <div class="head-buttons"><button class="btn" id="r-detail-close" type="button">닫기</button></div>
           </div>
+          <h3 class="small-text section-title">맞춤 피드백 <span class="muted">— 모든 활동 기준, 규칙으로 계산</span></h3>
+          <ul id="r-feedback" class="feedback-list"></ul>
+          <h3 class="small-text section-title">활동별 변화</h3>
+          <div id="r-trend"></div>
+          <h3 class="small-text section-title">추천 문제 <span class="muted">— 취약 개념과 같은 개념의 내 문제은행 문제</span></h3>
+          <div id="r-recommend"></div>
+          <button class="btn" id="r-recommend-btn" type="button" hidden>추천 문제로 활동 만들기</button>
           <h3 class="small-text section-title">판별 기록</h3>
           <div id="r-runs"></div>
           <h3 class="small-text section-title">개념별 오답</h3>
@@ -269,6 +285,36 @@
       </div>
       <p class="small-text error" id="bank-error"></p>
       <div id="q-list"></div>
+    </section>
+    <section id="shared-view" hidden>
+      <div class="page-head">
+        <h2 class="body-text">공유 문제은행</h2>
+        <span class="small-text notice" id="shared-notice"></span>
+      </div>
+      <p class="small-text muted">다른 선생님과 문제를 나눠 쓰는 곳이에요. 가져온 문제는 내 문제은행에 복사되어 원본과 따로 고칠 수 있고, 활동 만들기에서 바로 고를 수 있어요. 학생 정보와 결과는 공유되지 않아요.</p>
+      <form id="share-name-form" class="form-row share-name-row" novalidate>
+        <label class="field">
+          <span class="small-text">공유할 때 보일 이름 (실명·이메일 대신, 20자까지)</span>
+          <input class="input" id="share-name" type="text" autocomplete="off" maxlength="20" placeholder="예: 과학 선생님">
+        </label>
+        <button class="btn" id="share-name-btn" type="submit">이름 저장</button>
+      </form>
+      <p class="small-text error" id="share-name-error"></p>
+      <div class="filter-row">
+        <label class="field"><span class="small-text">과목</span><select class="input" id="s-subject"></select></label>
+        <label class="field"><span class="small-text">난이도</span><select class="input" id="s-difficulty"></select></label>
+        <label class="field"><span class="small-text">학습 개념</span><select class="input" id="s-concept"></select></label>
+        <label class="field">
+          <span class="small-text">보기</span>
+          <select class="input" id="s-mine"><option value="">모든 공유 문제</option><option value="mine">내가 공유한 문제</option></select>
+        </label>
+        <label class="field search-field">
+          <span class="small-text">문제 내용 검색</span>
+          <input class="input" id="s-keyword" type="search" autocomplete="off" placeholder="문제 글로 찾기">
+        </label>
+      </div>
+      <p class="small-text error" id="shared-error"></p>
+      <div id="shared-list"></div>
     </section>
   </main>
 
