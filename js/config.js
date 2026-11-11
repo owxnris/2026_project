@@ -39,7 +39,7 @@ export const PHYS = {
   HIT_STUN_MS: 300,
 };
 
-// 능력 (spec.md 능력 구매). 가격은 functions/grading.js ABILITY_PRICE와 같아야 한다
+// 능력 (spec.md 능력 구매). 가격은 js/grading.js ABILITY_PRICE와 같아야 한다
 export const ABILITIES = [
   { key: 'dash', name: '대시', price: 10, effect: '짧게 빠르게 이동 (Shift). 산 횟수만큼 쓸 수 있어요', repeat: true },
   { key: 'shield', name: '보호막', price: 15, effect: '장애물 충돌 1번을 막아 줘요' },
@@ -47,3 +47,4 @@ export const ABILITIES = [
 ];
 
 export const GUIDE_TEXT = '←→ 이동 · Space 점프 · 능력은 입장 퀴즈 뒤에 코인으로 사요';
+
