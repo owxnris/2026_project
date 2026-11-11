@@ -1,6 +1,7 @@
 // 학급 상세 화면: 학급 이름(바꾸기), 참여 코드, 탭 '학생 · 활동 · 결과' (탭 내용은 각 단계에서 채운다)
 import { showView } from './nav.js';
 import { renameClass } from './classes.js';
+import { showActivities } from './activityTab.js';
 
 const $ = (id) => document.getElementById(id);
 let current = null; // 지금 열린 학급 { id, name, joinCode }
@@ -69,6 +70,13 @@ export function openClassDetail(c) {
   $('detail-notice').textContent = '';
   setRenameMode(false);
   selectTab('students');
+  showActivities(c);
+  showView('detail');
+}
+
+// 활동 진행 화면에서 돌아올 때: 지금 학급의 '활동' 탭으로
+export function backToActivities() {
+  selectTab('activities');
   showView('detail');
 }
 

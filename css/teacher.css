@@ -169,3 +169,13 @@ select.input:disabled { opacity: 0.4; }
   flex-direction: column;
   gap: 24px;
 }
+
+/* 학습 활동: 활동 탭 제목 줄, 문제 고르기 표, 상태 글자색, 진행 중 화면 큰 숫자 */
+.sub-head { margin-top: 0; }
+.picker { max-height: 420px; overflow-y: auto; }
+.picker input[type="checkbox"] { width: 20px; height: 20px; margin: 0; accent-color: var(--good); cursor: pointer; }
+.status-waiting { color: var(--white); }
+.status-running { color: var(--good); }
+.status-ended { color: var(--white); opacity: 0.4; }
+.av-numbers { display: flex; gap: 64px; margin-bottom: 16px; }
+.av-later { margin: 24px 0; }

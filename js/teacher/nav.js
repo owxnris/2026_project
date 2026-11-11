@@ -1,6 +1,7 @@
 // 교사 플랫폼 화면 전환: 한 번에 한 화면만 보이고, 지금 메뉴에 밑줄을 친다.
-const VIEWS = { classes: 'home-view', detail: 'class-view', bank: 'bank-view' };
-const MENU_OF = { classes: 'classes', detail: 'classes', bank: 'bank' }; // 학급 상세는 '학급' 메뉴 아래
+const VIEWS = { classes: 'home-view', detail: 'class-view', activity: 'activity-view', bank: 'bank-view' };
+// 학급 상세와 활동 진행 화면은 '학급' 메뉴 아래
+const MENU_OF = { classes: 'classes', detail: 'classes', activity: 'classes', bank: 'bank' };
 
 export function showView(name) {
   Object.entries(VIEWS).forEach(([key, id]) => {

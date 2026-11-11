@@ -84,10 +84,83 @@
         <p class="small-text muted">참여한 학생 목록은 6단계(학생 참여)에서 만들어요.</p>
       </div>
       <div class="tab-panel" data-panel="activities" hidden>
-        <p class="small-text muted">학습 활동은 5단계(수업 활동 관리)에서 만들어요.</p>
+        <div class="page-head sub-head">
+          <span class="small-text notice" id="act-notice"></span>
+          <div class="head-buttons">
+            <button class="btn primary" id="act-add-btn" type="button">활동 만들기</button>
+          </div>
+        </div>
+
+        <form id="act-form" class="q-form" novalidate hidden>
+          <p class="body-text">활동 만들기</p>
+          <div class="form-row">
+            <label class="field">
+              <span class="small-text">활동 제목</span>
+              <input class="input" id="act-title" type="text" autocomplete="off">
+              <span class="small-text error" data-act-error="title"></span>
+            </label>
+            <label class="field">
+              <span class="small-text">전체 시간(분)</span>
+              <input class="input" id="act-minutes" type="number" min="1" step="1">
+              <span class="small-text error" data-act-error="minutes"></span>
+            </label>
+          </div>
+          <div class="filter-row">
+            <label class="field">
+              <span class="small-text">과목</span>
+              <select class="input" id="a-subject"></select>
+            </label>
+            <label class="field">
+              <span class="small-text">난이도</span>
+              <select class="input" id="a-difficulty"></select>
+            </label>
+            <label class="field">
+              <span class="small-text">학습 개념</span>
+              <select class="input" id="a-concept"></select>
+            </label>
+          </div>
+          <p class="small-text" id="act-picked"></p>
+          <div id="act-q-list" class="picker"></div>
+          <p class="small-text error" data-act-error="questions"></p>
+          <p class="small-text error" id="act-save-error"></p>
+          <div class="button-row">
+            <button class="btn primary" id="act-save-btn" type="submit">만들기</button>
+            <button class="btn" id="act-cancel-btn" type="button">취소</button>
+          </div>
+        </form>
+
+        <p class="small-text error" id="act-error"></p>
+        <div id="act-list"></div>
       </div>
       <div class="tab-panel" data-panel="results" hidden>
         <p class="small-text muted">결과 조회는 8단계(결과 분석)에서 만들어요.</p>
+      </div>
+    </section>
+
+    <section id="activity-view" hidden>
+      <div class="page-head">
+        <button class="btn" id="av-back-btn" type="button">활동 목록으로</button>
+      </div>
+      <div class="name-row">
+        <h2 class="body-text" id="av-title"></h2>
+        <span class="small-text" id="av-status"></span>
+      </div>
+      <div class="av-numbers">
+        <div>
+          <p class="small-text detail-label">참여 코드</p>
+          <p class="big-text" id="av-code"></p>
+        </div>
+        <div>
+          <p class="small-text detail-label">남은 시간</p>
+          <p class="big-text" id="av-time"></p>
+        </div>
+      </div>
+      <p class="small-text muted" id="av-info"></p>
+      <p class="small-text muted av-later">학생별 진행 상황·순위는 8단계(결과 분석)에서 이 자리에 만들어요.</p>
+      <p class="small-text error" id="av-error"></p>
+      <div class="button-row">
+        <button class="btn primary" id="av-start-btn" type="button" hidden>시작</button>
+        <button class="btn primary" id="av-end-btn" type="button" hidden>종료</button>
       </div>
     </section>
 

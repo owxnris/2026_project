@@ -4,13 +4,20 @@ import { watchTeacher, login, logout } from './auth.js';
 import { createClass, watchMyClasses } from './classes.js';
 import { renderClassList, showClassListLoading, showClassListError } from './classList.js';
 import { showView, hideAllViews, setupMenu } from './nav.js';
-import { openClassDetail, setupClassDetail } from './classDetail.js';
+import { openClassDetail, setupClassDetail, backToActivities } from './classDetail.js';
 import {
   watchMyQuestions, addQuestion, updateQuestion, deleteQuestion, importDefaultQuestions,
 } from './questionBank.js';
 import {
   setupBank, setQuestions, showBankLoading, showBankError, resetBank,
 } from './bankView.js';
+import {
+  createActivity, watchActivities, startActivity, endActivity,
+} from './activities.js';
+import {
+  setupActivityTab, setActivityBank, stopActivities, getActivities,
+} from './activityTab.js';
+import { setupActivityView, openActivityView } from './activityView.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -37,7 +44,11 @@ let stopBank = null;
 function startBankWatch() {
   stopBankWatch();
   showBankLoading();
-  stopBank = watchMyQuestions(setQuestions, showBankError);
+  // 문제은행 목록은 문제은행 화면과 활동 만들기(문제 고르기)가 함께 쓴다
+  stopBank = watchMyQuestions((list) => {
+    setQuestions(list);
+    setActivityBank(list);
+  }, showBankError);
 }
 
 function stopBankWatch() {
@@ -68,6 +79,7 @@ function show(user) {
     hideAllViews();
     stopClassListWatch();
     stopBankWatch();
+    stopActivities();
     resetBank();
   }
 }
@@ -81,6 +93,8 @@ if (!isConfigured) {
   setupBank({
     add: addQuestion, update: updateQuestion, remove: deleteQuestion, importDefaults: importDefaultQuestions,
   });
+  setupActivityTab({ create: createActivity, watch: watchActivities }, openActivityView);
+  setupActivityView({ start: startActivity, end: endActivity, getActivities }, backToActivities);
   watchTeacher(show);
   $('login-btn').addEventListener('click', async () => {
     showError('');
@@ -94,6 +108,7 @@ if (!isConfigured) {
   $('logout-btn').addEventListener('click', () => {
     stopClassListWatch();
     stopBankWatch();
+    stopActivities();
     logout();
   });
   $('class-form').addEventListener('submit', onCreateClass);
