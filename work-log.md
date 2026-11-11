@@ -240,3 +240,13 @@
 - 요청 요약: 활동 만들기에서 permission-denied 발생 문의
 - 수정한 파일: 없음 (원인 분석: 콘솔에 올라간 규칙이 저장소 규칙과 다름)
 - 판단 근거: 저장소 규칙은 에뮬레이터에서 활동+정답표 일괄 생성이 통과하므로, 미배포 규칙(answerKey 항목 없음)이 원인일 가능성이 가장 큼
+
+[2026-11-11 19:24]
+- 요청 요약: Blaze 없이 Spark 무료 요금제만으로 동작하도록 Cloud Functions 제거, 학생 기기 채점 + Firestore 규칙 검사로 전환
+- 수정한 파일: js/grading.js(functions에서 이동), js/runLog.js·js/quiz.js·js/firebase/{clock,runStore}.js(신규), js/firebase/{sdk,app,student 외}.js, js/teacher/{activities,activityView,activityTab}.js, js/progress.js, scenes(Quiz·Result·Waiting), firestore.rules, firebase.json, tests/(구 functions: package.json·test·test-rules), spec.md, tasks.md, verification.md, AGENTS.md, .gitignore. functions/index.js·handlers.js·가짜 Firestore 시험 삭제, server.js 삭제
+- 판단 근거: 서버 코드 없이는 시작·종료 시각을 서버 시각으로 두 번 쓰기(규칙이 startAt==request.time, endAt=startAt+전체 시간 검사)로, 결과는 '내uid_…' 번호로 한 번만 만들기·코인=맞힌 수×10 규칙으로 중복·값 범위를 지키고, 정답 노출·점수 조작 한계는 spec.md에 명시
+
+[2026-11-11 19:27]
+- 요청 요약: 사용자가 규칙 게시·Authentication 설정·활동 만들기/시작을 직접 확인했다고 알림
+- 수정한 파일: tasks.md(5-2·5-3·5-6·5-8·5-10 체크), verification.md
+- 판단 근거: 사용자가 직접 확인한 항목만 완료 처리, 학생 쪽 흐름은 확인 전으로 유지

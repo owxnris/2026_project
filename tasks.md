@@ -121,10 +121,10 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
 - [x] 5-1 동시 활동 수: 학급당 진행 중 활동 1개. 진행 중인 활동이 있으면 다른 활동 시작 불가 (구 6-6)
   - [x] 대기 활동은 여러 개 미리 만들 수 있고 '시작'만 막는다
   - [x] 중도 종료: 결과를 cleared / failed / abandoned로 나누고 문제 풀이 기록을 남긴다
-- [ ] 5-2 활동 만들기: 제목·전체 시간, 문제 고르기 표(과목·난이도·학습 개념 거르기, 여러 과목 혼합 가능) → 활동 문서(문제 복사, 학습 개념 유지, 정답 제외) + 정답표(answerKey/main) 한 번에 저장 (구 6-1)
+- [x] 5-2 활동 만들기: 제목·전체 시간, 문제 고르기 표(과목·난이도·학습 개념 거르기, 여러 과목 혼합 가능) → 활동 문서(문제 복사, 학습 개념 유지, 정답 제외) + 정답표(answerKey/main) 한 번에 저장 (구 6-1)
   - 확인: 저장하면 Firestore activities 문서의 questions에 learningConcept는 있고 answer는 없다 / answerKey/main에 문제별 정답이 있다 / status 'waiting' / 빈 제목·시간 없음·문제 0개는 빨간 안내
   - 구현됨 — js/teacher/activityTab.js·activities.js·activityRules.js, teacher.html, css/teacher.css — 전체 시간은 분으로 입력. 가짜 Firestore로 실제 화면 모듈 시험 통과(teacher.e2e), Live Server 확인 전
-- [ ] 5-3 firestore.rules: answerKey는 소유 교사만, 활동은 대기 상태로만 만들기 + 시작·종료는 허용된 변경만(교사), answerKey는 소유 교사 쓰기·같은 학급 학생 읽기, results는 학생 본인 번호로 한 번만(형식·코인 범위 검사), learners는 본인만 → 게시 (구 6-1a)
+- [x] 5-3 firestore.rules: answerKey는 소유 교사만, 활동은 대기 상태로만 만들기 + 시작·종료는 허용된 변경만(교사), answerKey는 소유 교사 쓰기·같은 학급 학생 읽기, results는 학생 본인 번호로 한 번만(형식·코인 범위 검사), learners는 본인만 → 게시 (구 6-1a)
   - 확인: 게시 후 5-2 활동 만들기가 그대로 된다 (학생 쪽 거부 확인은 6-10)
   - 구현됨 — firestore.rules, firebase.json — 규칙 에뮬레이터 시험 11묶음 통과(2026-11-11, 재작성). 게시는 사용자(콘솔 규칙 탭에 붙여 넣고 '게시', 또는 firebase deploy --only firestore:rules) — 예전 초안 규칙이 올라가 있으면 활동 만들기가 permission-denied로 막힌다
 - [ ] 5-4 활동 탭: 활동 표(제목·문제 수·전체 시간·상태), 실시간 (구 6-2)
@@ -133,7 +133,7 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
 - [ ] 5-5 진행 중 화면 뼈대: 참여 코드·남은 시간(큰 숫자), 시작 버튼 (구 6-3)
   - 확인: 활동 줄을 누르면 열린다 / 주 버튼은 '시작' 하나
   - 구현됨 — js/teacher/activityView.js, nav.js, classDetail.js — 순위 표 자리는 8-3에서 채움. 시험 통과(teacher.e2e), Live Server 확인 전
-- [ ] 5-6 활동 시작: status 'running', startAt(Firestore 서버 시각)·endAt = startAt + 전체 시간 (구 6-4)
+- [x] 5-6 활동 시작: status 'running', startAt(Firestore 서버 시각)·endAt = startAt + 전체 시간 (구 6-4)
   - 확인: 시작 → 남은 시간이 1초씩 줄고 상태가 '진행 중'(금색) / Firestore에 startAt·endAt / 새로고침해도 남은 시간이 이어진다
   - 확인(진행 중 1개): 진행 중인 활동이 있으면 다른 활동의 시작을 누를 때 빨간 안내가 뜨고 시작되지 않는다 / 대기 활동은 그동안에도 만들 수 있다
   - 구현됨 — js/teacher/activities.js startActivity(진행 중 확인 후 ① status·startAt(서버 시각) ② endAt, 규칙이 두 쓰기를 검사), activityView.js — 시험 통과(teacher-full·game.e2e, 규칙 에뮬레이터), 규칙 게시·Live Server 확인 전
@@ -142,12 +142,12 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
   - 구현됨 — activities.js endActivity(status 'ended'), 학생 기기가 끝난 판을 failed로 저장, confirmDialog.js — 시험 통과, 규칙 게시·Live Server 확인 전
   - [x] 시간이 다 되면: 교사 화면·학생 게임 모두 끝난 활동으로 보고, status는 다음 활동을 시작할 때 교사 화면이 'ended'로 바꾼다 (결정(2026-11-11))
     - 지금 기본값: 종료 시각이 지나면 교사 화면·학생 게임 모두 끝난 활동으로 본다 (따로 정하면 바꾼다)
-- [ ] 5-8 Firebase 설정 (사용자): Spark 무료 요금제 그대로 (업그레이드 없음), Firebase 콘솔에서 Authentication(Google·익명)·Firestore 사용 설정 확인. 규칙 게시용 Firebase CLI 설치·로그인(또는 콘솔에 붙여 넣기)
+- [x] 5-8 Firebase 설정 (사용자): Spark 무료 요금제 그대로 (업그레이드 없음), Firebase 콘솔에서 Authentication(Google·익명)·Firestore 사용 설정 확인. 규칙 게시용 Firebase CLI 설치·로그인(또는 콘솔에 붙여 넣기)
   - 확인: 콘솔 Authentication 로그인 방법에 Google·익명이 켜져 있다 / Firestore가 만들어져 있다
 - [ ] 5-9 기기 채점 규칙과 시험: js/grading.js·js/runLog.js(순수 함수), 노드 시험 28개(tests/test, npm test) + 규칙 에뮬레이터 11묶음(npm run test:rules)
   - 확인: 채점·중복 지급·시간 초과·입장 3문제·회복·코인 검사·같은 문제 다시 받기·결과 한 번만 통과 (2026-11-11 실제 실행함)
 - 실제 Firebase 배포·검증 절차와 결과 기록: verification.md (V1~V8). 배포 전 점검은 끝났고(2026-11-11), CLI 로그인·배포 명령은 사용자가 한다
-- [ ] 5-10 규칙 게시(+ Hosting 배포): firebase deploy --only firestore:rules,hosting 또는 콘솔에 firestore.rules 붙여 넣기 (Cloud Functions 배포는 없다)
+- [x] 5-10 규칙 게시(+ Hosting 배포): firebase deploy --only firestore:rules,hosting 또는 콘솔에 firestore.rules 붙여 넣기 (Cloud Functions 배포는 없다)
   - 확인: 콘솔 Firestore 규칙에 answerKey·results 검사가 보인다 / 5-2 활동 만들기·5-6 시작·7-2·7-4가 실제 Firebase로 된다
 
 ## 6. 학생 참여 시스템 (구 4단계 + 6-7·6-9·6-10)
