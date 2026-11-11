@@ -77,6 +77,12 @@ export function getActivities() {
   return activities;
 }
 
+// 활동 목록이 바뀔 때 알려 준다 (결과 탭의 활동 거르기, 진행 중 화면)
+const changeListeners = new Set();
+export function onActivitiesChange(fn) {
+  changeListeners.add(fn);
+}
+
 // 학급 화면을 열 때마다 부른다: 그 학급의 활동만 구독한다
 export function showActivities(c) {
   stopActivities();
@@ -88,6 +94,7 @@ export function showActivities(c) {
   stopWatch = store.watch(c.id, (list) => {
     activities = list;
     renderList();
+    changeListeners.forEach((fn) => fn());
   }, (e) => {
     message($('act-list'), `활동 목록을 불러오지 못했어요 (${e.code || e.message})`, 'error');
   });

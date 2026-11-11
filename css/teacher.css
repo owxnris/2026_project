@@ -178,4 +178,14 @@ select.input:disabled { opacity: 0.4; }
 .status-running { color: var(--good); }
 .status-ended { color: var(--white); opacity: 0.4; }
 .av-numbers { display: flex; gap: 64px; margin-bottom: 16px; }
-.av-later { margin: 24px 0; }
+.av-ranking { margin: 24px 0; }
+.rank-table { font-size: 24px; }
+
+/* 학생·결과 탭 */
+#student-count { margin-bottom: 16px; }
+.section-title { margin: 32px 0 12px; font-weight: bold; }
+.section-title .muted { font-weight: normal; }
+.detail-box { margin-top: 24px; padding: 0 16px 16px; border: 2px solid var(--line); border-radius: 8px; }
+.weak, .outcome-failed { color: var(--bad); }
+.outcome-cleared { color: var(--good); }
+.outcome-abandoned { opacity: 0.6; }

@@ -81,7 +81,8 @@
         <button class="tab" type="button" data-tab="results">결과</button>
       </nav>
       <div class="tab-panel" data-panel="students">
-        <p class="small-text muted">참여한 학생 목록은 6단계(학생 참여)에서 만들어요.</p>
+        <p class="small-text" id="student-count"></p>
+        <div id="student-list"></div>
       </div>
       <div class="tab-panel" data-panel="activities" hidden>
         <div class="page-head sub-head">
@@ -133,7 +134,34 @@
         <div id="act-list"></div>
       </div>
       <div class="tab-panel" data-panel="results" hidden>
-        <p class="small-text muted">결과 조회는 8단계(결과 분석)에서 만들어요.</p>
+        <div class="filter-row">
+          <label class="field">
+            <span class="small-text">활동</span>
+            <select class="input" id="r-activity"></select>
+          </label>
+        </div>
+        <p class="small-text" id="r-summary"></p>
+
+        <h3 class="small-text section-title">학생별 결과 <span class="muted">— 줄을 누르면 자세한 기록</span></h3>
+        <div id="r-students"></div>
+
+        <div id="r-detail" class="detail-box" hidden>
+          <div class="page-head sub-head">
+            <p class="body-text" id="r-detail-name"></p>
+            <div class="head-buttons"><button class="btn" id="r-detail-close" type="button">닫기</button></div>
+          </div>
+          <h3 class="small-text section-title">판별 기록</h3>
+          <div id="r-runs"></div>
+          <h3 class="small-text section-title">개념별 오답</h3>
+          <div id="r-student-concepts"></div>
+          <h3 class="small-text section-title">틀린 문제</h3>
+          <div id="r-wrong"></div>
+        </div>
+
+        <h3 class="small-text section-title">문제별 정답률 <span class="muted">— 정답률 낮은 순</span></h3>
+        <div id="r-questions"></div>
+        <h3 class="small-text section-title">개념별 오답 (학급) <span class="muted" id="r-weak-rule"></span></h3>
+        <div id="r-concepts"></div>
       </div>
     </section>
 
@@ -156,7 +184,7 @@
         </div>
       </div>
       <p class="small-text muted" id="av-info"></p>
-      <p class="small-text muted av-later">학생별 진행 상황·순위는 8단계(결과 분석)에서 이 자리에 만들어요.</p>
+      <div id="av-ranking" class="av-ranking"></div>
       <p class="small-text error" id="av-error"></p>
       <div class="button-row">
         <button class="btn primary" id="av-start-btn" type="button" hidden>시작</button>

@@ -1,18 +1,43 @@
 // 진행 중 화면 (design.md): 참여 코드·남은 시간(큰 숫자), 시작 또는 종료 버튼(지금 누를 수 있는 하나만 주 버튼).
-// 학생별 진행 상황·순위 표는 8단계(8-3)에서 채운다.
+// 아래에 학생별 진행 상황·순위 표 (progress + 서버 결과)
 import { showView } from './nav.js';
 import {
   activityState, remainingSec, formatClock, otherRunning, STATUS_LABEL,
 } from './activityRules.js';
 import { serverNow, errorReason } from '../firebase/server.js';
 import { confirmDelete } from './confirmDialog.js';
+import { onClassDataChange, getStudents, getResults } from './classHub.js';
+import { ranking, filterResults } from './analysis.js';
+import { message, renderTable } from './tableUtil.js';
+import { DUNGEONS } from '../dungeons.js';
 
 const $ = (id) => document.getElementById(id);
 
-let store = null; // { start, end, getActivities }
+let store = null; // { start, end, getActivities, watchProgress }
 let cls = null; // 학급 { id, name, joinCode }
 let activityId = null;
 let busy = false;
+let progress = {};
+let stopProgress = null;
+
+// 학생별 진행 상황·순위 (design.md: 교실 화면에 띄우므로 본문 글자). 순위 기준(기본값): 깬 던전 수 → 맞힌 문제 수
+function renderRanking() {
+  if ($('activity-view').hidden || !cls) return;
+  const box = $('av-ranking');
+  const students = getStudents();
+  if (students.length === 0) {
+    message(box, '아직 참여한 학생이 없어요. 학생에게 참여 코드를 알려 주세요.');
+    return;
+  }
+  const rows = ranking(filterResults(getResults(), activityId), students, progress);
+  const where = (r) => {
+    if (!progress[r.studentUid]) return '들어오기 전';
+    return r.currentDungeon === null ? '월드맵' : (DUNGEONS[r.currentDungeon]?.name ?? '-');
+  };
+  renderTable(box, ['순위', '닉네임', '지금 위치', '깬 던전', '맞힌 문제'], rows.map((r) => [
+    r.rank, r.nickname, where(r), `${r.clearedCount}개`, `${r.quizCorrect} / ${r.quizTotal}`,
+  ]), { className: 'rank-table' });
+}
 
 const START_ERROR = {
   'already-running': (d) => `진행 중인 활동 '${d.title}'이(가) 있어요. 그 활동을 종료한 뒤 시작할 수 있어요.`,
@@ -90,15 +115,25 @@ async function onEnd() {
 export function openActivityView(c, id) {
   cls = c;
   activityId = id;
+  progress = {};
   $('av-error').textContent = '';
+  if (stopProgress) stopProgress();
+  stopProgress = store.watchProgress(c.id, id, (p) => { progress = p; renderRanking(); });
   render();
   showView('activity');
+  renderRanking();
+}
+
+export function closeActivityView() {
+  if (stopProgress) stopProgress();
+  stopProgress = null;
 }
 
 export function setupActivityView(s, backToClass) {
   store = s;
   $('av-start-btn').addEventListener('click', onStart);
   $('av-end-btn').addEventListener('click', onEnd);
-  $('av-back-btn').addEventListener('click', backToClass);
+  $('av-back-btn').addEventListener('click', () => { closeActivityView(); backToClass(); });
+  onClassDataChange(renderRanking);
   setInterval(() => { if (!$('activity-view').hidden) render(); }, 1000);
 }

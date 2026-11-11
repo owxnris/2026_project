@@ -2,6 +2,8 @@
 import { showView } from './nav.js';
 import { renameClass } from './classes.js';
 import { showActivities } from './activityTab.js';
+import { openClassData } from './classHub.js';
+import { resetResultsTab } from './resultsTab.js';
 
 const $ = (id) => document.getElementById(id);
 let current = null; // 지금 열린 학급 { id, name, joinCode }
@@ -71,6 +73,8 @@ export function openClassDetail(c) {
   setRenameMode(false);
   selectTab('students');
   showActivities(c);
+  resetResultsTab();
+  openClassData(c.id);
   showView('detail');
 }
 

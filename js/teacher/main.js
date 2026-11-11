@@ -15,9 +15,20 @@ import {
   createActivity, watchActivities, startActivity, endActivity,
 } from './activities.js';
 import {
-  setupActivityTab, setActivityBank, stopActivities, getActivities,
+  setupActivityTab, setActivityBank, stopActivities, getActivities, onActivitiesChange,
 } from './activityTab.js';
-import { setupActivityView, openActivityView } from './activityView.js';
+import { setupActivityView, openActivityView, closeActivityView } from './activityView.js';
+import { watchStudents, watchResults, watchProgress } from './classData.js';
+import { setupClassHub, closeClassData } from './classHub.js';
+import { setupStudentsTab } from './studentsTab.js';
+import { setupResultsTab } from './resultsTab.js';
+
+// 학급 화면의 실시간 구독(활동·학생·결과·진행 상황)을 모두 끊는다 (로그아웃 전)
+function stopClassWatches() {
+  stopActivities();
+  closeClassData();
+  closeActivityView();
+}
 
 const $ = (id) => document.getElementById(id);
 
@@ -79,7 +90,7 @@ function show(user) {
     hideAllViews();
     stopClassListWatch();
     stopBankWatch();
-    stopActivities();
+    stopClassWatches();
     resetBank();
   }
 }
@@ -94,7 +105,10 @@ if (!isConfigured) {
     add: addQuestion, update: updateQuestion, remove: deleteQuestion, importDefaults: importDefaultQuestions,
   });
   setupActivityTab({ create: createActivity, watch: watchActivities }, openActivityView);
-  setupActivityView({ start: startActivity, end: endActivity, getActivities }, backToActivities);
+  setupActivityView({ start: startActivity, end: endActivity, getActivities, watchProgress }, backToActivities);
+  setupClassHub({ watchStudents, watchResults });
+  setupStudentsTab();
+  setupResultsTab(getActivities, onActivitiesChange);
   watchTeacher(show);
   $('login-btn').addEventListener('click', async () => {
     showError('');
@@ -108,7 +122,7 @@ if (!isConfigured) {
   $('logout-btn').addEventListener('click', () => {
     stopClassListWatch();
     stopBankWatch();
-    stopActivities();
+    stopClassWatches();
     logout();
   });
   $('class-form').addEventListener('submit', onCreateClass);
