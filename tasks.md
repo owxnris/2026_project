@@ -137,7 +137,7 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
   - 확인: 시작 → 남은 시간이 1초씩 줄고 상태가 '진행 중'(금색) / Firestore에 startAt·endAt / 새로고침해도 남은 시간이 이어진다
   - 확인(진행 중 1개): 진행 중인 활동이 있으면 다른 활동의 시작을 누를 때 빨간 안내가 뜨고 시작되지 않는다 / 대기 활동은 그동안에도 만들 수 있다
   - 구현됨 — js/teacher/activities.js startActivity(진행 중 확인 후 ① status·startAt(서버 시각) ② endAt, 규칙이 두 쓰기를 검사), activityView.js — 시험 통과(teacher-full·game.e2e, 규칙 에뮬레이터), 규칙 게시·Live Server 확인 전
-- [ ] 5-7 활동 종료: status 'ended' (구 6-5)
+- [x] 5-7 활동 종료: status 'ended' (구 6-5)
   - 확인: 종료 → 상태 '종료'(흰색 40%) / 종료 버튼은 확인 상자를 거친다 / 그 뒤 다른 활동을 시작할 수 있다
   - 구현됨 — activities.js endActivity(status 'ended'), 학생 기기가 끝난 판을 failed로 저장, confirmDialog.js — 시험 통과, 규칙 게시·Live Server 확인 전
   - [x] 시간이 다 되면: 교사 화면·학생 게임 모두 끝난 활동으로 보고, status는 다음 활동을 시작할 때 교사 화면이 'ended'로 바꾼다 (결정(2026-11-11))
@@ -177,13 +177,13 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
 - [ ] 6-8 남은 시간을 활동 endAt(서버 시각) 기준으로 (state.js) (구 6-9)
   - 확인: 교사 진행 중 화면과 학생 화면의 남은 시간이 1초 이내로 같다
   - 구현됨 — js/state.js, js/firebase/clock.js(Firestore 서버 시각으로 기기 시계 차이 맞춤) — 시험 통과(endTime = endAt), 두 기기 비교는 Live Server 확인 전
-- [ ] 6-9 활동 종료 신호 → 학생 최종 결과 화면 (구 6-10)
+- [x] 6-9 활동 종료 신호 → 학생 최종 결과 화면 (구 6-10)
   - 확인: 교사가 종료하면 모든 학생 화면이 최종 결과로 넘어간다 / 시간이 다 돼도 넘어간다
   - 구현됨 — js/session.js(종료 신호), state.js(checkTimeout), ResultScene.js('선생님이 활동을 끝냈어요') — 교사 종료는 시험 통과(game.e2e), 시간 종료는 Live Server 확인 전
 - [ ] 6-10 학생 권한 확인
   - 확인: 참여한 학생 창의 개발자 도구에서 answerKey 읽기, 다른 학급 읽기를 시도하면 거부된다
   - 규칙 거부(학급 밖 학생의 활동·정답표·결과 읽기·쓰기, 남의 결과·복습 기록 읽기·쓰기, 활동 고치기)는 Firestore 에뮬레이터 시험 통과(tests/test-rules). 같은 학급 학생은 정답표를 읽을 수 있다(기기 채점, 알려진 한계). 실제 Firebase는 규칙 게시 후 확인
-- [ ] 6-11 재접속·중복 실행: 다시 들어오면 처음 닉네임과 깬 던전 수 유지, 같은 학생이 창 두 개로 하면 나중 창만 이어짐
+- [x] 6-11 재접속·중복 실행: 다시 들어오면 처음 닉네임과 깬 던전 수 유지, 같은 학생이 창 두 개로 하면 나중 창만 이어짐
   - 확인: 진행 중에 새로고침 → 참여 → 바로 월드맵, 깬 던전이 열려 있다 / 다른 닉네임을 넣어도 처음 닉네임 / 두 번째 창에서 던전을 시작하면 첫 창 퀴즈에 '다른 창에서 게임을 새로 시작해서 이 판은 끝났어요'
   - 구현됨 — js/progress.js(loadClearedCount), WaitingScene.js, QuizScene.js, firestore.rules(학생이 자기 progress 읽기). 시험: game.e2e, Live Server 확인 전
 
@@ -209,13 +209,13 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
 - [ ] 7-7 구매 처리: 코인 차감, 부족한 능력 흐리게·안내 (구 7-4)
   - 확인: 30코인으로 보호막+대시 1회 가능, 이단 점프+보호막 불가 / 코인이 HUD에 바로 반영
   - 구현됨 — ShopScene.js(부족하면 빨간 안내, 보호막·이단 점프는 한 번만). 시험: game.e2e, Live Server 확인 전
-- [ ] 7-8 대시를 '산 횟수만큼 사용'으로 (구 7-5)
+- [x] 7-8 대시를 '산 횟수만큼 사용'으로 (구 7-5)
   - 확인: 산 횟수만큼만 대시, 대시할 때 코인은 줄지 않는다 / 안 사면 대시 안 됨 안내
   - 구현됨 — DungeonScene.js tryDash. 안 산 경우 시험 통과, 산 횟수만큼 쓰기는 Live Server 확인 전
-- [ ] 7-9 보호막: 충돌 1회 무시 (구 7-6)
+- [x] 7-9 보호막: 충돌 1회 무시 (구 7-6)
   - 확인: 첫 충돌에 코인이 줄지 않고, 두 번째부터 줄어든다 / 다음 던전에는 남지 않는다
   - 구현됨 — DungeonScene.js onHit. 시험: game.e2e, Live Server 확인 전
-- [ ] 7-10 이단 점프 (구 7-7)
+- [x] 7-10 이단 점프 (구 7-7)
   - 확인: 산 판에서만 공중에서 Space 한 번 더 / 다음 던전에는 남지 않는다
   - 구현됨 — DungeonScene.js update. 물리 동작이라 Live Server 확인 전 (자동 시험 없음)
 - [ ] 7-11 회복 퀴즈는 충돌로 0개가 될 때만 (구 7-8)
@@ -252,7 +252,7 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
 - [x] 8-4 결과 탭: 학생별 결과 표(맞힌 수·정답률·클리어한 던전) (구 8-8)
   - 확인: 저장된 결과가 학생별로 합쳐져 보이고, 계산 값이 Firestore 결과와 맞다
   - 구현됨 — js/teacher/resultsTab.js·analysis.js. 계산은 노드 시험(analysis.test.js)과 시험: teacher-full.e2e(실제 teacher.html + main.js), Live Server 확인 전
-- [ ] 8-5 학생 자세한 기록: 판별 던전 기록(클리어·시간·충돌·추락·산 능력), 틀린 문제 (구 8-9)
+- [x] 8-5 학생 자세한 기록: 판별 던전 기록(클리어·시간·충돌·추락·산 능력), 틀린 문제 (구 8-9)
   - 확인: 결과 탭에서 학생 줄을 누르면 열린다
   - 구현됨 — resultsTab.js 자세한 기록. 시험: teacher-full.e2e(실제 teacher.html + main.js), Live Server 확인 전
 - [ ] 8-6 학생 최종 결과 화면 (구 8-10)
@@ -266,13 +266,13 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
 - [ ] 8-9 design.md에 분석 화면 배치 추가 (구 8a-2)
   - 확인: 사용자 승인
   - design.md 결과 탭 배치 초안 작성 — 사용자 승인 전
-- [ ] 8-10 개념별 집계 함수: answers → '과목 + 개념'마다 (과목은 활동 문제 사본에서 찾음) 푼 횟수·틀린 횟수·오답률·틀린 학생 수 (구 8a-3)
+- [x] 8-10 개념별 집계 함수: answers → '과목 + 개념'마다 (과목은 활동 문제 사본에서 찾음) 푼 횟수·틀린 횟수·오답률·틀린 학생 수 (구 8a-3)
   - 확인: 시험 데이터로 계산 값이 손으로 센 값과 같다
   - 구현됨 — analysis.js conceptStats·questionStats (문제별 정답률 포함). 노드 시험 6개 통과(손으로 센 값과 비교, 실제 실행함)
-- [ ] 8-11 학급별 취약 개념 표 (오답률 높은 순, 활동으로 거르기) (구 8a-4)
+- [x] 8-11 학급별 취약 개념 표 (오답률 높은 순, 활동으로 거르기) (구 8a-4)
   - 확인: 여러 학생 결과가 개념별로 합쳐져 보이고, 8-8 기준에 맞는 개념이 '취약'으로 표시된다
   - 구현됨 — resultsTab.js 개념별 오답(학급). 시험: teacher-full.e2e(실제 teacher.html + main.js), Live Server 확인 전
-- [ ] 8-12 학생별 취약 개념과 틀린 문제 (8-5 자세한 기록 안) (구 8a-5)
+- [x] 8-12 학생별 취약 개념과 틀린 문제 (8-5 자세한 기록 안) (구 8a-5)
   - 확인: 학생마다 다른 취약 개념이 보인다
   - 구현됨 — resultsTab.js 자세한 기록의 개념별 오답·틀린 문제. 시험: teacher-full.e2e(실제 teacher.html + main.js), Live Server 확인 전
 
@@ -280,13 +280,13 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
 - 확인은 teacher.html에서 한다. 공유 문제은행은 Google 계정 두 개(교사 A·B)로 확인한다
 - 자동 시험: tests/test/analysis.test.js(노드, 데이터 부족 기준 포함), 브라우저 teacher-full.e2e(교사 두 명 공유·가져오기, 맞춤 피드백·추천·보충 요약) 통과. Live Server 확인 전
 - 실제 Firebase 검증은 verification.md V2~V8 (규칙 거부는 실제 Firebase에서만 확인할 수 있다)
-- [ ] 12-1 학생별 맞춤 피드백: 정답률·학습 수준·취약 개념·잘하는 개념·시간 초과·활동별 변화 (규칙 기반, 데이터 부족 표시)
+- [x] 12-1 학생별 맞춤 피드백: 정답률·학습 수준·취약 개념·잘하는 개념·시간 초과·활동별 변화 (규칙 기반, 데이터 부족 표시)
   - 확인: 결과 탭에서 학생을 누르면 피드백 문장이 실제 결과와 맞다 / 푼 문제가 5개 미만인 학생은 '데이터가 부족해요'
   - 구현됨 — js/teacher/analysis.js(studentFeedback·activityTrend·levelOf), resultsTab.js
-- [ ] 12-2 취약 개념 추천 문제 → 추천 문제로 활동 만들기
+- [x] 12-2 취약 개념 추천 문제 → 추천 문제로 활동 만들기
   - 확인: 추천 문제가 취약 개념과 같은 과목·개념이다 / 버튼을 누르면 그 문제가 골라진 활동 만들기 양식이 열린다
   - 구현됨 — analysis.js recommendQuestions, activityTab.js openFormWith
-- [ ] 12-3 학급 분석: 학습 수준 분포, 활동별 참여율·완료율, 문제별·개념별 정답률(데이터 부족 표시), 다음 수업 보충 학습 요약
+- [x] 12-3 학급 분석: 학습 수준 분포, 활동별 참여율·완료율, 문제별·개념별 정답률(데이터 부족 표시), 다음 수업 보충 학습 요약
   - 확인: 값이 Firestore 결과와 맞다 / 결과가 적으면 '데이터 부족'
   - 구현됨 — analysis.js(participation·supplementSummary·levelDistribution·rateText), resultsTab.js, teacher.html
 - [ ] 12-4 공유 문제은행 데이터·규칙: sharedQuestions, 개인 문제 source 'shared'·origin·sharedId, teachers shareName, firestore.rules(교사만 읽기, 올린 교사만 고치기·지우기, 필드 제한)
