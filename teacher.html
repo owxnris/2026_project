@@ -9,7 +9,7 @@
 <body>
   <header class="topbar">
     <div class="topbar-left">
-      <span class="body-text">던전 대시</span>
+      <span class="logo"><span class="logo-icon" aria-hidden="true"></span><span class="body-text">던전 대시</span></span>
       <nav class="menu" id="menu" hidden>
         <button class="menu-item" type="button" data-view="classes">학급</button>
         <button class="menu-item" type="button" data-view="bank">문제은행</button>
@@ -58,24 +58,30 @@
 
     <section id="class-view" hidden>
       <div class="page-head">
-        <button class="btn" id="class-back-btn" type="button">학급 목록으로</button>
+        <button class="btn back" id="class-back-btn" type="button">← 학급 목록으로</button>
       </div>
-      <div class="name-row">
-        <h2 class="body-text" id="detail-name"></h2>
-        <span class="small-text notice" id="detail-notice"></span>
+      <div class="class-header card">
+        <div class="class-title">
+          <div class="name-row">
+            <h2 class="page-title" id="detail-name"></h2>
+            <button class="btn small" id="rename-btn" type="button">이름 바꾸기</button>
+            <span class="small-text notice" id="detail-notice"></span>
+          </div>
+          <form id="rename-form" class="form-row" novalidate hidden>
+            <label class="field">
+              <span class="small-text">새 학급 이름</span>
+              <input class="input" id="rename-input" type="text" autocomplete="off">
+            </label>
+            <button class="btn primary" id="rename-save-btn" type="submit">저장</button>
+            <button class="btn" id="rename-cancel-btn" type="button">취소</button>
+          </form>
+          <p class="small-text error" id="rename-error"></p>
+        </div>
+        <div class="code-chip">
+          <p class="small-text detail-label">학생 참여 코드</p>
+          <p class="big-text" id="detail-code"></p>
+        </div>
       </div>
-      <button class="btn" id="rename-btn" type="button">이름 바꾸기</button>
-      <form id="rename-form" class="form-row" novalidate hidden>
-        <label class="field">
-          <span class="small-text">새 학급 이름</span>
-          <input class="input" id="rename-input" type="text" autocomplete="off">
-        </label>
-        <button class="btn primary" id="rename-save-btn" type="submit">저장</button>
-        <button class="btn" id="rename-cancel-btn" type="button">취소</button>
-      </form>
-      <p class="small-text error" id="rename-error"></p>
-      <p class="small-text detail-label">참여 코드</p>
-      <p class="big-text" id="detail-code"></p>
 
       <nav class="tabs">
         <button class="tab" type="button" data-tab="students">학생</button>
@@ -142,7 +148,7 @@
             <select class="input" id="r-activity"></select>
           </label>
         </div>
-        <p class="small-text" id="r-summary"></p>
+        <div class="stats" id="r-summary"></div>
         <p class="small-text" id="r-levels"></p>
 
         <h3 class="small-text section-title">다음 수업 보충 학습 요약 <span class="muted">— 저장된 결과로 계산</span></h3>
@@ -184,13 +190,13 @@
 
     <section id="activity-view" hidden>
       <div class="page-head">
-        <button class="btn" id="av-back-btn" type="button">활동 목록으로</button>
+        <button class="btn back" id="av-back-btn" type="button">← 활동 목록으로</button>
       </div>
       <div class="name-row">
         <h2 class="body-text" id="av-title"></h2>
         <span class="small-text" id="av-status"></span>
       </div>
-      <div class="av-numbers">
+      <div class="av-numbers card">
         <div>
           <p class="small-text detail-label">참여 코드</p>
           <p class="big-text" id="av-code"></p>

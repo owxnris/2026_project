@@ -1,10 +1,17 @@
-/* design.md 규칙: 색 5가지, 글자 3단계, 버튼 모양 */
+/* design.md '교사 플랫폼': 밝은 대시보드 (2026-11-12). 이름은 예전 그대로 두고 값만 밝은 색으로 바꿨다
+   --bg 페이지 바탕, --white 글자색(이름은 그대로), --good 금색 주 버튼, --bad 빨강, --line 구분선 */
 :root {
-  --bg: #1B1F2A;
-  --white: #F5F5F5;
+  --bg: #F3F5FA;
+  --white: #1B1F2A;
+  --card: #FFFFFF;
+  --navy: #2B3A67;
+  --navy-soft: #E7ECF7;
+  --muted: #5B6478;
   --good: #FFD54F;
-  --bad: #FF5252;
-  --line: rgba(245, 245, 245, 0.2);
+  --good-text: #8A6100;
+  --bad: #D93636;
+  --line: #DDE2EC;
+  --shadow: 0 1px 2px rgba(27, 31, 42, 0.06), 0 2px 8px rgba(27, 31, 42, 0.05);
 }
 
 * { box-sizing: border-box; }
@@ -15,6 +22,7 @@ body {
   color: var(--white);
   font-family: "Malgun Gothic", sans-serif;
   font-size: 16px;
+  line-height: 1.5;
 }
 
 [hidden] { display: none !important; }
@@ -211,4 +219,122 @@ div:has(> .table) { overflow-x: auto; }
   .tabs { gap: 16px; overflow-x: auto; }
   .table th, .table td { padding: 8px 10px; }
   main { padding: 16px 12px; }
+}
+
+/* ── 밝은 대시보드 (위의 기본 규칙을 덮어쓴다) ── */
+.topbar { background: var(--card); border-bottom: 1px solid var(--line); box-shadow: var(--shadow); position: sticky; top: 0; z-index: 5; }
+.logo { display: flex; align-items: center; gap: 10px; font-weight: bold; color: var(--navy); }
+.logo .body-text { font-size: 22px; }
+/* 말랑이 아이콘: 게임과 같은 Kenney Tiny Dungeon 시트의 108번 그림 (assets/CREDITS.md) */
+.logo-icon {
+  width: 32px; height: 32px;
+  background: url("../assets/kenney/tiny-dungeon.png") -0px -0px / 384px 352px no-repeat;
+  background-position: 0 -288px;
+  image-rendering: pixelated;
+}
+.menu-item { opacity: 1; color: var(--muted); padding: 18px 4px; border-bottom-width: 3px; }
+.menu-item:hover { color: var(--navy); }
+.menu-item.current { color: var(--navy); border-bottom-color: var(--navy); font-weight: bold; }
+
+main { max-width: 1040px; padding: 24px 20px 48px; }
+h2.body-text, .page-title { font-size: 24px; font-weight: bold; color: var(--navy); margin: 0; }
+.page-head { margin: 8px 0 16px; }
+.muted, .small-text.muted { color: var(--muted); opacity: 1; }
+.notice { color: var(--good-text); font-weight: bold; }
+.error { color: var(--bad); }
+
+/* 버튼: 주 버튼(금색)만 크게, 보조 버튼은 작고 가볍게 */
+.btn {
+  width: auto; min-width: 0; height: 40px; padding: 0 16px;
+  border: 1px solid var(--line); border-radius: 8px;
+  background: var(--card); color: var(--white); font-size: 15px; font-weight: bold;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn:hover:not(:disabled) { border-color: var(--navy); background: var(--navy-soft); }
+.btn.primary { height: 48px; padding: 0 24px; font-size: 17px; background: var(--good); border-color: #E8B830; color: #1B1F2A; }
+.btn.primary:hover:not(:disabled) { background: #FFCA28; border-color: #D9A400; }
+.btn.small { height: 32px; padding: 0 12px; font-size: 14px; }
+.btn.back { border: none; background: none; padding: 0; height: auto; color: var(--muted); font-weight: normal; }
+.btn.back:hover:not(:disabled) { background: none; color: var(--navy); }
+.btn.danger { color: var(--bad); border-color: #F2B8B8; }
+.topbar .btn { height: 36px; font-size: 14px; }
+.link-btn { color: var(--navy); font-weight: bold; border-radius: 6px; padding: 4px 8px; }
+.link-btn:hover:not(.muted) { background: var(--navy-soft); }
+.link-btn.danger { color: var(--bad); }
+
+/* 입력창 */
+.input { height: 44px; border: 1px solid #C9D0DE; border-radius: 8px; background: var(--card); color: var(--white); font-size: 15px; }
+.input:focus { border-color: var(--navy); box-shadow: 0 0 0 3px rgba(43, 58, 103, 0.15); }
+.input.invalid { border-color: var(--bad); }
+.field > .small-text:first-child { color: var(--muted); font-size: 14px; font-weight: bold; }
+
+/* 카드로 구획: 목록·양식·탭 내용·자세한 기록 */
+.card, #class-list, .tab-panel, .q-form, #q-list, #shared-list, .av-ranking, #login-view.center {
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 20px;
+}
+#class-list:empty, #q-list:empty, #shared-list:empty { display: none; }
+#login-view.center { max-width: 440px; margin: 64px auto 0; padding: 40px 32px; }
+#login-view .big-text { color: var(--navy); }
+.q-form { margin-bottom: 20px; }
+
+/* 학급 머리: 이름 + 참여 코드 칩 */
+.class-header { display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; margin-bottom: 8px; }
+.class-title { flex: 1; min-width: 260px; }
+.class-header .name-row { margin: 0; flex-wrap: wrap; }
+.class-header #rename-form { margin-top: 12px; }
+.code-chip { background: var(--navy); color: #fff; border-radius: 12px; padding: 12px 24px; text-align: center; }
+.code-chip .detail-label { margin: 0; color: #C9D3F0; }
+.code-chip .big-text { font-size: 40px; letter-spacing: 6px; color: #fff; }
+
+/* 탭: 카드 위 알약 모양 */
+.tabs { border-bottom: none; gap: 8px; margin: 20px 0 12px; }
+.tab { opacity: 1; color: var(--muted); padding: 8px 18px; border: 1px solid transparent; border-radius: 999px; font-weight: bold; }
+.tab:hover { color: var(--navy); }
+.tab.current { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+/* 표: 머리줄 연한 남색, 줄 구분, 마우스를 올리면 강조 */
+.table th { background: var(--navy-soft); color: var(--navy); font-weight: bold; font-size: 14px; padding: 10px 14px; }
+.table th:first-child { border-top-left-radius: 8px; }
+.table th:last-child { border-top-right-radius: 8px; }
+.table td { padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.table tbody tr:nth-child(even) td { background: #FAFBFD; }
+.table tr.clickable:hover td { background: #FFF6D6; }
+.preview-row td { background: #F6F8FC !important; }
+
+/* 결과 탭: 요약 숫자 카드 */
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 16px 0 8px; }
+.stat { background: var(--navy-soft); border-radius: 10px; padding: 12px 16px; display: flex; flex-direction: column; }
+.stat-label { font-size: 13px; color: var(--muted); font-weight: bold; }
+.stat strong { font-size: 26px; color: var(--navy); line-height: 1.3; }
+.stat-wide { grid-column: 1 / -1; }
+.stat-wide strong { font-size: 16px; }
+.section-title { color: var(--navy); font-size: 17px; margin: 28px 0 10px; }
+.section-title .muted { font-size: 14px; }
+.detail-box { border: 2px solid var(--navy); background: #FBFCFF; border-radius: 12px; padding: 4px 20px 20px; }
+
+/* 상태·강조 글자 (밝은 바탕에 맞춘 진한 색) */
+.status-waiting { color: var(--muted); }
+.status-running { color: var(--good-text); font-weight: bold; }
+.status-ended { color: var(--muted); opacity: 0.7; }
+.status-waiting::before, .status-running::before, .status-ended::before { content: '● '; font-size: 12px; }
+.status-running::before { color: #E0A800; }
+.outcome-cleared, .fb-good, .preview-choices .answer { color: var(--good-text); font-weight: bold; }
+.weak, .outcome-failed, .fb-weak, .fb-time { color: var(--bad); }
+
+/* 진행 중 화면 (교실 화면에 띄움): 큰 숫자 카드 */
+.av-numbers { gap: 48px; align-items: center; }
+.av-numbers .big-text { font-size: 56px; color: var(--navy); }
+.av-numbers .detail-label { color: var(--muted); font-weight: bold; }
+.rank-table { font-size: 22px; }
+.rank-table tbody tr:first-child td { background: #FFF6D6; font-weight: bold; }
+
+/* 확인 상자 */
+.overlay { background: rgba(27, 31, 42, 0.45); }
+.dialog { background: var(--card); border: none; border-radius: 12px; box-shadow: 0 12px 40px rgba(27, 31, 42, 0.25); }
+.dialog .body-text { font-size: 20px; }
+
+@media (max-width: 720px) {
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .code-chip { width: 100%; }
+  .card, #class-list, .tab-panel, .q-form, #q-list, #shared-list, .av-ranking { padding: 14px; }
 }

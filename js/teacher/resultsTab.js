@@ -108,7 +108,22 @@ function render() {
 
   const s = classSummary(results);
   const clears = DUNGEONS.filter((dg) => dg.level).map((dg, i) => `${dg.name} ${s.clearsByDungeon[i]}명`).join(' · ');
-  $('r-summary').textContent = results.length === 0 ? '' : `참여 학생 ${s.students}명 · 판 ${s.runs}개 · 푼 문제 ${s.quizTotal}개 · 평균 정답률 ${percent(s.rate)} · 클리어한 학생: ${clears}`;
+  // 요약 숫자 카드: 이름표 + 큰 숫자 (글자로 이어 읽으면 '참여 학생 2명' 처럼 읽힌다)
+  const tiles = results.length === 0 ? [] : [
+    ['참여 학생 ', `${s.students}명`], ['판 ', `${s.runs}개`], ['푼 문제 ', `${s.quizTotal}개`],
+    ['평균 정답률 ', percent(s.rate)], ['클리어한 학생: ', clears],
+  ];
+  $('r-summary').replaceChildren(...tiles.map(([label, value], k) => {
+    const d = document.createElement('div');
+    d.className = k === tiles.length - 1 ? 'stat stat-wide' : 'stat';
+    const l = document.createElement('span');
+    l.className = 'stat-label';
+    l.textContent = label;
+    const v = document.createElement('strong');
+    v.textContent = value;
+    d.append(l, v);
+    return d;
+  }));
 
   // 활동별 참여율·완료율 (활동 거르기와 상관없이 시작한 활동 모두)
   const part = participation(getResults(), getStudents().length, getActivities());
