@@ -3,6 +3,7 @@ import { DUNGEONS } from '../dungeons.js';
 import { state, checkTimeout, clearDungeon } from '../state.js';
 import { text, createHud, createGuide } from '../ui.js';
 import { playStats } from '../quiz.js';
+import { play } from '../sound.js';
 import { reportProgress } from '../progress.js';
 import {
   SCALE, TD, PP, THEMES, sprite, tiles, tinted, dot, coinPop, sparkle, reducedMotion, fadeIn,
@@ -303,6 +304,7 @@ export default class DungeonScene extends Phaser.Scene {
     const shielded = state.play.shieldLeft;
     if (shielded) {
       sparkle(this, player.x, player.y, 0x9fd8ff, 14);
+      play('coin');
       // 보호막: 충돌 1번은 코인이 줄지 않는다
       state.play.shieldLeft = false;
       this.guide.setBase(guideText());
@@ -313,6 +315,7 @@ export default class DungeonScene extends Phaser.Scene {
       this.hud.flashCoins(CSS.bad);
       if (lost > 0) coinPop(this, player.x, player.y - 40, `-${lost}`, CSS.bad);
       if (!reducedMotion()) this.cameras.main.shake(120, 0.004);
+      play('hit');
       reportProgress();
     }
     this.hud.update();
@@ -345,6 +348,7 @@ export default class DungeonScene extends Phaser.Scene {
     // 깃발 반짝임과 말랑이 점프를 잠깐 보여 준 뒤 결과 화면으로
     this.player.body.setVelocity(0, -300);
     sparkle(this, this.flag.x, this.flag.y - 40, 0xffd54f, 30);
+    play('clear');
     this.time.delayedCall(reducedMotion() ? 0 : 650, () => this.scene.start('Result', { mode: 'clear', dungeon: this.index, stats }));
   }
 }

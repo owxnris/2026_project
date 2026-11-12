@@ -2,6 +2,7 @@
 // 코인이 부족한 능력은 투명도 40%, 누르면 빨간 안내. 보호막·이단 점프는 한 번만 살 수 있다
 import { COLORS, CSS, LAYOUT, ABILITIES } from '../config.js';
 import { DUNGEONS } from '../dungeons.js';
+import { play } from '../sound.js';
 import { state, checkTimeout } from '../state.js';
 import { reportProgress } from '../progress.js';
 import { text, createButton, createHud, createGuide } from '../ui.js';
@@ -65,6 +66,7 @@ export default class ShopScene extends Phaser.Scene {
       if (a.key === 'shield') state.play.shieldLeft = true;
     }
     this.hud.flashCoins(CSS.good);
+    play('coin');
     reportProgress();
     this.refresh();
   }

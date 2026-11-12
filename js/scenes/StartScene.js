@@ -3,6 +3,7 @@ import { resetGame } from '../state.js';
 import { setQuestions } from '../questions.js';
 import { session, leaveActivity } from '../session.js';
 import { text, createButton, createGuide } from '../ui.js';
+import { soundOn, setSound } from '../sound.js';
 import {
   backdrop, fadeIn, sprite, tiles, ribbon, THEMES, TD, SCALE,
 } from '../art.js';
@@ -52,6 +53,17 @@ export default class StartScene extends Phaser.Scene {
     if (session.online) {
       createButton(this, cx, 362, '선생님 로그인', () => { window.location.href = 'teacher.html'; }, { w: 220, h: 44 });
     }
+    this.drawSoundButton();
     createGuide(this, GUIDE_TEXT);
+  }
+
+  // 효과음 켜기·끄기 (기본은 꺼짐, 이 기기에 기억). 누르면 버튼 글자를 바꿔 다시 그린다
+  drawSoundButton() {
+    if (this.soundButton) this.soundButton.destroy();
+    const label = soundOn() ? '소리 켬' : '소리 끔';
+    this.soundButton = createButton(this, W - 96, 36, label, () => {
+      setSound(!soundOn());
+      this.time.delayedCall(0, () => this.drawSoundButton());
+    }, { w: 160, h: 44 });
   }
 }

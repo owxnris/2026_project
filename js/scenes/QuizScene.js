@@ -2,6 +2,7 @@
 // mode 'revive': 코인이 0개가 됐을 때 던전 위에 뜸 → 맞힐 때까지 계속 출제
 // 문제와 채점은 quiz.js가 맡는다 (화면은 답을 낸 뒤에야 정답 보기를 보여 준다)
 import { reasonText } from '../firebase/errors.js';
+import { play } from '../sound.js';
 import { COLORS, CSS, LAYOUT, RULES } from '../config.js';
 import { DUNGEONS } from '../dungeons.js';
 import { state, checkTimeout, recordQuiz } from '../state.js';
@@ -138,6 +139,7 @@ export default class QuizScene extends Phaser.Scene {
         sparkle(this, ox, oy, 0xffd54f, 18);
       }
       recordQuiz(correct, this.mode);
+      play(correct ? 'correct' : 'wrong');
       if (correct) reportProgress();
       this.items.push(text(this, W / 2, 470, correct ? `정답! 코인 +${RULES.COIN_PER_CORRECT}` : (chosen === null ? '시간 초과 — 금색 테두리가 정답이에요' : '오답 — 금색 테두리가 정답이에요'), 'small', correct ? CSS.good : CSS.bad).setOrigin(0.5));
       this.hud.update();
