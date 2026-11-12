@@ -1,0 +1,59 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<script type="importmap">
+{ "imports": {
+  "http://127.0.0.1:5599/js/firebase/sdk.js": "/__test/e2e-sdk.js",
+  "http://127.0.0.1:5599/js/firebase/app.js": "/__test/off-app.js"
+} }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+<style>html,body{margin:0;background:#1B1F2A}#game{width:960px;height:540px}</style></head>
+<body><div id="game"></div><pre id="out">running</pre>
+<script type="module">
+var out; window.addEventListener('error', (e) => out.push('WINERR ' + e.message + ' @' + e.filename + ':' + e.lineno)); window.addEventListener('unhandledrejection', (e) => out.push('REJ ' + (e.reason?.stack || e.reason)));
+out = []; const log = (ok, msg) => out.push((ok ? 'PASS ' : 'FAIL ') + msg);
+const tick = (ms = 50) => new Promise((r) => setTimeout(r, ms));
+async function waitFor(fn, ms = 5000) { const t = Date.now(); while (Date.now() - t < ms) { try { if (fn()) return true; } catch {} await tick(30); } return false; }
+try {
+  const F = await import('/__test/e2e-sdk.js');
+  const TEACHER = { uid: 'T1', provider: 'google.com' };
+  const put = (p, v) => F.docs.set(p, v);
+  const QS = [
+    { id: 'q1', subject: '수학', difficulty: '하', learningConcept: '곱셈', question: '2×3', choices: ['5', '6', '7', '8'] },
+    { id: 'q2', subject: '과학', difficulty: '하', learningConcept: '광합성', question: '광합성 장소', choices: ['뿌리', '잎', '줄기', '꽃'] },
+    { id: 'q3', subject: '국어', difficulty: '상', learningConcept: '맞춤법', question: '맞춤법', choices: ['a', 'b', 'c', 'd'] },
+  ];
+  const KEY = { q1: 1, q2: 1, q3: 3 };
+  put('classes/C1', { ownerUid: 'T1', name: '1반', joinCode: '123456' });
+  put('joinCodes/123456', { classId: 'C1', ownerUid: 'T1' });
+  put('classes/C1/activities/A1', { title: '1차', totalTimeSec: 600, status: 'waiting', startAt: null, endAt: null, questions: QS });
+  put('classes/C1/activities/A1/answerKey/main', { answers: KEY });
+
+  const { COLORS, LAYOUT, PHYS } = await import('/js/config.js');
+  const scenes = await Promise.all(['Boot', 'Start', 'Join', 'Waiting', 'WorldMap', 'Quiz', 'Shop', 'Dungeon', 'Result'].map((n) => import(`/js/scenes/${n}Scene.js`).then((m) => m.default)));
+  const { state } = await import('/js/state.js');
+  const { session } = await import('/js/session.js');
+  const game = new Phaser.Game({
+    type: Phaser.CANVAS, parent: 'game', width: LAYOUT.W, height: LAYOUT.H, backgroundColor: COLORS.bg,
+    fps: { forceSetTimeOut: true, target: 60 }, // 헤드리스 가상 시간에서는 requestAnimationFrame이 멈춰서
+    dom: { createContainer: true }, physics: { default: 'arcade', arcade: { gravity: { y: PHYS.GRAVITY } } }, scene: scenes,
+  });
+  const active = (k) => game.scene.isActive(k);
+  const S = (k) => game.scene.getScene(k);
+  const Q = () => S('Quiz');
+  const results = () => [...F.docs].filter(([p]) => p.startsWith('classes/C1/results/')).map(([, v]) => v);
+  const progress = () => F.docs.get('classes/C1/activities/A1/progress/S1');
+
+  // ── 6: 참여 ──
+  log(await waitFor(() => active('Start')), 'start scene');
+  log(session.online === false, 'offline when no config');
+  (await import('/js/state.js')).resetGame(); // 시작 버튼이 하는 일
+  S('Start').scene.start('WorldMap');
+  log(await waitFor(() => active('WorldMap')), 'offline -> world map directly');
+  S('WorldMap').scene.start('Quiz', { mode: 'entry', dungeon: 0 });
+  await waitFor(() => active('Quiz') && Q().item && !Q().answered);
+  Q().answer(Q().item.local.answer);
+  log(await waitFor(() => state.coins === 10), 'offline local grading +10');
+  log([...F.docs.keys()].every((p) => !p.includes("/results/") && !p.includes("/progress/")), "no results or progress written offline");
+} catch (e) { out.push('ERROR ' + e.stack); }
+document.getElementById('out').textContent = out.join('\n');
+</script></body></html>

@@ -1,0 +1,20 @@
+<!doctype html><html><head><meta charset="utf-8"></head><body><pre id="out">running</pre>
+<script type="module">
+const out = []; const log = (ok, m) => out.push((ok ? 'PASS ' : 'FAIL ') + m);
+try {
+  localStorage.removeItem('dungeonDash.sound');
+  const S = await import('/js/sound.js?' + Date.now());
+  log(S.soundOn() === false, 'default off');
+  let threw = null;
+  try { ['correct', 'wrong', 'coin', 'hit', 'clear'].forEach((n) => S.play(n)); } catch (e) { threw = e; }
+  log(!threw, 'play while off does nothing, no error');
+  S.setSound(true);
+  log(S.soundOn() === true && localStorage.getItem('dungeonDash.sound') === 'on', 'turn on -> remembered on this device');
+  threw = null;
+  try { ['correct', 'wrong', 'coin', 'hit', 'clear'].forEach((n) => S.play(n)); } catch (e) { threw = e; }
+  log(!threw, '5 sounds play without error (Web Audio)');
+  S.setSound(false);
+  log(localStorage.getItem('dungeonDash.sound') === 'off', 'turn off -> remembered');
+} catch (e) { out.push('ERROR ' + e.stack); }
+document.getElementById('out').textContent = out.join('\n');
+</script></body></html>

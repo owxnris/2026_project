@@ -1,0 +1,104 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" href="/css/teacher.css"></head>
+<body><main id="host"></main><pre id="out">running</pre>
+<script type="module">
+const out = []; const log = (ok, msg) => out.push((ok ? 'PASS ' : 'FAIL ') + msg);
+try {
+  const html = await (await fetch('/teacher.html')).text();
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const bv = doc.getElementById('bank-view'); bv.hidden = false;
+  document.getElementById('host').append(bv); document.body.append(doc.getElementById('confirm'));
+  const V = await import('/js/teacher/bankView.js');
+  const $ = (id) => document.getElementById(id);
+  let list = [{ id: 'd02', subject: '수학', difficulty: '중', learningConcept: '일차방정식', question: 'x + 7 = 3x − 5 일 때, x의 값은?', choices: ['4', '5', '6', '7'], answer: 2, source: 'default' }];
+  const calls = []; let n = 0;
+  const store = {
+    add: async (f) => { calls.push(['add', f]); list = [{ id: 't' + (++n), ...f, source: 'teacher' }, ...list]; queueMicrotask(() => V.setQuestions(list)); },
+    update: async (id, f) => { calls.push(['update', id, f]); list = list.map((q) => (q.id === id ? { ...q, ...f } : q)); queueMicrotask(() => V.setQuestions(list)); },
+    remove: async (id) => { calls.push(['remove', id]); list = list.filter((q) => q.id !== id); queueMicrotask(() => V.setQuestions(list)); },
+  };
+  const tick = () => new Promise((r) => setTimeout(r, 20));
+  const set = (id, v, ev = 'change') => { $(id).value = v; $(id).dispatchEvent(new Event(ev)); };
+  const rows = () => $('q-list').querySelectorAll('tbody tr');
+  const opts = (id) => [...$(id).options].map((o) => o.text).join(',');
+  const rowOf = (id) => [...rows()].find((r) => r.dataset.questionId === id);
+  V.setupBank(store);
+  V.showBankLoading(); log($('q-list').textContent.includes('불러오는 중'), 'loading message');
+  V.setQuestions([]); log($('q-list').textContent.includes('아직 문제가 없어요'), 'empty bank message');
+  V.setQuestions(list); log(rows().length === 1, 'table shows 1 row');
+  log([...$('q-list').querySelectorAll('td')].map((t) => t.textContent).slice(0, 5).join('|') === '수학|중|일차방정식|x + 7 = 3x − 5 일 때, x의 값은?|6', 'row columns incl. answer text');
+  log($('f-subject').options.length === 14, 'subject filter: 전체 + 13');
+
+  $('q-add-btn').click(); log(!$('q-form').hidden && $('q-add-btn').hidden, 'form opens, add button hidden');
+  log($('q-concept').disabled, 'concept disabled before subject');
+  $('q-save-btn').click(); await tick();
+  log(calls.length === 0, 'empty submit does not save');
+  log(document.querySelectorAll('#q-form .invalid').length >= 7, 'invalid borders shown (' + document.querySelectorAll('#q-form .invalid').length + ')');
+  log(document.querySelector('[data-error="answer"]').textContent !== '', 'answer error shown');
+
+  set('q-subject', '수학'); log(!$('q-concept').disabled && opts('q-concept') === '학습 개념 선택,일차방정식,새 개념 입력', 'concept options for 수학');
+  set('q-difficulty', '상'); set('q-concept', '__new__'); log(!$('q-new-concept-field').hidden, 'new concept input appears');
+  $('q-new-concept').value = '  일차   방정식 ';
+  $('q-question').value = '  2x = 8 이면 x는? ';
+  document.querySelectorAll('[data-choice]').forEach((el, i) => { el.value = ['4', '4', '2', '8'][i]; });
+  document.querySelector('input[name="q-answer"][value="0"]').checked = true;
+  $('q-save-btn').click(); await tick();
+  const a = calls[0];
+  log(a && a[0] === 'add', 'add called');
+  log(a && a[1].learningConcept === '일차방정식', 'spacing variant merged into existing concept');
+  log(a && a[1].question === '2x = 8 이면 x는?', 'question trimmed');
+  log(a && a[1].answer === 0 && a[1].choices.join() === '4,4,2,8', 'duplicate choices allowed, answer saved');
+  log(a && !('source' in a[1]) && !('id' in a[1]), 'view passes only content fields');
+  log($('q-form').hidden && !$('q-add-btn').hidden, 'form closes after save');
+  log($('bank-notice').textContent.includes("이미 있는 개념 '일차방정식'"), 'merge notice shown');
+
+  $('q-add-btn').click(); set('q-subject', '정보'); set('q-difficulty', '하'); set('q-concept', '__new__');
+  $('q-new-concept').value = '알고리즘'; $('q-question').value = '순서대로 해결하는 절차는?';
+  document.querySelectorAll('[data-choice]').forEach((el, i) => { el.value = ['알고리즘', '변수', '함수', '배열'][i]; });
+  document.querySelector('input[name="q-answer"][value="0"]').checked = true;
+  $('q-save-btn').click(); await tick();
+  log(calls[1] && calls[1][1].learningConcept === '알고리즘' && calls[1][1].subject === '정보', 'new subject + new concept saved');
+  $('q-add-btn').click(); set('q-subject', '정보');
+  log([...$('q-concept').options].some((o) => o.value === '알고리즘'), 'new concept now in 정보 list');
+  log($('q-question').value === '' && !document.querySelector('input[name="q-answer"]:checked'), 'add form starts empty');
+  $('q-cancel-btn').click(); log($('q-form').hidden, 'cancel closes form');
+
+  log(rows().length === 3, '3 rows now');
+  set('f-subject', '수학'); log(rows().length === 2, 'subject filter');
+  log(opts('f-concept') === '전체,일차방정식', 'concept filter limited to subject');
+  set('f-difficulty', '상'); log(rows().length === 1, 'subject+difficulty');
+  set('f-difficulty', ''); set('f-subject', '');
+  log(opts('f-concept') === '전체,수학 · 일차방정식,정보 · 알고리즘', 'all-subject concept labels');
+  set('f-concept', $('f-concept').options[2].value); log(rows().length === 1, 'concept filter');
+  set('f-concept', '');
+  set('f-keyword', '  X는 ', 'input'); log(rows().length === 1, 'keyword search case-insensitive');
+  set('f-keyword', '없는말', 'input'); log($('q-list').textContent.includes('조건에 맞는 문제가 없어요'), 'no-match message');
+  set('f-keyword', '', 'input');
+
+  rowOf('d02').querySelector('.link-btn').click();
+  log($('q-form-title').textContent === '문제 수정' && $('q-subject').value === '수학' && $('q-concept').value === '일차방정식' && document.querySelector('input[name="q-answer"]:checked').value === '2', 'edit form prefilled');
+  $('q-question').value = 'x + 7 = 3x − 5 일 때 x는?'; document.querySelector('input[name="q-answer"][value="1"]').checked = true;
+  $('q-save-btn').click(); await tick();
+  const u = calls[2]; log(u && u[0] === 'update' && u[1] === 'd02' && u[2].answer === 1 && !('source' in u[2]), 'update called for d02 without touching source');
+  log(list.find((q) => q.id === 'd02').source === 'default', 'source stays default');
+
+  rowOf('d02').querySelector('.link-btn').click(); document.querySelector('[data-choice="2"]').value = '   ';
+  $('q-save-btn').click(); await tick();
+  log(calls.length === 3 && document.querySelector('[data-choice="2"]').classList.contains('invalid'), 'blank choice blocks save on edit');
+  $('q-cancel-btn').click();
+
+  rowOf('d02').querySelector('.link-btn.danger').click(); await tick();
+  log(!$('confirm').hidden && $('confirm-text').textContent.includes('삭제할까요'), 'confirm dialog opens');
+  $('confirm-cancel').click(); await tick(); log($('confirm').hidden && calls.length === 3, 'cancel keeps question');
+  rowOf('d02').querySelector('.link-btn.danger').click(); await tick(); $('confirm-ok').click(); await tick();
+  log(calls[3] && calls[3][0] === 'remove' && calls[3][1] === 'd02' && !list.some((q) => q.id === 'd02'), 'delete removes question');
+  log(rows().length === 2, 'table updated after delete');
+
+  store.add = async () => { throw Object.assign(new Error('x'), { code: 'permission-denied' }); };
+  $('q-add-btn').click(); set('q-subject', '정보'); set('q-difficulty', '하'); set('q-concept', '알고리즘');
+  $('q-question').value = 'q'; document.querySelectorAll('[data-choice]').forEach((el) => { el.value = 'a'; });
+  document.querySelector('input[name="q-answer"][value="3"]').checked = true;
+  $('q-save-btn').click(); await tick();
+  log(!$('q-form').hidden && $('q-save-error').textContent.includes('permission-denied'), 'save failure keeps form with red message');
+} catch (e) { out.push('ERROR ' + e.stack); }
+document.getElementById('out').textContent = out.join('\n');
+</script></body></html>

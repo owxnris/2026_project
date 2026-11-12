@@ -1,0 +1,72 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<script type="importmap">
+{ "imports": {
+  "http://127.0.0.1:5599/js/firebase/sdk.js": "/__test/fake-sdk.js",
+  "http://127.0.0.1:5599/js/firebase/app.js": "/__test/fake-app.js"
+} }
+</script>
+<link rel="stylesheet" href="/css/teacher.css"></head>
+<body><main id="host"></main><pre id="out">running</pre>
+<script type="module">
+const out = []; const log = (ok, msg) => out.push((ok ? 'PASS ' : 'FAIL ') + msg);
+try {
+  const html = await (await fetch('/teacher.html')).text();
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const bv = doc.getElementById('bank-view'); bv.hidden = false;
+  document.getElementById('host').append(bv); document.body.append(doc.getElementById('confirm'));
+  const F = await import('/__test/fake-sdk.js');
+  const Q = await import('/js/teacher/questionBank.js');
+  const V = await import('/js/teacher/bankView.js');
+  const $ = (id) => document.getElementById(id);
+  const tick = (ms = 50) => new Promise((r) => setTimeout(r, ms));
+  const rows = () => $('q-list').querySelectorAll('tbody tr');
+  const bankDocs = () => [...F.docs].filter(([p]) => p.startsWith('teachers/T1/questions/'));
+  const json = await (await fetch('/questions.json')).json();
+
+  V.setupBank({ add: Q.addQuestion, update: Q.updateQuestion, remove: Q.deleteQuestion, importDefaults: Q.importDefaultQuestions });
+  V.showBankLoading();
+  const stop = Q.watchMyQuestions(V.setQuestions, V.showBankError);
+  log($('q-list').textContent.includes('아직 문제가 없어요'), 'starts empty');
+
+  // 교사가 직접 만든 문제 1개 (자동 id)
+  await Q.addQuestion({ subject: '정보', difficulty: '하', learningConcept: '알고리즘', question: '직접 만든 문제', choices: ['a', 'b', 'c', 'd'], answer: 0 });
+  await tick();
+
+  // 1회 불러오기
+  $('q-import-btn').click(); await tick(150);
+  log(bankDocs().length === 13, `first import → 12 + 1 own = 13 docs (got ${bankDocs().length})`);
+  log(rows().length === 13, 'table shows 13 rows');
+  log($('bank-notice').textContent === '기본 문제 12개를 불러왔어요', 'notice: 12 imported');
+  const d02 = F.docs.get('teachers/T1/questions/d02');
+  const src = json.find((q) => q.id === 'd02');
+  log(d02 && d02.source === 'default' && d02.updatedAt && !('id' in d02), 'd02 doc: source default, updatedAt, no id field');
+  log(d02 && ['subject', 'difficulty', 'learningConcept', 'question', 'answer'].every((k) => d02[k] === src[k]) && d02.choices.join() === src.choices.join(), 'd02 fields match questions.json');
+  log(Object.keys(d02).sort().join() === 'answer,choices,difficulty,learningConcept,question,source,subject,updatedAt', 'fields exactly per spec.md');
+  log(F.docs.get('teachers/T1/questions/auto1').question === '직접 만든 문제' && F.docs.get('teachers/T1/questions/auto1').source === 'teacher', 'own question untouched, source teacher');
+
+  // 기본 문제 하나를 교사가 수정
+  await Q.updateQuestion('d02', { ...src, id: undefined, question: '교사가 고친 d02' }); await tick();
+  // 2회 불러오기
+  $('q-import-btn').click(); await tick(150);
+  log(bankDocs().length === 13, 'second import adds nothing (13 docs)');
+  log($('bank-notice').textContent === '기본 문제가 이미 모두 있어요', 'notice: already all present');
+  log(F.docs.get('teachers/T1/questions/d02').question === '교사가 고친 d02', 'edited default question not overwritten');
+  log(F.log.filter((l) => l[0] === 'commit').length === 1, 'no batch commit on second import');
+
+  // 기본 문제 2개 삭제 후 다시 불러오기 → 2개만 복구
+  await Q.deleteQuestion('d05'); await Q.deleteQuestion('d11'); await tick();
+  $('q-import-btn').click(); await tick(150);
+  log(bankDocs().length === 13 && F.docs.has('teachers/T1/questions/d05'), 'deleted defaults restored only');
+  log($('bank-notice').textContent === '기본 문제 2개를 불러왔어요 (이미 있는 10개는 건너뜀)', 'notice: 2 imported, 10 skipped');
+
+  // 불러온 개념이 양식 목록·거르기에 나타남
+  $('q-add-btn').click(); $('q-subject').value = '수학'; $('q-subject').dispatchEvent(new Event('change'));
+  log([...$('q-concept').options].map((o) => o.text).join(',') === '학습 개념 선택,곱셈,일차방정식,새 개념 입력', 'imported concepts appear in form list');
+  $('q-cancel-btn').click();
+  $('f-subject').value = '상식'; $('f-subject').dispatchEvent(new Event('change'));
+  log(rows().length === 2, 'filter works on imported questions');
+
+  stop();
+} catch (e) { out.push('ERROR ' + e.stack); }
+document.getElementById('out').textContent = out.join('\n');
+</script></body></html>

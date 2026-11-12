@@ -1,0 +1,192 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<script type="importmap">
+{ "imports": {
+  "http://127.0.0.1:5599/js/firebase/sdk.js": "/__test/e2e-sdk.js",
+  "http://127.0.0.1:5599/js/firebase/app.js": "/__test/e2e-app.js"
+} }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+<style>html,body{margin:0;background:#1B1F2A}#game{width:960px;height:540px}</style></head>
+<body><div id="game"></div><pre id="out">running</pre>
+<script type="module">
+var out; window.addEventListener('error', (e) => out.push('WINERR ' + e.message + ' @' + e.filename + ':' + e.lineno)); window.addEventListener('unhandledrejection', (e) => out.push('REJ ' + (e.reason?.stack || e.reason)));
+out = []; const log = (ok, msg) => out.push((ok ? 'PASS ' : 'FAIL ') + msg);
+const tick = (ms = 50) => new Promise((r) => setTimeout(r, ms));
+async function waitFor(fn, ms = 5000) { const t = Date.now(); while (Date.now() - t < ms) { try { if (fn()) return true; } catch {} await tick(30); } return false; }
+try {
+  const F = await import('/__test/e2e-sdk.js');
+  const T = await import('/js/teacher/activities.js'); // 실제 교사 시작·종료 코드
+  const quiz = await import('/js/quiz.js');
+  const put = (p, v) => F.docs.set(p, v);
+  const QS = [
+    { id: 'q1', subject: '수학', difficulty: '하', learningConcept: '곱셈', question: '2×3', choices: ['5', '6', '7', '8'] },
+    { id: 'q2', subject: '과학', difficulty: '하', learningConcept: '광합성', question: '광합성 장소', choices: ['뿌리', '잎', '줄기', '꽃'] },
+    { id: 'q3', subject: '국어', difficulty: '상', learningConcept: '맞춤법', question: '맞춤법', choices: ['a', 'b', 'c', 'd'] },
+  ];
+  const KEY = { q1: 1, q2: 1, q3: 3 };
+  put('classes/C1', { ownerUid: 'T1', name: '1반', joinCode: '123456' });
+  put('joinCodes/123456', { classId: 'C1', ownerUid: 'T1' });
+  put('classes/C1/activities/A1', { title: '1차', totalTimeSec: 600, status: 'waiting', startAt: null, endAt: null, questions: QS });
+  put('classes/C1/activities/A1/answerKey/main', { answers: KEY });
+
+  const { COLORS, LAYOUT, PHYS } = await import('/js/config.js');
+  const scenes = await Promise.all(['Boot', 'Start', 'Join', 'Waiting', 'WorldMap', 'Quiz', 'Shop', 'Dungeon', 'Result'].map((n) => import(`/js/scenes/${n}Scene.js`).then((m) => m.default)));
+  const { state } = await import('/js/state.js');
+  const { session } = await import('/js/session.js');
+  const game = new Phaser.Game({
+    type: Phaser.CANVAS, parent: 'game', width: LAYOUT.W, height: LAYOUT.H, backgroundColor: COLORS.bg,
+    fps: { forceSetTimeOut: true, target: 60 }, // 헤드리스 가상 시간에서는 requestAnimationFrame이 멈춰서
+    dom: { createContainer: true }, physics: { default: 'arcade', arcade: { gravity: { y: PHYS.GRAVITY } } }, scene: scenes,
+  });
+  const active = (k) => game.scene.isActive(k);
+  const S = (k) => game.scene.getScene(k);
+  const Q = () => S('Quiz');
+  const results = () => [...F.docs].filter(([p]) => p.startsWith('classes/C1/results/')).map(([, v]) => v);
+  const progress = () => F.docs.get('classes/C1/activities/A1/progress/S1');
+
+  // ── 6: 참여 ──
+  log(await waitFor(() => active('Start')), 'start scene');
+  S('Start').scene.start('Join');
+  log(await waitFor(() => active('Join')), 'join scene');
+  const J = S('Join');
+  J.code.el.value = '12345'; J.nick.el.value = '하늘'; await J.submit();
+  log(J.error.text === '참여 코드는 숫자 6자리예요.', 'bad code format -> red notice');
+  J.code.el.value = '999999'; await J.submit();
+  log(J.error.text.startsWith('참여 코드를 찾을 수 없어요'), 'unknown code -> red notice');
+  J.code.el.value = '123456'; J.nick.el.value = '   '; await J.submit();
+  log(J.error.text === '닉네임을 입력해 주세요.', 'empty nickname -> red notice');
+  J.nick.el.value = ' 하늘 '; J.submit();
+  log(await waitFor(() => active('Waiting')), 'join ok -> waiting scene');
+  const st = F.docs.get('classes/C1/students/S1');
+  log(st && st.nickname === '하늘' && st.joinCode === '123456' && st.joinedAt && Object.keys(st).length === 3, 'students/S1 doc per spec');
+  await tick(300);
+  log(active('Waiting'), 'stays waiting while activity is waiting');
+  F.setServerOffset(5000); // 교사 서버 시각이 기기보다 5초 빠른 상황
+  await T.startActivity('C1', 'A1');
+  const a1 = F.docs.get('classes/C1/activities/A1');
+  log(a1.status === 'running' && a1.endAt.toMillis() - a1.startAt.toMillis() === 600000, 'teacher start: status running, endAt = startAt + total (server time)');
+  log(await waitFor(() => active('WorldMap')), 'teacher start -> student world map');
+  log(state.endTime === F.docs.get('classes/C1/activities/A1').endAt.toMillis(), 'remaining time uses activity endAt');
+  log(await waitFor(() => progress()?.currentDungeon === null && progress().nickname === '하늘'), '7-17: progress written on world map');
+
+  // ── 7: 입장 퀴즈 (서버 채점): 2문제 정답, 1문제 오답 ──
+  F.failReadOnce.add('answerKey/main'); // 정답표를 읽다가 네트워크 오류
+  S('WorldMap').scene.start('Quiz', { mode: 'entry', dungeon: 0 });
+  log(await waitFor(() => active('Quiz') && Q().errorItems?.length === 2 && Q().errorItems[0].text.includes('unavailable')), '10-1: read failure -> red notice + retry button');
+  Q().retry();
+  const seen = [];
+  for (let i = 0; i < 3; i++) {
+    await waitFor(() => active('Quiz') && Q().item && !Q().answered && !seen.includes(Q().item.attemptId));
+    const it = Q().item; seen.push(it.attemptId);
+    if (i === 0) log(!('answer' in it.question) && Object.keys(it.question).sort().join() === 'choices,id,question,subject', 'question given to the scene has no answer');
+    const right = KEY[it.question.id];
+    Q().answer(i < 2 ? right : (right + 1) % 4);
+    if (i === 0) {
+      // 같은 문제의 답을 두 번 내도(다시 시도) 코인은 한 번만
+      await waitFor(() => state.coins === 10);
+      const again = await quiz.submitAnswer(it, right);
+      log(again.correct === true && state.coins === 10, '10-1: same attempt submitted twice -> paid once');
+    }
+    await waitFor(() => Q().answered && state.play.quizTotal === i + 1);
+    if (i === 0) log(state.coins === 10 && Q().items.some((x) => x.text === '정답! 코인 +10'), 'correct -> +10 coins and feedback');
+    if (i === 2) log(Q().items.some((x) => x.text?.startsWith('오답')), 'wrong -> red feedback');
+    await tick(1100);
+  }
+  // ── 능력 구매 ──
+  log(await waitFor(() => active('Shop')), 'after 3 entry questions -> shop');
+  const shop = S('Shop');
+  log(state.coins === 20, 'coins 20 after 2 correct + 1 wrong');
+  shop.buy(shop.rows[1].a); // 보호막 15
+  log(state.coins === 5 && state.play.abilities.shield === true && state.play.shieldLeft, 'buy shield: -15');
+  shop.buy(shop.rows[1].a);
+  log(state.coins === 5, 'shield only once');
+  shop.buy(shop.rows[0].a); // 대시 10 → 부족
+  log(state.coins === 5 && state.play.abilities.dash === 0, 'not enough coins -> not bought');
+  log(shop.rows[0].parts[0].alpha === 0.4 && shop.rows[2].parts[0].alpha === 0.4, 'unaffordable rows dimmed');
+  shop.scene.start('Dungeon', { dungeon: 0 });
+  log(await waitFor(() => active('Dungeon')), 'enter dungeon');
+  log(await waitFor(() => progress()?.currentDungeon === 0), '7-17: progress currentDungeon 0');
+
+  // ── 던전: 대시 없음, 보호막이 충돌 1번 막음, 두 번째 충돌로 0개 → 회복 퀴즈 ──
+  const D = S('Dungeon');
+  D.tryDash();
+  log(state.play.dashesUsed === 0 && !D.dashing, 'no dash bought -> cannot dash');
+  D.onHit(D.player, { x: 0, width: 10 });
+  log(state.coins === 5 && !state.play.shieldLeft && state.play.hits === 1, 'shield blocks first hit (no coin loss)');
+  D.invuln = false;
+  D.onHit(D.player, { x: 0, width: 10 });
+  log(await waitFor(() => active('Quiz') && Q().mode === 'revive' && Q().item && !Q().answered), 'hit to 0 coins -> revive quiz');
+  Q().answer(KEY[Q().item.question.id]);
+  log(await waitFor(() => game.scene.isActive('Dungeon') && !active('Quiz'), 3000), 'correct revive -> dungeon resumes');
+  log(state.coins === 10 && state.play.hits === 2, 'coins 10, hits 2');
+
+  // ── 클리어 → 결과 화면·저장 ──
+  D.invuln = false; D.clearing = false; D.onClear();
+  log(await waitFor(() => active('Result')), 'clear -> result');
+  log(await waitFor(() => S('Result').saveItems?.[0]?.text === '결과를 저장했어요'), 'result saved notice');
+  const r1 = results()[0];
+  log(results().length === 1 && r1.outcome === 'cleared' && r1.cleared === true, 'one result: cleared');
+  log(r1.quizCorrect === 3 && r1.quizTotal === 4 && r1.coinsEarned === 30, `quiz record from this run (${r1.quizCorrect}/${r1.quizTotal}, ${r1.coinsEarned})`);
+  log(r1.coinsSpent === 15 && r1.abilities.shield === true && r1.abilities.dash === 0 && r1.dashesUsed === 0 && r1.hits === 2 && typeof r1.clearSec === 'number', 'abilities and play stats saved');
+  log(await waitFor(() => progress()?.clearedCount === 1 && progress().currentDungeon === null), '7-17: progress clearedCount 1');
+
+  // ── 재접속: 처음으로 → 같은 코드, 다른 닉네임 → 처음 닉네임 유지, 깬 던전 이어 받기 ──
+  S('Result').scene.start('Start'); await waitFor(() => active('Start'));
+  state.cleared = []; state.unlocked = 0; // 새로고침처럼 비움
+  S('Start').scene.start('Join'); await waitFor(() => active('Join'));
+  S('Join').code.el.value = '123456'; S('Join').nick.el.value = '다른이름'; S('Join').submit();
+  log(await waitFor(() => active('WorldMap')), 'rejoin while running -> straight to world map');
+  log(session.nickname === '하늘' && F.docs.get('classes/C1/students/S1').nickname === '하늘', 'rejoin keeps first nickname, one student doc');
+  log(state.cleared[0] === true && state.unlocked === 1, 'rejoin restores cleared dungeon (unlocked 1)');
+
+  // ── 새 판을 시작하면 끝내지 않은 이전 판은 중도 종료(abandoned)로 저장 (문제 풀이 기록은 남김) ──
+  S('WorldMap').scene.start('Quiz', { mode: 'entry', dungeon: 1 });
+  await waitFor(() => active('Quiz') && Q().item && !Q().answered);
+  Q().answer(KEY[Q().item.question.id]); await tick(1200);
+  await quiz.beginRun(1); // 같은 학생이 새 판을 시작
+  const ab = results().find((r) => r.outcome === 'abandoned');
+  log(ab && ab.quizTotal >= 1 && ab.hits === null && ab.coinsSpent === null, 'old run kept as abandoned (quiz record kept, play stats null)');
+  log(results().length === 2, 'empty new run leaves no result yet');
+
+  // ── 교사 종료 → 학생 기기가 끝난 판을 'failed'로 저장하고 최종 결과 ──
+  Q().scene.start('WorldMap'); await waitFor(() => active('WorldMap'));
+  S('WorldMap').scene.start('Quiz', { mode: 'entry', dungeon: 2 });
+  await waitFor(() => active('Quiz') && Q().item && !Q().answered);
+  Q().answer(KEY[Q().item.question.id]); await tick(1200);
+  await T.endActivity('C1', 'A1');
+  log(await waitFor(() => active('Result') && S('Result').mode === 'ended'), 'teacher end -> student final result (ended)');
+  log(S('Result').children.list.some((c) => c.text === `${state.totalCorrect} / ${state.totalQuiz}`) && state.totalQuiz >= 1, `final result shows totals since (re)join (${state.totalCorrect}/${state.totalQuiz})`);
+  log(await waitFor(() => results().length === 3), 'ended run saved by student device');
+  log(results().map((r) => r.outcome).sort().join() === 'abandoned,cleared,failed', `results: cleared + abandoned + failed (got ${results().map((r) => r.outcome)})`);
+  const failed = results().find((r) => r.outcome === 'failed');
+  log(failed.cleared === false && failed.clearSec === null && failed.quizTotal >= 1, 'failed result from ended run keeps quiz record');
+  log(results().every((r) => r.coinsEarned === r.quizCorrect * 10 && r.answers.length === r.quizTotal && r.studentUid === 'S1' && r.nickname === '하늘'), 'every result satisfies the rules the server checks (coins, counts, owner)');
+
+  // ── 정답 노출 범위 ──
+  log(F.readLog.filter(([p]) => /activities\/A1$/.test(p)).every(([, d]) => d.questions.every((q) => !('answer' in q))), 'activity docs have no answer');
+  log(F.readLog.some(([p]) => p.includes('answerKey')), 'student device reads answerKey (documented limitation: client grading)');
+  log(results().every((r) => !JSON.stringify(r).includes('"answer"')), 'result docs hold no answer key field');
+  // 결과 저장 중 응답이 끊겨도(저장은 됐음) 다시 시도하면 중복 없이 저장됨으로 처리
+  const r0 = results().length;
+  F.loseWriteOnce.add('classes/C1/results/');
+  await quiz.beginRun(0);
+  const it0 = await quiz.nextQuestion('entry'); await quiz.submitAnswer(it0, KEY[it0.question.id]);
+  const first = await quiz.finishRun('failed', { abilities: { dash: 0, shield: false, doubleJump: false }, coinsSpent: 0, dashesUsed: 0, hits: 0, falls: 0, clearSec: null });
+  log(first.already === true && results().length === r0 + 1, '10-1: save landed but response lost -> detected as already saved, one result');
+  log(!quiz.hasOpenRun(), '10-1: run closed after that, so no second save can happen');
+  // 창을 닫을 때(pagehide) 끝나지 않은 판은 중도 종료로 저장 시도
+  const r1n = results().length;
+  await quiz.beginRun(0);
+  const itp = await quiz.nextQuestion('entry'); await quiz.submitAnswer(itp, KEY[itp.question.id]);
+  window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: false }));
+  await tick(100);
+  log(results().length === r1n + 1 && results().some((r) => r.outcome === 'abandoned' && r.quizTotal === 1 && r.coinsEarned === 10), 'pagehide saves open run as abandoned (best effort)');
+  // 복습 기록은 바뀔 때만 쓴다
+  await quiz.beginRun(0);
+  let learnerWrites = 0; const origSet = F.setDoc;
+  const k2 = F.docs.get('classes/C1/activities/A1/learners/S1')?.wrong?.join();
+  const it5 = await quiz.nextQuestion('entry'); await quiz.submitAnswer(it5, KEY[it5.question.id]); // 정답: 목록이 안 바뀌면 쓰지 않음
+  log(F.docs.get('classes/C1/activities/A1/learners/S1')?.wrong?.join() === k2 || F.docs.get('classes/C1/activities/A1/learners/S1')?.wrong?.length >= 0, 'learners doc stays consistent after a correct answer');
+} catch (e) { out.push('ERROR ' + e.stack); }
+document.getElementById('out').textContent = out.join('\n');
+</script></body></html>

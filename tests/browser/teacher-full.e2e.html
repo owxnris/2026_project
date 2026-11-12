@@ -1,0 +1,270 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<script type="importmap">
+{ "imports": {
+  "http://127.0.0.1:5599/js/firebase/sdk.js": "/__test/e2e-sdk.js",
+  "http://127.0.0.1:5599/js/firebase/app.js": "/__test/e2e-app.js"
+} }
+</script>
+<link rel="stylesheet" href="/css/teacher.css"></head>
+<body><pre id="out">running</pre>
+<script type="module">
+// 실제 teacher.html + js/teacher/main.js 전체를 가짜 Firebase(메모리 Firestore) 위에서 돌린다
+var out = [];
+window.addEventListener('error', (e) => out.push('WINERR ' + e.message));
+window.addEventListener('unhandledrejection', (e) => out.push('REJ ' + (e.reason?.stack || e.reason)));
+const log = (ok, msg) => out.push((ok ? 'PASS ' : 'FAIL ') + msg);
+const tick = (ms = 60) => new Promise((r) => setTimeout(r, ms));
+async function waitFor(fn, ms = 4000) { const t = Date.now(); while (Date.now() - t < ms) { try { if (fn()) return true; } catch {} await tick(30); } return false; }
+const outEl = document.getElementById('out');
+try {
+  const html = await (await fetch('/teacher.html')).text();
+  const d = new DOMParser().parseFromString(html, 'text/html');
+  d.querySelectorAll('script').forEach((s) => s.remove());
+  document.body.prepend(...d.body.childNodes);
+  const F = await import('/__test/e2e-sdk.js');
+  await import('/js/teacher/main.js');
+  const $ = (id) => document.getElementById(id);
+  const sel = (id, v) => { $(id).value = v; $(id).dispatchEvent(new Event('change')); };
+  const rows = (id) => [...$(id).querySelectorAll('tbody tr')];
+  const cells = (tr) => [...tr.cells].map((c) => c.textContent);
+
+  // ── 로그인 (2-8) ──
+  await tick();
+  log(!$('login-view').hidden && $('menu').hidden, 'before login: login view, no menu');
+  $('login-btn').click();
+  log(await waitFor(() => !$('home-view').hidden), 'login -> class home');
+  log(await waitFor(() => F.docs.get('teachers/T1')?.name === '김선생'), 'teachers/T1 created');
+  log(document.querySelector('.menu-item.current')?.dataset.view === 'classes', '3-1: 학급 menu underlined');
+
+  // ── 3-4·3-5 학급 만들기·목록 ──
+  log(await waitFor(() => $('class-list').textContent.includes('아직 학급이 없어요')), '3-5: empty class list message');
+  $('class-create-btn').click(); await tick();
+  log($('class-name').classList.contains('invalid'), '3-4: empty name -> invalid');
+  $('class-name').value = '5학년 1반'; $('class-create-btn').click();
+  log(await waitFor(() => rows('class-list').length === 1), '3-5: class appears without reload');
+  const code = $('class-code').textContent;
+  log(/^\d{6}$/.test(code) && F.docs.get(`joinCodes/${code}`)?.ownerUid === 'T1', '3-4: 6-digit code + joinCodes doc');
+  const classId = F.docs.get(`joinCodes/${code}`).classId;
+  await waitFor(() => cells(rows('class-list')[0])[2] === '0명');
+  log(cells(rows('class-list')[0]).join('|') === `5학년 1반|${code}|0명`, '3-5: row name|code|students');
+
+  // ── 3-1 메뉴 ──
+  document.querySelector('[data-view="bank"]').click();
+  log(!$('bank-view').hidden && $('home-view').hidden, '3-1: bank menu switches view');
+  document.querySelector('[data-view="classes"]').click();
+  log(!$('home-view').hidden, '3-1: back to classes');
+
+  // ── 4: 기본 문제 불러오기 + 교사 문제 하나 추가 ──
+  document.querySelector('[data-view="bank"]').click();
+  $('q-import-btn').click();
+  log(await waitFor(() => rows('q-list').length === 12), '4-9: 12 default questions');
+  $('q-add-btn').click();
+  sel('q-subject', '정보'); sel('q-difficulty', '하'); sel('q-concept', '__new__');
+  $('q-new-concept').value = '알고리즘'; $('q-question').value = '순서대로 하는 일의 차례를 무엇이라 하나요?';
+  ['알고리즘', '변수', '함수', '배열'].forEach((c, i) => { document.querySelector(`[data-choice="${i}"]`).value = c; });
+  document.querySelector('input[name="q-answer"][value="0"]').click();
+  $('q-save-btn').click();
+  log(await waitFor(() => rows('q-list').length === 13), '4-5: teacher question saved');
+  const myQ = [...F.docs].find(([p, v]) => p.startsWith('teachers/T1/questions/') && v.source === 'teacher');
+
+  // ── 3-6·3-7 학급 상세, 이름 바꾸기 ──
+  document.querySelector('[data-view="classes"]').click();
+  rows('class-list')[0].click();
+  log(!$('class-view').hidden && $('detail-name').textContent === '5학년 1반' && $('detail-code').textContent === code, '3-6: detail shows name + code');
+  document.querySelector('[data-tab="results"]').click();
+  log(document.querySelector('.tab.current').dataset.tab === 'results', '3-6: tab underline moves');
+  document.querySelector('[data-tab="students"]').click();
+  $('rename-btn').click(); $('rename-input').value = ''; $('rename-save-btn').click(); await tick();
+  log($('rename-input').classList.contains('invalid'), '3-7: empty rename -> invalid');
+  $('rename-input').value = '5학년 2반'; $('rename-save-btn').click();
+  log(await waitFor(() => $('detail-name').textContent === '5학년 2반'), '3-7: rename shown in detail');
+  const cdoc = F.docs.get(`classes/${classId}`);
+  log(cdoc.name === '5학년 2반' && cdoc.ownerUid === 'T1' && cdoc.joinCode === code, '3-7: only name changed');
+  log(await waitFor(() => cells(rows('class-list')[0])[0] === '5학년 2반'), '3-7: list updated');
+  log(await waitFor(() => $('student-list').textContent.includes('아직 참여한 학생이 없어요')), '6-6: empty students tab');
+
+  // ── 5: 활동 만들기 (교사가 만든 문제 + 기본 문제 섞기) ──
+  document.querySelector('[data-tab="activities"]').click();
+  $('act-add-btn').click();
+  $('act-title').value = '정보·수학 복습'; $('act-minutes').value = '10';
+  const pick = (id) => $('act-q-list').querySelector(`[data-question-id="${id}"]`).click();
+  pick(myQ[0].split('/').pop()); pick('d01'); pick('d02');
+  $('act-save-btn').click();
+  log(await waitFor(() => rows('act-list').length === 1), '5-2/5-4: activity in list');
+  const [aPath, act] = [...F.docs].find(([p]) => new RegExp(`^classes/${classId}/activities/[^/]+$`).test(p));
+  const activityId = aPath.split('/').pop();
+  log(act.questions.length === 3 && act.questions.some((q) => q.subject === '정보') && act.questions.every((q) => !('answer' in q)), 'activity has teacher question, no answers');
+
+  // ── 학생 두 명 참여 (실제 앱은 game.e2e에서 시험) — 학생 문서는 규칙과 같은 필드로 ──
+  F.setDoc({ path: `classes/${classId}/students/S1` }, { nickname: '하늘', joinCode: code, joinedAt: F.serverTimestamp() });
+  F.setDoc({ path: `classes/${classId}/students/S2` }, { nickname: '바다', joinCode: code, joinedAt: F.serverTimestamp() });
+  document.querySelector('[data-tab="students"]').click();
+  log(await waitFor(() => rows('student-list').length === 2 && $('student-count').textContent === '참여한 학생 2명'), '6-6: students tab realtime (2)');
+
+  // ── 시작 → 진행 중 화면 순위 ──
+  document.querySelector('[data-tab="activities"]').click();
+  rows('act-list')[0].click();
+  $('av-start-btn').click();
+  log(await waitFor(() => F.docs.get(aPath).status === 'running'), '5-6: started');
+  log(await waitFor(() => rows('av-ranking').length === 2 && rows('av-ranking').every((r) => r.cells[2].textContent === '들어오기 전')), '8-3: ranking lists both students (before entry)');
+
+  // 학생 기기가 하는 일(출제·채점·결과 문서 만들기)을 실제 js/runLog.js·grading.js로 흉내 낸다. S1: 3문제 모두 정답 → 클리어. S2: 1문제 틀리고 실패
+  const RL = await import('/js/runLog.js');
+  const G = await import('/js/grading.js');
+  const T = await import('/js/teacher/activities.js');
+  async function play(uid, dungeon, rightCount, outcome, path = aPath, actId = activityId) {
+    const act = F.docs.get(path);
+    const key = F.docs.get(`${path}/answerKey/main`).answers;
+    const run = RL.newRun({ runId: `${uid}_${Math.random().toString(36).slice(2)}`, studentUid: uid, dungeon, nowMs: Date.now() });
+    for (let i = 0; i < 3; i++) {
+      const q = RL.issue(run, act.questions, 'entry', Date.now());
+      const k = key[q.question.id];
+      RL.answer(run, q.attemptId, i < rightCount ? k : (k + 1) % 4, k, Date.now());
+    }
+    const ab = run.coinsEarned >= 15 ? { dash: 0, shield: true, doubleJump: false } : { dash: 0, shield: false, doubleJump: false };
+    const stats = { abilities: ab, coinsSpent: ab.shield ? 15 : 0, dashesUsed: 0, hits: 1, falls: 0, clearSec: outcome === 'cleared' ? 42 : null };
+    const student = F.docs.get(`classes/${classId}/students/${uid}`);
+    const res = G.buildResult({ run, attempts: run.attempts, student, activityId: actId, outcome, stats });
+    await F.setDoc({ path: `classes/${classId}/results/${run.runId}` }, { ...res, createdAt: F.serverTimestamp() });
+  }
+  F.setDoc({ path: `${aPath}/progress/S1` }, { nickname: '하늘', currentDungeon: 0, clearedCount: 0, coins: 0, updatedAt: F.serverTimestamp() });
+  await play('S1', 0, 3, 'cleared');
+  await play('S2', 0, 2, 'failed');
+  F.setDoc({ path: `${aPath}/progress/S1` }, { nickname: '하늘', currentDungeon: null, clearedCount: 1, coins: 0, updatedAt: F.serverTimestamp() });
+  log(await waitFor(() => cells(rows('av-ranking')[0]).join('|') === '1|하늘|월드맵|1개|3 / 3'), `8-3: S1 ranked 1st (${cells(rows('av-ranking')[0]).join('|')})`);
+  log(cells(rows('av-ranking')[1]).join('|') === '2|바다|들어오기 전|0개|2 / 3', `8-3: S2 2nd (${cells(rows('av-ranking')[1]).join('|')})`);
+
+  // ── 결과 탭 ──
+  $('av-back-btn').click();
+  document.querySelector('[data-tab="results"]').click();
+  log(await waitFor(() => rows('r-students').length === 2), '8-4: student results table');
+  const byName = Object.fromEntries(rows('r-students').map((r) => [r.cells[0].textContent, cells(r)]));
+  log(byName['하늘'].slice(1).join('|') === '3 / 3|데이터 부족 (3번)|데이터 부족|1개|30|1', `8-4: 하늘 row (${byName['하늘'].join('|')})`);
+  log(byName['바다'].slice(1).join('|') === '2 / 3|데이터 부족 (3번)|데이터 부족|0개|20|1', `8-4: 바다 row (${byName['바다'].join('|')})`);
+  log($('r-summary').textContent.includes('참여 학생 2명') && $('r-summary').textContent.includes('평균 정답률 83%'), `8-7: class summary (${$('r-summary').textContent})`);
+  log(rows('r-questions').length >= 1 && rows('r-questions').every((r) => r.cells[2].textContent.length > 0), '문제별 정답률 table with question text');
+  log(rows('r-concepts').length >= 1, '8-11: concept table');
+  rows('r-students').find((r) => r.cells[0].textContent === '바다').click();
+  log(!$('r-detail').hidden && $('r-detail-name').textContent === '바다 자세한 기록', '8-5: detail opens');
+  const run = cells(rows('r-runs')[0]);
+  log(run[2] === '실패' && run[3] === '2 / 3' && run[5] === '보호막' && run[4] === '20 · 15', `8-5: run row (${run.join('|')})`);
+  log(rows('r-wrong').length === 1, '8-12: wrong question listed');
+  sel('r-activity', activityId);
+  log(rows('r-students').length === 2, 'activity filter keeps results of that activity');
+
+  // ── 종료 → 로그아웃 ──
+  rows('act-list')?.[0];
+  document.querySelector('[data-tab="activities"]').click();
+  rows('act-list')[0].click();
+  $('av-end-btn').click(); await tick(); $('confirm-ok').click();
+  log(await waitFor(() => F.docs.get(aPath).status === 'ended'), '5-7: ended');
+
+  // ── 맞춤 피드백·학급 분석: 2차 활동(교사가 만든 문제 하나)에서 S1이 3번 모두 틀림 ──
+  $('av-back-btn').click();
+  log(await waitFor(() => $('r-supplement').textContent.includes('데이터가 부족해요')), 'class summary: 9 answers -> 데이터 부족');
+  rows('r-students').find((r) => r.cells[0].textContent === '하늘').click();
+  log($('r-feedback').textContent.includes('데이터가 부족해요') && $('r-recommend-btn').hidden, 'student with 3 answers -> feedback 데이터 부족, no recommend');
+  log(rows('r-students').every((r) => r.cells[3].textContent === '데이터 부족'), 'level column 데이터 부족 (<5 answers)');
+  document.querySelector('[data-tab="activities"]').click();
+  $('act-add-btn').click();
+  $('act-title').value = '알고리즘 확인'; $('act-minutes').value = '5';
+  const myQid = myQ[0].split('/').pop();
+  $('act-q-list').querySelector(`[data-question-id="${myQid}"]`).click();
+  $('act-save-btn').click();
+  await waitFor(() => rows('act-list').length === 2);
+  const a2Path = [...F.docs].find(([p, v]) => new RegExp(`^classes/${classId}/activities/[^/]+$`).test(p) && v.title === '알고리즘 확인')[0];
+  const a2Id = a2Path.split('/').pop();
+  await T.startActivity(classId, a2Id);
+  for (const uid of ['S1', 'S2']) await play(uid, 0, 0, 'failed', a2Path, a2Id);
+  document.querySelector('[data-tab="results"]').click();
+  sel('r-activity', '');
+  log(await waitFor(() => $('r-supplement').textContent.includes('보충할 개념: 정보 · 알고리즘')), `class summary names weak concept (${$('r-supplement').textContent.slice(0, 80)})`);
+  log(!$('r-supplement-btn').hidden && $('r-supplement').textContent.includes('보충 학습이 필요한 학생 (학습 수준 하): 바다'), 'supplement: button + students needing support');
+  const part = rows('r-participation').map(cells);
+  log(part.length === 2 && part[0].join('|') === '정보·수학 복습|2 / 2명|100%|1명|50%' && part[1].join('|') === '알고리즘 확인|2 / 2명|100%|0명|0%', `participation (${part.map((p) => p.join('|')).join(' / ')})`);
+  log($('r-levels').textContent.startsWith('학습 수준: 상 0명 · 중 1명 · 하 1명 · 데이터 부족 0명'), `level distribution (${$('r-levels').textContent})`);
+  rows('r-students').find((r) => r.cells[0].textContent === '하늘').click();
+  const fbText = $('r-feedback').textContent;
+  log(fbText.includes('학습 수준 중') && /취약 개념 정보 · 알고리즘: [3-6]번 중 3번/.test(fbText), `student feedback: level + weak concept from real answers (${fbText.slice(0, 160)})`);
+  log(fbText.includes("'정보·수학 복습' 100% → '알고리즘 확인' 0% — 내려갔어요"), 'student feedback: activity trend');
+  log(rows('r-trend').length === 2 && rows('r-recommend').length === 1 && rows('r-recommend')[0].cells[2].textContent.startsWith('순서대로'), 'trend table + recommended bank question');
+  $('r-recommend-btn').click();
+  log(!$('act-form').hidden && $('act-title').value === '하늘 보충 활동' && $('act-picked').textContent === '고른 문제 1개'
+    && $('act-q-list').querySelector(`[data-question-id="${myQid}"]`).checked, 'recommend -> activity form with question picked');
+  $('act-cancel-btn').click();
+  await T.endActivity(classId, a2Id);
+
+  // ── 공유 문제은행: T1이 공유 → T2가 검색·미리보기·가져오기 → 원본과 따로 고치기 ──
+  document.querySelector('[data-view="bank"]').click();
+  const myRow = () => rows('q-list').find((r) => r.dataset.questionId === myQid);
+  log(myRow().cells[5].textContent === '직접 만듦' && rows('q-list').find((r) => r.dataset.questionId === 'd01').cells[5].textContent === '기본 문제', 'bank source column');
+  log(!rows('q-list').find((r) => r.dataset.questionId === 'd01').textContent.includes('공유'), 'default question has no share button');
+  [...myRow().querySelectorAll('button')].find((b) => b.textContent === '공유').click();
+  log(await waitFor(() => $('bank-error').textContent.includes('공유할 때 보일 이름을 먼저')), 'share without share name -> asks for name');
+  document.querySelector('[data-view="shared"]').click();
+  $('share-name').value = 'a@b.com'; $('share-name-btn').click();
+  log(await waitFor(() => $('share-name-error').textContent.includes('이메일')), 'email as share name rejected');
+  $('share-name').value = '  정보   선생님 '; $('share-name-btn').click();
+  log(await waitFor(() => F.docs.get('teachers/T1').shareName === '정보 선생님'), 'share name saved (normalized)');
+  document.querySelector('[data-view="bank"]').click();
+  [...myRow().querySelectorAll('button')].find((b) => b.textContent === '공유').click();
+  log(await waitFor(() => [...F.docs].some(([p]) => p.startsWith('sharedQuestions/'))), 'shared doc created');
+  const [sPath, sDoc] = [...F.docs].find(([p]) => p.startsWith('sharedQuestions/'));
+  const sharedId = sPath.split('/').pop();
+  log(Object.keys(sDoc).sort().join() === 'answer,choices,difficulty,learningConcept,ownerUid,question,sharedAt,subject,updatedAt,authorName'.split(',').sort().join()
+    && sDoc.authorName === '정보 선생님' && !JSON.stringify(sDoc).includes('@') && !JSON.stringify(sDoc).includes('김선생'), 'shared doc: allowed fields only, no email/real name');
+  log(await waitFor(() => myRow().cells[5].textContent === '직접 만듦 · 공유함' && myRow().textContent.includes('공유 갱신')), 'bank row shows 공유함 + 공유 갱신');
+  document.querySelector('[data-view="shared"]').click();
+  log(await waitFor(() => rows('shared-list').length === 1 && rows('shared-list')[0].textContent.includes('정보 선생님 (나)') && rows('shared-list')[0].textContent.includes('공유 취소')), 'owner sees own shared question with 공유 취소');
+
+  $('logout-btn').click(); await waitFor(() => !$('login-view').hidden);
+  globalThis.nextTeacher = { uid: 'T2', provider: 'google.com', isAnonymous: false, displayName: '박선생', email: 't2@example.com' };
+  $('login-btn').click();
+  await waitFor(() => !$('home-view').hidden);
+  log(await waitFor(() => $('class-list').textContent.includes('아직 학급이 없어요')), 'T2 does not see T1 classes (results private)');
+  document.querySelector('[data-view="shared"]').click();
+  log(await waitFor(() => rows('shared-list').length === 1), 'T2 sees shared question');
+  sel('s-subject', '수학');
+  log($('shared-list').textContent.includes('조건에 맞는 공유 문제가 없어요'), 'shared filter by subject');
+  sel('s-subject', '정보'); sel('s-difficulty', '하'); $('s-keyword').value = '차례'; $('s-keyword').dispatchEvent(new Event('input'));
+  log(rows('shared-list').length === 1, 'shared filter subject+difficulty+keyword');
+  const sRow = () => rows('shared-list').find((r) => r.dataset.sharedId === sharedId);
+  log(sRow().cells[4].textContent === '정보 선생님' && !sRow().textContent.includes('공유 취소'), 'T2 sees author share name, no delete');
+  [...sRow().querySelectorAll('button')].find((b) => b.textContent === '미리보기').click();
+  log($('shared-list').querySelector('.preview-choices .answer')?.textContent === '알고리즘 (정답)', 'preview shows choices + answer');
+  [...sRow().querySelectorAll('button')].find((b) => b.textContent === '가져오기').click();
+  log(await waitFor(() => [...F.docs].some(([p, v]) => p.startsWith('teachers/T2/questions/') && v.origin?.sharedId === sharedId)), 'imported into T2 bank');
+  const [impPath, imp] = [...F.docs].find(([p, v]) => p.startsWith('teachers/T2/questions/') && v.origin?.sharedId === sharedId);
+  log(imp.source === 'shared' && imp.origin.authorName === '정보 선생님' && imp.answer === 0 && !('ownerUid' in imp), 'imported copy: source shared, origin author');
+  log(await waitFor(() => sRow().textContent.includes('가져옴')), 'shared row shows 가져옴 (no duplicate import)');
+  // T2가 가져온 문제를 고친다 → 원본은 그대로
+  document.querySelector('[data-view="bank"]').click();
+  const impRow = () => rows('q-list').find((r) => r.dataset.questionId === impPath.split('/').pop());
+  log(await waitFor(() => impRow()?.cells[5].textContent === '공유: 정보 선생님' && !impRow().textContent.includes('공유 갱신')), 'T2 bank shows source 공유: 정보 선생님');
+  [...impRow().querySelectorAll('button')].find((b) => b.textContent === '수정').click();
+  $('q-question').value = 'T2가 고친 문제'; $('q-save-btn').click();
+  log(await waitFor(() => F.docs.get(impPath).question === 'T2가 고친 문제') && F.docs.get(sPath).question.startsWith('순서대로'), 'edit import does not change shared original');
+  // 가져온 문제로 바로 활동 만들기 (T2 학급)
+  document.querySelector('[data-view="classes"]').click();
+  $('class-name').value = '6학년 3반'; $('class-create-btn').click();
+  await waitFor(() => rows('class-list').length === 1);
+  rows('class-list')[0].click(); document.querySelector('[data-tab="activities"]').click();
+  $('act-add-btn').click();
+  log(!!$('act-q-list').querySelector(`[data-question-id="${impPath.split('/').pop()}"]`), 'imported question available in activity picker');
+  $('act-cancel-btn').click();
+  // T2는 공유 문제를 지울 수 없다 (화면에 버튼 없음 + 규칙: firestore.rules)
+  $('logout-btn').click(); await waitFor(() => !$('login-view').hidden);
+  globalThis.nextTeacher = null;
+  $('login-btn').click(); await waitFor(() => !$('home-view').hidden);
+  document.querySelector('[data-view="shared"]').click();
+  await waitFor(() => sRow());
+  [...sRow().querySelectorAll('button')].find((b) => b.textContent === '공유 취소').click();
+  await tick(); $('confirm-ok').click();
+  log(await waitFor(() => !F.docs.has(sPath)), 'owner unshare deletes shared doc');
+  log(F.docs.has(impPath) && F.docs.get(`teachers/T1/questions/${myQid}`).sharedId === null, 'T2 copy stays, T1 question unmarked');
+
+  $('logout-btn').click();
+  log(await waitFor(() => !$('login-view').hidden && $('menu').hidden), '2-9: logout -> login view');
+} catch (e) { out.push('ERROR ' + e.stack); }
+outEl.textContent = out.join('\n');
+</script></body></html>

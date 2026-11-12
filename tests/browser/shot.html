@@ -1,0 +1,31 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<script type="importmap">
+{ "imports": {
+  "http://127.0.0.1:5599/js/firebase/sdk.js": "/__test/e2e-sdk.js",
+  "http://127.0.0.1:5599/js/firebase/app.js": "/__test/off-app.js"
+} }
+</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css">
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+<style>html,body{margin:0;background:#000}#game{width:960px;height:540px}#out{position:absolute;left:0;top:540px;color:#fff;font:12px monospace}</style></head>
+<body><div id="game"></div><pre id="out"></pre>
+<script type="module">
+const q = new URLSearchParams(location.search);
+const out = document.getElementById('out'); const errs = [];
+window.addEventListener('error', (e) => { errs.push(e.message); out.textContent = errs.join('\n'); });
+const { COLORS, LAYOUT, PHYS } = await import('/js/config.js');
+const scenes = await Promise.all(['Boot', 'Start', 'Join', 'Waiting', 'WorldMap', 'Quiz', 'Shop', 'Dungeon', 'Result'].map((n) => import(`/js/scenes/${n}Scene.js`).then((m) => m.default)));
+const { state, resetGame, restoreCleared } = await import('/js/state.js');
+const game = new Phaser.Game({ type: Phaser.CANVAS, parent: 'game', width: LAYOUT.W, height: LAYOUT.H, backgroundColor: COLORS.bg, pixelArt: true,
+  fps: { forceSetTimeOut: true, target: 60 }, dom: { createContainer: true }, physics: { default: 'arcade', arcade: { gravity: { y: PHYS.GRAVITY } } }, scene: scenes });
+const tick = (ms) => new Promise((r) => setTimeout(r, ms));
+while (!game.scene.isActive('Start')) await tick(50);
+resetGame(); restoreCleared(Number(q.get('cleared') || 1)); state.coins = 35;
+const target = q.get('scene') || 'Dungeon';
+const data = JSON.parse(q.get('data') || '{"dungeon":0}');
+game.scene.getScene('Start').scene.start(target, data);
+await tick(800);
+if (target === 'Dungeon' && q.get('x')) { const D = game.scene.getScene('Dungeon'); D.player.body.reset(Number(q.get('x')), 420); }
+await tick(1500);
+out.textContent = (errs.join('\n') || 'ok');
+</script></body></html>

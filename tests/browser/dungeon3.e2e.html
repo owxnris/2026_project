@@ -1,0 +1,49 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<script type="importmap">
+{ "imports": {
+  "http://127.0.0.1:5599/js/firebase/sdk.js": "/__test/e2e-sdk.js",
+  "http://127.0.0.1:5599/js/firebase/app.js": "/__test/off-app.js"
+} }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script></head>
+<body><div id="game"></div><pre id="out">running</pre>
+<script type="module">
+var out = []; window.addEventListener('error', (e) => out.push('WINERR ' + e.message));
+const log = (ok, msg) => out.push((ok ? 'PASS ' : 'FAIL ') + msg);
+const tick = (ms = 50) => new Promise((r) => setTimeout(r, ms));
+async function waitFor(fn, ms = 5000) { const t = Date.now(); while (Date.now() - t < ms) { try { if (fn()) return true; } catch {} await tick(30); } return false; }
+try {
+  const { COLORS, LAYOUT, PHYS } = await import('/js/config.js');
+  const { DUNGEONS } = await import('/js/dungeons.js');
+  const scenes = await Promise.all(['Boot', 'Start', 'Join', 'Waiting', 'WorldMap', 'Quiz', 'Shop', 'Dungeon', 'Result'].map((n) => import(`/js/scenes/${n}Scene.js`).then((m) => m.default)));
+  const { state, resetGame, restoreCleared } = await import('/js/state.js');
+  const game = new Phaser.Game({ type: Phaser.CANVAS, parent: 'game', width: LAYOUT.W, height: LAYOUT.H, backgroundColor: COLORS.bg,
+    fps: { forceSetTimeOut: true, target: 60 }, dom: { createContainer: true }, physics: { default: 'arcade', arcade: { gravity: { y: PHYS.GRAVITY } } }, scene: scenes });
+  const active = (k) => game.scene.isActive(k); const S = (k) => game.scene.getScene(k);
+  await waitFor(() => active('Start'));
+
+  // 레벨 데이터 점검: 구멍 폭 ≤ 140, 높이 차 ≤ 90, 문·깃발은 발판 위
+  DUNGEONS.forEach((d, i) => {
+    const P = [...d.level.platforms].sort((a, b) => a[0] - b[0]);
+    const gaps = P.slice(1).map((p, k) => p[0] - (P[k][0] + P[k][2]));
+    const rises = P.slice(1).map((p, k) => P[k][1] - p[1]);
+    const on = (pt) => P.some(([x, y, w]) => pt.x >= x && pt.x <= x + w && pt.y === y);
+    log(Math.max(...gaps) <= 140 && Math.max(...rises) <= 90, `${d.name}: gaps ≤140 (${Math.max(...gaps)}), rises ≤90 (${Math.max(...rises)})`);
+    log(d.level.doors.every(on) && on(d.level.flag), `${d.name}: doors and flag on platforms`);
+  });
+
+  resetGame(); restoreCleared(2);
+  S('Start').scene.start('WorldMap');
+  log(await waitFor(() => active('WorldMap')) && state.unlocked === 2, '3rd dungeon unlocked after 2 clears');
+  S('WorldMap').scene.start('Dungeon', { dungeon: 2 });
+  log(await waitFor(() => active('Dungeon')), 'frozen castle dungeon builds');
+  const D = S('Dungeon');
+  D.player.body.reset(1500, 420); await tick(200);
+  log(D.checkpoint === 1, 'passing door 1 sets checkpoint');
+  D.player.body.reset(1950, 700); await tick(200);
+  log(Math.abs(D.player.x - 1450) < 30 && state.play.falls === 1, `fall -> respawn at door 1 (x=${Math.round(D.player.x)})`);
+  D.onClear();
+  log(await waitFor(() => active('Result')) && S('Result').children.list.some((c) => (c.text || '').startsWith('준비된 던전을 모두 클리어했어요')), 'clearing last dungeon -> all-cleared reward');
+} catch (e) { out.push('ERROR ' + e.stack); }
+document.getElementById('out').textContent = out.join('\n');
+</script></body></html>
