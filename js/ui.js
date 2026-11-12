@@ -1,6 +1,7 @@
-// design.md 규칙을 따르는 글자·버튼·상단 정보줄·하단 안내줄.
-import { COLORS, CSS, FONT, SIZE, LAYOUT } from './config.js';
+// design.md 규칙을 따르는 글자·버튼·상단 정보줄·하단 안내줄. 그림은 픽셀 아트 패널(art.js)
+import { COLORS, CSS, SIZE, LAYOUT } from './config.js';
 import { state, remainingSeconds } from './state.js';
+import { FONT_PIXEL as FONT, panel, UI, PP } from './art.js';
 
 const { W, H, HUD_H, GUIDE_H } = LAYOUT;
 
@@ -14,31 +15,36 @@ export function text(scene, x, y, str, size, color = CSS.player) {
   });
 }
 
-// primary: 금색 채움 / 보조: 흰색 2px 테두리. onClick이 없으면 누를 수 없다.
+// primary: 금색 픽셀 버튼 / 보조: 돌 버튼. onClick이 없으면 누를 수 없다.
+// setBorder(색): 퀴즈 보기 결과 — 금색이면 금색 버튼(정답), 빨강이면 빨간 버튼(오답)
 export function createButton(scene, x, y, label, onClick, { primary = false, w = 240, h = 56 } = {}) {
-  const g = scene.add.graphics();
-  const t = text(scene, x, y, label, 'body', primary ? CSS.bg : CSS.player).setOrigin(0.5);
+  let bg = null;
+  let alpha = 1;
+  const t = text(scene, x, y, label, 'body', primary ? CSS.bg : CSS.player).setOrigin(0.5).setDepth(1);
+  t.setWordWrapWidth(w - 24);
   const zone = scene.add.zone(x, y, w, h);
 
   function draw(border) {
-    g.clear();
-    if (primary) {
-      g.fillStyle(COLORS.good, 1);
-      g.fillRoundedRect(x - w / 2, y - h / 2, w, h, 8);
-    } else {
-      g.lineStyle(border === undefined ? 2 : 4, border === undefined ? COLORS.player : border, 1);
-      g.strokeRoundedRect(x - w / 2, y - h / 2, w, h, 8);
-    }
+    if (bg) bg.destroy();
+    const gold = border === COLORS.good || (border === undefined && primary);
+    const red = border === COLORS.bad;
+    bg = panel(scene, x, y, w, h, gold ? UI.parchment : red ? UI.red : UI.stone, gold ? COLORS.good : 0xffffff).setAlpha(alpha);
+    t.setColor(gold ? CSS.bg : CSS.player);
   }
   draw();
 
-  if (onClick) zone.setInteractive({ useHandCursor: true }).on('pointerdown', onClick);
+  if (onClick) {
+    zone.setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => { t.y = y + 2; scene.time.delayedCall(80, () => { t.y = y; }); onClick(); })
+      .on('pointerover', () => bg.setAlpha(alpha * 0.85))
+      .on('pointerout', () => bg.setAlpha(alpha));
+  }
 
   return {
     setBorder: draw,
     disable: () => zone.disableInteractive(),
-    setAlpha: (a) => { g.setAlpha(a); t.setAlpha(a); },
-    destroy: () => { g.destroy(); t.destroy(); zone.destroy(); },
+    setAlpha: (a) => { alpha = a; bg.setAlpha(a); t.setAlpha(a); },
+    destroy: () => { bg.destroy(); t.destroy(); zone.destroy(); },
   };
 }
 
@@ -47,11 +53,11 @@ export function createHud(scene, title) {
   const parts = [];
   const add = (obj) => { parts.push(obj.setScrollFactor(0).setDepth(10)); return obj; };
 
-  add(scene.add.rectangle(0, 0, W, HUD_H, COLORS.bg).setOrigin(0));
+  add(panel(scene, W / 2, HUD_H / 2, W + 12, HUD_H + 6, UI.stone, 0x8898c8).setAlpha(0.95));
   add(text(scene, 16, 22, '시간', 'small'));
   const timeText = add(text(scene, 60, 4, '', 'big'));
   const titleText = add(text(scene, W / 2, HUD_H / 2, title, 'small').setOrigin(0.5));
-  add(text(scene, W - 140, 22, '코인', 'small', CSS.good));
+  add(scene.add.sprite(W - 150, HUD_H / 2, 'pp', PP.coin).setScale(3).play('coin_spin'));
   const coinText = add(text(scene, W - 16, 4, '', 'big', CSS.good).setOrigin(1, 0));
 
   function update() {
@@ -76,7 +82,7 @@ export function createHud(scene, title) {
 // 아래: 작은 안내 한 줄
 export function createGuide(scene, str) {
   let base = str;
-  scene.add.rectangle(0, H - GUIDE_H, W, GUIDE_H, COLORS.bg).setOrigin(0).setScrollFactor(0).setDepth(10);
+  panel(scene, W / 2, H - GUIDE_H / 2, W + 12, GUIDE_H + 6, UI.stone, 0x8898c8).setAlpha(0.95).setScrollFactor(0).setDepth(10);
   const t = text(scene, W / 2, H - GUIDE_H / 2, str, 'small').setOrigin(0.5).setScrollFactor(0).setDepth(10);
   let timer = null;
   return {

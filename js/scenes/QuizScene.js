@@ -10,6 +10,9 @@ import { session } from '../session.js';
 import { beginRun, nextQuestion, submitAnswer } from '../quiz.js';
 import { errorReason } from '../firebase/clock.js';
 import { text, createButton, createHud } from '../ui.js';
+import {
+  backdrop, fadeIn, panel, coinPop, sparkle, UI,
+} from '../art.js';
 
 const { W, H, GUIDE_H } = LAYOUT;
 const BAR_W = 800;
@@ -29,7 +32,9 @@ export default class QuizScene extends Phaser.Scene {
   create() {
     this.alive = true;
     this.events.once('shutdown', () => { this.alive = false; });
-    this.add.rectangle(0, 0, W, H, COLORS.bg).setOrigin(0);
+    backdrop(this);
+    fadeIn(this);
+    panel(this, W / 2, 150, 900, 150, UI.wood, 0x8a6a8a).setAlpha(0.92);
     const title = this.mode === 'entry' ? `${DUNGEONS[this.dungeon].name} 입장 퀴즈` : '코인 회복 퀴즈';
     if (this.mode === 'entry') state.coins = 0;
     this.hud = createHud(this, title);
@@ -126,7 +131,12 @@ export default class QuizScene extends Phaser.Scene {
     this.request(() => submitAnswer(this.item, chosen), ({ correct, correctIndex }) => {
       this.options[correctIndex].setBorder(COLORS.good);
       if (chosen !== null && !correct) this.options[chosen].setBorder(COLORS.bad);
-      if (correct) state.coins += RULES.COIN_PER_CORRECT;
+      if (correct) {
+        state.coins += RULES.COIN_PER_CORRECT;
+        const [ox, oy] = OPTION_POS[correctIndex];
+        coinPop(this, ox, oy - 40, `+${RULES.COIN_PER_CORRECT}`, CSS.good);
+        sparkle(this, ox, oy, 0xffd54f, 18);
+      }
       recordQuiz(correct, this.mode);
       if (correct) reportProgress();
       this.items.push(text(this, W / 2, 470, correct ? `정답! 코인 +${RULES.COIN_PER_CORRECT}` : (chosen === null ? '시간 초과 — 금색 테두리가 정답이에요' : '오답 — 금색 테두리가 정답이에요'), 'small', correct ? CSS.good : CSS.bad).setOrigin(0.5));

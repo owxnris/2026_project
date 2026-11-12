@@ -280,3 +280,13 @@
 - 요청 요약: 11-5 사용자 확인 완료 → D-5 그래픽 방향 결정
 - 수정한 파일: design.md(그래픽 방향 확정·하지 않을 것 개정), spec.md(그래픽·효과음 결정), tasks.md(11-5 체크, D-5 완료, D-6~D-9 구체화)
 - 판단 근거: 파일 없이 코드로 그리면 CDN 규칙·Live Server·저작권·용량에 모두 안전하고, UI 5색의 의미는 지키되 던전 영역만 어두운 테마색으로 구분, 효과음은 교실 소음 방지로 기본 꺼짐
+
+[2026-11-12 12:15]
+- 요청 요약: 참고 이미지 기반 픽셀 아트 그래픽 적용(무료 CC0 에셋)
+- 수정한 파일: 없음 (에셋 다운로드가 막혀 사용자 다운로드 요청)
+- 판단 근거: Kenney·OpenGameArt 자동 다운로드가 거부됨(403·봇 차단 우회 금지). 게임 그래픽은 모두 도형 코드(장면 9개)라 에셋을 받은 뒤 시트 배치를 직접 보고 적용해야 함
+
+[2026-11-12 12:55]
+- 요청 요약: 참고 이미지 분위기의 픽셀 아트 그래픽을 무료 CC0 에셋으로 직접 받아 적용 + 교사·학생 HTML 하나로 합치기 검토
+- 수정한 파일: assets/kenney/(시트 3장·라이선스), assets/CREDITS.md, js/art.js·js/scenes/BootScene.js(신규), js/main.js, index.html(Galmuri), js/ui.js, 장면 8개(Start·Join·Waiting·WorldMap·Quiz·Shop·Dungeon·Result), design.md, spec.md, tasks.md
+- 판단 근거: itch 자동 다운로드가 막혀 OpenGameArt의 Kenney 원본(CC0)을 받았고, 프레임 하나뿐인 주인공은 코드 몸짓으로 살렸으며, Canvas 렌더러에서도 보이도록 색·패널을 미리 그림으로 만듦. 게임 로직·Firebase는 그대로

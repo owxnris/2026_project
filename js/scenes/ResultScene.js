@@ -10,6 +10,9 @@ import { leaveActivity } from '../session.js';
 import { hasOpenRun, finishRun, playStats } from '../quiz.js';
 import { errorReason } from '../firebase/clock.js';
 import { text, createButton, createHud } from '../ui.js';
+import {
+  backdrop, fadeIn, panel, ribbon, sparkle, reducedMotion, UI, SCALE,
+} from '../art.js';
 
 const { W } = LAYOUT;
 const cx = W / 2;
@@ -32,6 +35,9 @@ export default class ResultScene extends Phaser.Scene {
   create() {
     this.alive = true;
     this.events.once('shutdown', () => { this.alive = false; });
+    backdrop(this);
+    fadeIn(this);
+    panel(this, cx, 290, 480, 380, UI.wood, 0x8a6a8a).setAlpha(0.92);
     this.hud = createHud(this, '결과');
     const open = hasOpenRun();
     if (this.mode === 'clear') this.drawClear();
@@ -49,9 +55,18 @@ export default class ResultScene extends Phaser.Scene {
 
   drawClear() {
     const p = state.play;
-    text(this, cx, 82, `${DUNGEONS[this.dungeon].name} 클리어!`, 'body', CSS.good).setOrigin(0.5);
+    ribbon(this, cx, 82, 400);
+    text(this, cx, 80, `${DUNGEONS[this.dungeon].name} 클리어!`, 'body', CSS.player).setOrigin(0.5).setStroke('#3f2631', 6);
+    // 별: 얻은 별은 금색으로 하나씩 튀어나온다
     starsOf(p).forEach((got, i) => {
-      this.add.star(cx - 50 + i * 50, 125, 5, 9, 20, got ? COLORS.good : COLORS.player, got ? 1 : 0.4);
+      const s = this.add.image(cx - 60 + i * 60, 125, got ? 'star' : 'star_off').setScale(got ? SCALE : 2.4);
+      if (got && !reducedMotion()) {
+        s.setScale(0);
+        this.tweens.add({
+          targets: s, scale: SCALE, delay: 200 + i * 250, duration: 300, ease: 'Back.out',
+          onStart: () => sparkle(this, s.x, s.y, 0xffd54f, 10),
+        });
+      }
     });
     text(this, cx, 155, '별: 클리어 · 입장 퀴즈 모두 정답 · 충돌 0번', 'small').setOrigin(0.5).setAlpha(0.6);
     this.line(185, '맞힌 문제', `${p.quizCorrect} / ${p.quizTotal}`);

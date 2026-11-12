@@ -5,6 +5,12 @@ import { DUNGEONS } from '../dungeons.js';
 import { state, checkTimeout } from '../state.js';
 import { reportProgress } from '../progress.js';
 import { text, createButton, createHud, createGuide } from '../ui.js';
+import {
+  backdrop, fadeIn, panel, sprite, UI, TD,
+} from '../art.js';
+
+// 능력 그림: 대시 = 파란 물약(빨라짐), 보호막 = 방패, 이단 점프 = 초록 물약(가벼워짐)
+const ICON = { dash: TD.potionBlue, shield: TD.shield, doubleJump: TD.potionGreen };
 
 const { W } = LAYOUT;
 const ROW_Y = [150, 250, 350];
@@ -17,16 +23,18 @@ export default class ShopScene extends Phaser.Scene {
   }
 
   create() {
+    backdrop(this);
+    fadeIn(this);
     this.hud = createHud(this, `${DUNGEONS[this.dungeon].name} · 능력 구매`);
     this.guide = createGuide(this, '코인으로 능력을 사세요 · 안 사도 클리어할 수 있어요');
     this.rows = ABILITIES.map((a, i) => this.makeRow(a, ROW_Y[i]));
-    ROW_Y.slice(1).forEach((y) => this.add.rectangle(80, y - 50, W - 160, 1, COLORS.player, 0.2).setOrigin(0, 0.5));
     createButton(this, W / 2, 440, '던전 입장', () => this.scene.start('Dungeon', { dungeon: this.dungeon }), { primary: true });
     this.refresh();
   }
 
   makeRow(a, y) {
-    const icon = this.add.rectangle(110, y, 36, 36, COLORS.player, 0).setStrokeStyle(2, COLORS.player);
+    panel(this, W / 2, y, W - 120, 90, UI.wood, 0x8a6a8a).setAlpha(0.9);
+    const icon = sprite(this, 112, y, 'td', ICON[a.key]);
     const name = text(this, 150, y - 22, a.name, 'body').setOrigin(0, 0.5);
     const effect = text(this, 150, y + 14, a.effect, 'small').setOrigin(0, 0.5);
     const price = text(this, 690, y, `${a.price}코인`, 'small', CSS.good).setOrigin(1, 0.5);

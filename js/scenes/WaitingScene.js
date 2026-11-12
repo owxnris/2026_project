@@ -8,6 +8,9 @@ import { session, enterActivity } from '../session.js';
 import { resetGame, restoreCleared } from '../state.js';
 import { loadClearedCount } from '../progress.js';
 import { text } from '../ui.js';
+import {
+  backdrop, fadeIn, panel, sprite, UI, TD, SCALE,
+} from '../art.js';
 
 const cx = LAYOUT.W / 2;
 
@@ -16,6 +19,12 @@ export default class WaitingScene extends Phaser.Scene {
 
   create() {
     this.entering = false;
+    backdrop(this);
+    fadeIn(this);
+    panel(this, cx, 240, 560, 220, UI.wood, 0x8a6a8a).setAlpha(0.9);
+    // 기다리는 동안 말랑이가 통통 뛴다
+    const hero = sprite(this, cx, 470, 'td', TD.hero).setOrigin(0.5, 1).setScale(SCALE + 1);
+    this.tweens.add({ targets: hero, y: 440, duration: 380, yoyo: true, repeat: -1, ease: 'Quad.out', repeatDelay: 700 });
     text(this, cx, 200, session.className, 'body').setOrigin(0.5);
     text(this, cx, 245, `${session.nickname} · 선생님이 시작하면 게임이 열려요`, 'small').setOrigin(0.5);
     this.error = text(this, cx, 300, '', 'small', CSS.bad).setOrigin(0.5);

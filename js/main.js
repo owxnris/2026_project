@@ -1,4 +1,5 @@
 import { COLORS, LAYOUT, PHYS } from './config.js';
+import BootScene from './scenes/BootScene.js';
 import StartScene from './scenes/StartScene.js';
 import WorldMapScene from './scenes/WorldMapScene.js';
 import QuizScene from './scenes/QuizScene.js';
@@ -14,8 +15,9 @@ new Phaser.Game({
   width: LAYOUT.W,
   height: LAYOUT.H,
   backgroundColor: COLORS.bg,
+  pixelArt: true, // 픽셀 그림을 흐리지 않게 키운다
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   dom: { createContainer: true }, // 참여 화면 입력창(HTML input)
   physics: { default: 'arcade', arcade: { gravity: { y: PHYS.GRAVITY } } },
-  scene: [StartScene, JoinScene, WaitingScene, WorldMapScene, QuizScene, ShopScene, DungeonScene, ResultScene],
+  scene: [BootScene, StartScene, JoinScene, WaitingScene, WorldMapScene, QuizScene, ShopScene, DungeonScene, ResultScene],
 });
