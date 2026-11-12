@@ -290,3 +290,8 @@
 - 요청 요약: 참고 이미지 분위기의 픽셀 아트 그래픽을 무료 CC0 에셋으로 직접 받아 적용 + 교사·학생 HTML 하나로 합치기 검토
 - 수정한 파일: assets/kenney/(시트 3장·라이선스), assets/CREDITS.md, js/art.js·js/scenes/BootScene.js(신규), js/main.js, index.html(Galmuri), js/ui.js, 장면 8개(Start·Join·Waiting·WorldMap·Quiz·Shop·Dungeon·Result), design.md, spec.md, tasks.md
 - 판단 근거: itch 자동 다운로드가 막혀 OpenGameArt의 Kenney 원본(CC0)을 받았고, 프레임 하나뿐인 주인공은 코드 몸짓으로 살렸으며, Canvas 렌더러에서도 보이도록 색·패널을 미리 그림으로 만듦. 게임 로직·Firebase는 그대로
+
+[2026-11-12 13:31]
+- 요청 요약: 주소 하나로 들어가도록 시작 화면에 교사 모드(선생님 로그인) 추가
+- 수정한 파일: js/scenes/StartScene.js(학생으로 참여·선생님 로그인 버튼), teacher.html(학생 참여 화면으로 링크)
+- 판단 근거: 교사·학생 코드는 그대로 두고(교사는 게임 엔진을 불러오지 않음) 첫 화면에서 역할을 고르게 해 선생님 의도(주소 하나)를 살림. Firebase 설정이 없는 예비 흐름에서는 교사 버튼을 숨김

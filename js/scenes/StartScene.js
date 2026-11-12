@@ -39,7 +39,8 @@ export default class StartScene extends Phaser.Scene {
     });
 
     text(this, cx, 240, '던전 고르기 → 입장 퀴즈 3문제(정답마다 코인 10) → 능력 구매 → 깃발까지 달리기', 'small').setOrigin(0.5).setAlpha(0.7);
-    createButton(this, cx, 310, '시작', () => {
+    // 주소 하나로 들어온다: 학생은 여기서 참여, 선생님은 교사 플랫폼(teacher.html, Google 로그인)으로
+    createButton(this, cx, 300, session.online ? '학생으로 참여' : '시작', () => {
       leaveActivity();
       if (session.online) {
         this.scene.start('Join'); // 참여 코드·닉네임 → 대기 → 교사가 시작하면 월드맵
@@ -48,6 +49,9 @@ export default class StartScene extends Phaser.Scene {
       resetGame(); // Firebase 설정값이 없을 때의 예비 흐름: 바로 월드맵 (임시 300초)
       this.scene.start('WorldMap');
     }, { primary: true });
+    if (session.online) {
+      createButton(this, cx, 362, '선생님 로그인', () => { window.location.href = 'teacher.html'; }, { w: 220, h: 44 });
+    }
     createGuide(this, GUIDE_TEXT);
   }
 }
