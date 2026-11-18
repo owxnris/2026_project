@@ -200,6 +200,17 @@ try {
   log(!panel('questions').hidden && panel('summary').hidden && panel('students').hidden, 'results buttons: only the chosen section is shown');
   document.querySelector('[data-seg="results"] [data-sec="summary"]').click();
   log(!panel('summary').hidden && panel('questions').hidden, 'results buttons: back to summary');
+  // CSV 내려받기: 내려받는 파일 내용을 가로채서 확인
+  let blob = null; const origUrl = URL.createObjectURL; URL.createObjectURL = (b) => { blob = b; return 'blob:test'; };
+  const origClick = HTMLAnchorElement.prototype.click; let fname = ''; HTMLAnchorElement.prototype.click = function () { fname = this.download; };
+  $('r-csv-students').click();
+  const sCsv = await blob.text();
+  log(fname.endsWith('_전체 활동_학생별 요약.csv') && sCsv.startsWith(String.fromCharCode(0xFEFF) + '닉네임,맞힌 문제') && sCsv.includes('하늘,') && sCsv.includes('바다,'), `CSV students (${fname})`);
+  $('r-csv-runs').click();
+  const rCsv = await blob.text();
+  log(rCsv.includes('정보·수학 복습') && rCsv.includes('클리어') && rCsv.split('
+').filter(Boolean).length >= 5, 'CSV runs: one line per run with activity title');
+  URL.createObjectURL = origUrl; HTMLAnchorElement.prototype.click = origClick;
   log(await waitFor(() => $('r-supplement').textContent.includes('보충할 개념: 정보 · 알고리즘')), `class summary names weak concept (${$('r-supplement').textContent.slice(0, 80)})`);
   log(!$('r-supplement-btn').hidden && $('r-supplement').textContent.includes('보충 학습이 필요한 학생 (학습 수준 하): 바다'), 'supplement: button + students needing support');
   const part = rows('r-participation').map(cells);

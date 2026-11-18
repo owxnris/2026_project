@@ -1,0 +1,48 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<script type="importmap">
+{ "imports": {
+  "http://127.0.0.1:5599/js/firebase/sdk.js": "/__test/e2e-sdk.js",
+  "http://127.0.0.1:5599/js/firebase/app.js": "/__test/off-app.js"
+} }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script></head>
+<body><div id="game"></div><pre id="out">running</pre>
+<script type="module">
+// 터치 조작: ?touch=1로 열어 던전에 화면 버튼이 생기고, 누르면 움직이고 점프하는지 본다
+const out = []; const log = (ok, m) => out.push((ok ? 'PASS ' : 'FAIL ') + m);
+const tick = (ms = 50) => new Promise((r) => setTimeout(r, ms));
+async function waitFor(fn, ms = 5000) { const t = Date.now(); while (Date.now() - t < ms) { try { if (fn()) return true; } catch {} await tick(30); } return false; }
+try {
+  const { COLORS, LAYOUT, PHYS } = await import('/js/config.js');
+  const scenes = await Promise.all(['Boot', 'Start', 'Join', 'Waiting', 'WorldMap', 'Quiz', 'Shop', 'Dungeon', 'Result'].map((n) => import(`/js/scenes/${n}Scene.js`).then((m) => m.default)));
+  const { state, resetGame, restoreCleared } = await import('/js/state.js');
+  const game = new Phaser.Game({ type: Phaser.CANVAS, parent: 'game', width: LAYOUT.W, height: LAYOUT.H, backgroundColor: COLORS.bg,
+    fps: { forceSetTimeOut: true, target: 60 }, dom: { createContainer: true }, physics: { default: 'arcade', arcade: { gravity: { y: PHYS.GRAVITY } } }, scene: scenes });
+  const active = (k) => game.scene.isActive(k); const S = (k) => game.scene.getScene(k);
+  await waitFor(() => active('Start'));
+  resetGame(); restoreCleared(0);
+  S('Start').scene.start('Dungeon', { dungeon: 0 });
+  await waitFor(() => active('Dungeon'));
+  const D = S('Dungeon');
+  log(!!D.touch && Object.keys(D.touch.buttons).join() === 'left,right,jump,dash', 'touch buttons shown (◀ ▶ 점프 대시)');
+  log(D.guide && S('Dungeon').children.list.some((c) => (c.text || '').startsWith('◀ ▶ 이동')), 'guide uses touch wording');
+  await tick(400);
+  const x0 = D.player.x;
+  D.touch.buttons.right.zone.emit('pointerdown');
+  await tick(400);
+  log(D.player.x > x0 + 20, `hold ▶ -> moves right (${Math.round(x0)} -> ${Math.round(D.player.x)})`);
+  D.touch.buttons.right.zone.emit('pointerup');
+  await tick(100);
+  const x1 = D.player.x; await tick(200);
+  log(Math.abs(D.player.x - x1) < 2, 'release ▶ -> stops');
+  D.touch.buttons.jump.zone.emit('pointerdown');
+  await tick(150);
+  log(D.player.body.velocity.y < 0, 'tap 점프 -> jumps');
+  state.play.dashLeft = 1; state.play.abilities.dash = 1;
+  await waitFor(() => D.player.body.blocked.down, 3000);
+  D.touch.buttons.dash.zone.emit('pointerdown');
+  await tick(60);
+  log(D.dashing === true && state.play.dashLeft === 0, 'tap 대시 -> dashes (uses one)');
+} catch (e) { out.push('ERROR ' + e.stack); }
+document.getElementById('out').textContent = out.join('\n');
+</script></body></html>

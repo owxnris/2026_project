@@ -11,14 +11,17 @@ import {
   SCALE, TD, PP, THEMES, sprite, tiles, tinted, dot, coinPop, sparkle, reducedMotion, fadeIn,
 } from '../art.js';
 import { playMusic } from '../music.js';
+import { isTouchDevice, createTouchControls } from '../touch.js';
 
 // 안내 줄: 조작과 가진 능력 (예: ←→ 이동 · Space 점프 · Shift 대시(남은 2회) · 보호막 · 이단 점프)
+// 터치 기기는 화면 버튼 이름으로 안내한다
+const TOUCH = isTouchDevice();
 function guideText() {
   const p = state.play;
-  const parts = ['←→ 이동', 'Space 점프'];
-  if (p.abilities.dash > 0) parts.push(`Shift 대시(남은 ${p.dashLeft}회)`);
+  const parts = TOUCH ? ['◀ ▶ 이동', '점프'] : ['←→ 이동', 'Space 점프'];
+  if (p.abilities.dash > 0) parts.push(`${TOUCH ? '대시' : 'Shift 대시'}(남은 ${p.dashLeft}회)`);
   if (p.shieldLeft) parts.push('보호막');
-  if (p.abilities.doubleJump) parts.push('이단 점프(공중에서 Space)');
+  if (p.abilities.doubleJump) parts.push(`이단 점프(공중에서 ${TOUCH ? '점프' : 'Space'})`);
   return parts.join(' · ');
 }
 
@@ -78,6 +81,7 @@ export default class DungeonScene extends Phaser.Scene {
 
     this.keys = this.input.keyboard.createCursorKeys();
     this.shift = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
+    this.touch = TOUCH ? createTouchControls(this) : null; // 태블릿·휴대폰: 화면 버튼
 
     // 회복 퀴즈에서 돌아왔을 때 눌린 채로 남은 키를 풀어 준다.
     this.events.off('resume', this.onResume, this);
@@ -212,6 +216,7 @@ export default class DungeonScene extends Phaser.Scene {
 
   onResume() {
     this.input.keyboard.resetKeys();
+    this.touch?.release();
   }
 
   update(time) {
@@ -238,10 +243,11 @@ export default class DungeonScene extends Phaser.Scene {
     if (this.dashing || time < this.stunUntil) return;
 
     const body = this.player.body;
-    if (this.keys.left.isDown) {
+    const t = this.touch;
+    if (this.keys.left.isDown || t?.left) {
       body.setVelocityX(-PHYS.MOVE_SPEED);
       this.facing = -1;
-    } else if (this.keys.right.isDown) {
+    } else if (this.keys.right.isDown || t?.right) {
       body.setVelocityX(PHYS.MOVE_SPEED);
       this.facing = 1;
     } else {
@@ -250,7 +256,7 @@ export default class DungeonScene extends Phaser.Scene {
 
     const onGround = body.blocked.down || body.touching.down;
     if (onGround) this.airJumped = false;
-    if (Phaser.Input.Keyboard.JustDown(this.keys.space)) {
+    if (Phaser.Input.Keyboard.JustDown(this.keys.space) || t?.takeJump()) {
       if (onGround) body.setVelocityY(-PHYS.JUMP_SPEED);
       else if (state.play.abilities.doubleJump && !this.airJumped) {
         this.airJumped = true; // 이단 점프: 공중에서 한 번 더
@@ -258,7 +264,7 @@ export default class DungeonScene extends Phaser.Scene {
         sparkle(this, this.player.x, this.player.y + 24, 0x9ffff0, 8);
       }
     }
-    if (Phaser.Input.Keyboard.JustDown(this.shift)) this.tryDash();
+    if (Phaser.Input.Keyboard.JustDown(this.shift) || t?.takeDash()) this.tryDash();
   }
 
   // 대시: 산 횟수만큼 쓸 수 있고, 쓸 때 코인은 줄지 않는다

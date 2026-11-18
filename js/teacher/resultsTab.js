@@ -2,6 +2,7 @@
 // → 문제별 정답률 → 개념별 오답(취약 개념). 값은 저장된 결과(results)에서 계산한다.
 import { reasonText } from '../firebase/errors.js';
 import { setupSegments } from './segments.js';
+import { studentsCsv, runsCsv, download } from './csv.js';
 import { onClassDataChange, getResults, getClassDataError, getStudents } from './classHub.js';
 import {
   OUTCOME_LABEL, percent, filterResults, questionIndex, studentSummary, questionStats, conceptStats,
@@ -196,6 +197,14 @@ export function setupResultsTab(activities, onActivities, bank, make) {
   $('r-activity').addEventListener('change', () => { selectedUid = null; render(); });
   $('r-detail-close').addEventListener('click', () => { selectedUid = null; $('r-detail').hidden = true; });
   setupSegments(document.querySelector('[data-panel="results"]'));
+  // CSV 내려받기: 지금 고른 활동(전체 활동이면 모두)의 결과
+  const csvName = (kind) => {
+    const act = getActivities().find((a) => a.id === $('r-activity').value);
+    return `${$('detail-name').textContent}_${act ? act.title : '전체 활동'}_${kind}.csv`;
+  };
+  const shownResults = () => filterResults(getResults(), $('r-activity').value);
+  $('r-csv-students').addEventListener('click', () => download(csvName('학생별 요약'), studentsCsv(shownResults())));
+  $('r-csv-runs').addEventListener('click', () => download(csvName('판별 기록'), runsCsv(shownResults(), getActivities(), DUNGEONS.map((d) => d.name))));
   setupSegments($('r-detail'));
   onClassDataChange(render);
   onActivities(render);
