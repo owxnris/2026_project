@@ -4,7 +4,9 @@ const out = []; const log = (ok, m) => out.push((ok ? 'PASS ' : 'FAIL ') + m);
 try {
   localStorage.removeItem('dungeonDash.sound');
   const S = await import('/js/sound.js?' + Date.now());
-  log(S.soundOn() === false, 'default off');
+  log(S.soundOn() === true, 'default on (user request 2026-11-18)');
+  S.setSound(false);
+  log(localStorage.getItem('dungeonDash.sound') === 'off', 'turn off -> remembered (first)');
   let threw = null;
   try { ['correct', 'wrong', 'coin', 'hit', 'clear'].forEach((n) => S.play(n)); } catch (e) { threw = e; }
   log(!threw, 'play while off does nothing, no error');
@@ -15,6 +17,15 @@ try {
   log(!threw, '5 sounds play without error (Web Audio)');
   S.setSound(false);
   log(localStorage.getItem('dungeonDash.sound') === 'off', 'turn off -> remembered');
+  // 배경 음악: 화면마다 곡, 끄면 멈춤
+  const M = await import('/js/music.js');
+  M.playMusic('menu');
+  log(true, 'playMusic menu without error');
+  S.setSound(false); M.refreshMusic();
+  M.playMusic('dungeon0');
+  log(true, 'music respects sound off without error');
+  const ok = await Promise.all(['old-tower-inn', 'stage-select', 'stage-1', 'boss-fight', 'stage-2'].map((n) => fetch('/assets/music/' + n + '.mp3', { method: 'HEAD' }).then((r) => r.ok)));
+  log(ok.every(Boolean), 'all 5 music files are served');
 } catch (e) { out.push('ERROR ' + e.stack); }
 document.getElementById('out').textContent = out.join('\n');
 </script></body></html>

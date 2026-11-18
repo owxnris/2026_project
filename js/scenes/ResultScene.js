@@ -13,6 +13,7 @@ import { text, createButton, createHud } from '../ui.js';
 import {
   backdrop, fadeIn, panel, ribbon, sparkle, reducedMotion, UI, SCALE,
 } from '../art.js';
+import { playMusic } from '../music.js';
 
 const { W } = LAYOUT;
 const cx = W / 2;
@@ -37,6 +38,7 @@ export default class ResultScene extends Phaser.Scene {
     this.events.once('shutdown', () => { this.alive = false; });
     backdrop(this);
     fadeIn(this);
+    playMusic('map');
     panel(this, cx, 290, 480, 380, UI.wood, 0x8a6a8a).setAlpha(0.92);
     this.hud = createHud(this, '결과');
     const open = hasOpenRun();

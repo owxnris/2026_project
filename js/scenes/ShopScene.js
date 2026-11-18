@@ -11,6 +11,7 @@ import {
 import {
   backdrop, fadeIn, panel, sprite, UI, TD,
 } from '../art.js';
+import { playMusic } from '../music.js';
 
 // 능력 그림: 대시 = 파란 물약(빨라짐), 보호막 = 방패, 이단 점프 = 초록 물약(가벼워짐)
 const ICON = { dash: TD.potionBlue, shield: TD.shield, doubleJump: TD.potionGreen };
@@ -28,6 +29,7 @@ export default class ShopScene extends Phaser.Scene {
   create() {
     backdrop(this);
     fadeIn(this);
+    playMusic('map');
     this.hud = createHud(this, `${DUNGEONS[this.dungeon].name} · 능력 구매`, { back: true });
     this.guide = createGuide(this, '코인으로 능력을 사세요 · 안 사도 클리어할 수 있어요');
     createBackButton(this, () => this.scene.start('WorldMap'), {

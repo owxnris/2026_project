@@ -9,6 +9,7 @@ import { reportProgress } from '../progress.js';
 import {
   backdrop, fadeIn, panel, sprite, tiles, THEMES, UI, TD, PP, SCALE,
 } from '../art.js';
+import { playMusic } from '../music.js';
 
 export default class WorldMapScene extends Phaser.Scene {
   constructor() { super('WorldMap'); }
@@ -16,6 +17,7 @@ export default class WorldMapScene extends Phaser.Scene {
   create() {
     backdrop(this);
     fadeIn(this);
+    playMusic('map');
     this.hud = createHud(this, '월드맵', { back: true });
     const guide = createGuide(this, '도전할 던전을 고르세요 · 앞 던전을 깨면 다음 던전이 열려요');
     // 처음 화면으로: 같은 닉네임으로 다시 참여하면 깬 던전이 이어진다

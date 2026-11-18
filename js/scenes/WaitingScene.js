@@ -11,6 +11,7 @@ import { text, createBackButton } from '../ui.js';
 import {
   backdrop, fadeIn, panel, sprite, UI, TD, SCALE,
 } from '../art.js';
+import { playMusic } from '../music.js';
 
 const cx = LAYOUT.W / 2;
 
@@ -21,6 +22,7 @@ export default class WaitingScene extends Phaser.Scene {
     this.entering = false;
     backdrop(this);
     fadeIn(this);
+    playMusic('menu');
     panel(this, cx, 240, 560, 220, UI.wood, 0x8a6a8a).setAlpha(0.9);
     createBackButton(this, () => this.scene.start('Start'));
     // 기다리는 동안 말랑이가 통통 뛴다

@@ -355,3 +355,8 @@
 - 요청 요약: 학생 플레이 때 소리가 안 남
 - 수정한 파일: js/sound.js(매 클릭·터치·키 입력마다 소리 장치 깨우기, 음량 0.07→0.1), StartScene.js(버튼 글자를 할 일로: 소리 켜기/끄기), design.md
 - 판단 근거: 기본이 꺼짐인데 버튼 글자 소리 끔이 상태인지 할 일인지 헷갈리고, 소리 장치를 첫 입력 한 번만 깨워 켠 뒤에도 잠든 채로 남을 수 있었음(특히 터치 기기)
+
+[2026-11-18 16:17]
+- 요청 요약: 무료 배포 사이트에서 테마에 맞는 배경 음악을 받아 넣고, 대기 화면에서도 음악이 나오게
+- 수정한 파일: assets/music/(CC0 곡 5개, 라이선스 원문), js/music.js(신규), js/sound.js(소리 기본 켜짐), 장면 8개(화면별 곡), assets/CREDITS.md, design.md, spec.md, tests/browser/(sound.test·server.mjs)
+- 판단 근거: OpenGameArt의 CC0 칩튠(RandomMind, Juhani Junkala)을 직접 받아 MP3(모든 브라우저 재생)로 쓰고, 같은 곡은 화면이 바뀌어도 이어지게 함. 사용자 요청으로 소리를 기본 켜짐으로 바꿈

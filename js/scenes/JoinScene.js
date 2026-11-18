@@ -5,6 +5,7 @@ import { joinClass, JoinError } from '../firebase/student.js';
 import { setClass } from '../session.js';
 import { text, createButton, createInput, createBackButton } from '../ui.js';
 import { backdrop, fadeIn, panel, UI } from '../art.js';
+import { playMusic } from '../music.js';
 
 const cx = LAYOUT.W / 2;
 const NICKNAME_MAX = 10; // firestore.rules 학생 문서 nickname 길이와 같다
@@ -19,6 +20,7 @@ export default class JoinScene extends Phaser.Scene {
     this.busy = false;
     backdrop(this);
     fadeIn(this);
+    playMusic('menu');
     panel(this, cx, 255, 520, 400, UI.wood, 0x8a6a8a).setAlpha(0.9);
     createBackButton(this, () => this.scene.start('Start'));
 

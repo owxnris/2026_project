@@ -1,10 +1,11 @@
 // 효과음 (design.md 그래픽 방향): 파일 없이 브라우저(Web Audio)에서 짧은 소리를 만든다.
-// 기본은 꺼짐 — 시작 화면의 소리 버튼으로 켜고, 선택은 이 기기에 기억한다(저장이 막혀도 게임은 그대로).
+// 기본은 켜짐(사용자 요청, 2026-11-18) — 시작 화면의 소리 버튼으로 끄고 켜며, 선택은 이 기기에 기억한다(저장이 막혀도 게임은 그대로).
+// 배경 음악(music.js)도 이 설정을 따른다.
 const KEY = 'dungeonDash.sound';
 const VOLUME = 0.1; // 교실에서 거슬리지 않을 만큼
 
-let on = false;
-try { on = localStorage.getItem(KEY) === 'on'; } catch { /* 저장소를 못 쓰면 꺼진 채로 */ }
+let on = true;
+try { on = localStorage.getItem(KEY) !== 'off'; } catch { /* 저장소를 못 쓰면 켜진 채로 */ }
 
 let ctx = null;
 function audio() {

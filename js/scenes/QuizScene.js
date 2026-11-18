@@ -16,6 +16,7 @@ import {
 import {
   backdrop, fadeIn, panel, coinPop, sparkle, UI,
 } from '../art.js';
+import { playMusic } from '../music.js';
 
 const { W, H, GUIDE_H } = LAYOUT;
 const BAR_W = 800;
@@ -37,6 +38,7 @@ export default class QuizScene extends Phaser.Scene {
     this.events.once('shutdown', () => { this.alive = false; });
     backdrop(this);
     fadeIn(this);
+    if (this.mode === 'entry') playMusic('map'); // 회복 퀴즈는 던전 음악을 그대로
     panel(this, W / 2, 150, 900, 150, UI.wood, 0x8a6a8a).setAlpha(0.92);
     const title = this.mode === 'entry' ? `${DUNGEONS[this.dungeon].name} 입장 퀴즈` : '코인 회복 퀴즈';
     if (this.mode === 'entry') state.coins = 0;

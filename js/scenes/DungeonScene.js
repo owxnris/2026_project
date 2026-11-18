@@ -10,6 +10,7 @@ import { reportProgress } from '../progress.js';
 import {
   SCALE, TD, PP, THEMES, sprite, tiles, tinted, dot, coinPop, sparkle, reducedMotion, fadeIn,
 } from '../art.js';
+import { playMusic } from '../music.js';
 
 // 안내 줄: 조작과 가진 능력 (예: ←→ 이동 · Space 점프 · Shift 대시(남은 2회) · 보호막 · 이단 점프)
 function guideText() {
@@ -51,6 +52,7 @@ export default class DungeonScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, L.width, H);
     this.cameras.main.setBackgroundColor(this.theme.bg);
     fadeIn(this);
+    playMusic(`dungeon${this.index}`);
 
     this.buildBackdrop(L);
     this.buildCourse(L);

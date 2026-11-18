@@ -4,6 +4,7 @@ import { setQuestions } from '../questions.js';
 import { session, leaveActivity } from '../session.js';
 import { text, createButton, createGuide } from '../ui.js';
 import { soundOn, setSound } from '../sound.js';
+import { playMusic, refreshMusic } from '../music.js';
 import {
   backdrop, fadeIn, sprite, tiles, ribbon, THEMES, TD, SCALE,
 } from '../art.js';
@@ -22,6 +23,7 @@ export default class StartScene extends Phaser.Scene {
     const cx = W / 2;
     backdrop(this);
     fadeIn(this);
+    playMusic('menu');
 
     // 제목: 리본 위 큰 글자 (외곽선으로 또렷하게)
     ribbon(this, cx, 150, 420);
@@ -63,6 +65,7 @@ export default class StartScene extends Phaser.Scene {
     const label = soundOn() ? '소리 끄기' : '소리 켜기'; // 누르면 할 일을 쓴다
     this.soundButton = createButton(this, W - 96, 36, label, () => {
       setSound(!soundOn());
+      refreshMusic();
       this.time.delayedCall(0, () => this.drawSoundButton());
     }, { w: 160, h: 44 });
   }
