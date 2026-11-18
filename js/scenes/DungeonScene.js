@@ -1,7 +1,9 @@
 import { COLORS, CSS, LAYOUT, RULES, PHYS } from '../config.js';
 import { DUNGEONS } from '../dungeons.js';
 import { state, checkTimeout, clearDungeon } from '../state.js';
-import { text, createHud, createGuide } from '../ui.js';
+import {
+  text, createHud, createGuide, createBackButton,
+} from '../ui.js';
 import { playStats } from '../quiz.js';
 import { play } from '../sound.js';
 import { reportProgress } from '../progress.js';
@@ -65,8 +67,11 @@ export default class DungeonScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.obstacles, this.onHit, null, this);
     this.physics.add.overlap(this.player, this.flagPole, this.onClear, null, this);
 
-    this.hud = createHud(this, '');
+    this.hud = createHud(this, '', { back: true });
     this.guide = createGuide(this, guideText());
+    createBackButton(this, () => this.scene.start('WorldMap'), {
+      warn: (m) => this.guide.notice(m, CSS.bad), message: '한 번 더 누르면 월드맵으로 가요 · 이번 판은 그만둬요',
+    });
     reportProgress(this.index);
 
     this.keys = this.input.keyboard.createCursorKeys();

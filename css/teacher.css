@@ -223,7 +223,8 @@ div:has(> .table) { overflow-x: auto; }
 
 /* ── 밝은 대시보드 (위의 기본 규칙을 덮어쓴다) ── */
 .topbar { background: var(--card); border-bottom: 1px solid var(--line); box-shadow: var(--shadow); position: sticky; top: 0; z-index: 5; }
-.logo { display: flex; align-items: center; gap: 10px; font-weight: bold; color: var(--navy); }
+.logo { display: flex; align-items: center; gap: 10px; font-weight: bold; color: var(--navy); text-decoration: none; border-radius: 8px; padding: 4px 6px; }
+.logo:hover { background: var(--navy-soft); }
 .logo .body-text { font-size: 22px; }
 /* 말랑이 아이콘: 게임과 같은 Kenney Tiny Dungeon 시트의 108번 그림 (assets/CREDITS.md) */
 .logo-icon {

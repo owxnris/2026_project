@@ -3,7 +3,7 @@ import { reasonText } from '../firebase/errors.js';
 import { CSS, LAYOUT } from '../config.js';
 import { joinClass, JoinError } from '../firebase/student.js';
 import { setClass } from '../session.js';
-import { text, createButton, createInput } from '../ui.js';
+import { text, createButton, createInput, createBackButton } from '../ui.js';
 import { backdrop, fadeIn, panel, UI } from '../art.js';
 
 const cx = LAYOUT.W / 2;
@@ -20,6 +20,7 @@ export default class JoinScene extends Phaser.Scene {
     backdrop(this);
     fadeIn(this);
     panel(this, cx, 255, 520, 400, UI.wood, 0x8a6a8a).setAlpha(0.9);
+    createBackButton(this, () => this.scene.start('Start'));
 
     text(this, cx, 90, '수업 참여', 'body').setOrigin(0.5);
     text(this, cx, 150, '참여 코드', 'small').setOrigin(0.5);

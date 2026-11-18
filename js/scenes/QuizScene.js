@@ -10,7 +10,9 @@ import { reportProgress } from '../progress.js';
 import { session } from '../session.js';
 import { beginRun, nextQuestion, submitAnswer } from '../quiz.js';
 import { errorReason } from '../firebase/clock.js';
-import { text, createButton, createHud } from '../ui.js';
+import {
+  text, createButton, createHud, createBackButton,
+} from '../ui.js';
 import {
   backdrop, fadeIn, panel, coinPop, sparkle, UI,
 } from '../art.js';
@@ -38,7 +40,15 @@ export default class QuizScene extends Phaser.Scene {
     panel(this, W / 2, 150, 900, 150, UI.wood, 0x8a6a8a).setAlpha(0.92);
     const title = this.mode === 'entry' ? `${DUNGEONS[this.dungeon].name} 입장 퀴즈` : '코인 회복 퀴즈';
     if (this.mode === 'entry') state.coins = 0;
-    this.hud = createHud(this, title);
+    // 입장 퀴즈에서만 뒤로 갈 수 있다 (회복 퀴즈는 맞혀야 던전으로 돌아간다)
+    this.hud = createHud(this, title, { back: this.mode === 'entry' });
+    if (this.mode === 'entry') {
+      const warnText = text(this, W / 2, H - GUIDE_H / 2, '', 'small', CSS.bad).setOrigin(0.5).setDepth(11);
+      createBackButton(this, () => this.scene.start('WorldMap'), {
+        warn: (m) => { warnText.setText(m); this.time.delayedCall(2500, () => warnText.setText('')); },
+        message: '한 번 더 누르면 월드맵으로 가요 · 이번 판은 그만둬요',
+      });
+    }
     this.bar = this.add.rectangle((W - BAR_W) / 2, H - GUIDE_H / 2, BAR_W, 8, COLORS.player).setOrigin(0, 0.5);
     if (this.mode === 'entry') this.request(() => beginRun(this.dungeon), () => this.showQuestion());
     else this.showQuestion();

@@ -5,7 +5,9 @@ import { DUNGEONS } from '../dungeons.js';
 import { play } from '../sound.js';
 import { state, checkTimeout } from '../state.js';
 import { reportProgress } from '../progress.js';
-import { text, createButton, createHud, createGuide } from '../ui.js';
+import {
+  text, createButton, createHud, createGuide, createBackButton,
+} from '../ui.js';
 import {
   backdrop, fadeIn, panel, sprite, UI, TD,
 } from '../art.js';
@@ -26,8 +28,11 @@ export default class ShopScene extends Phaser.Scene {
   create() {
     backdrop(this);
     fadeIn(this);
-    this.hud = createHud(this, `${DUNGEONS[this.dungeon].name} · 능력 구매`);
+    this.hud = createHud(this, `${DUNGEONS[this.dungeon].name} · 능력 구매`, { back: true });
     this.guide = createGuide(this, '코인으로 능력을 사세요 · 안 사도 클리어할 수 있어요');
+    createBackButton(this, () => this.scene.start('WorldMap'), {
+      warn: (m) => this.guide.notice(m, CSS.bad), message: '한 번 더 누르면 월드맵으로 가요 · 이번 판의 코인과 능력은 사라져요',
+    });
     this.rows = ABILITIES.map((a, i) => this.makeRow(a, ROW_Y[i]));
     createButton(this, W / 2, 440, '던전 입장', () => this.scene.start('Dungeon', { dungeon: this.dungeon }), { primary: true });
     this.refresh();

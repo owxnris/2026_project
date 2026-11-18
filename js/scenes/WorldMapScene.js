@@ -2,7 +2,9 @@
 import { CSS } from '../config.js';
 import { DUNGEONS } from '../dungeons.js';
 import { state, checkTimeout } from '../state.js';
-import { text, createHud, createGuide } from '../ui.js';
+import {
+  text, createHud, createGuide, createBackButton,
+} from '../ui.js';
 import { reportProgress } from '../progress.js';
 import {
   backdrop, fadeIn, panel, sprite, tiles, THEMES, UI, TD, PP, SCALE,
@@ -14,8 +16,12 @@ export default class WorldMapScene extends Phaser.Scene {
   create() {
     backdrop(this);
     fadeIn(this);
-    this.hud = createHud(this, '월드맵');
-    createGuide(this, '도전할 던전을 고르세요 · 앞 던전을 깨면 다음 던전이 열려요');
+    this.hud = createHud(this, '월드맵', { back: true });
+    const guide = createGuide(this, '도전할 던전을 고르세요 · 앞 던전을 깨면 다음 던전이 열려요');
+    // 처음 화면으로: 같은 닉네임으로 다시 참여하면 깬 던전이 이어진다
+    createBackButton(this, () => this.scene.start('Start'), {
+      warn: (m) => guide.notice(m, CSS.bad), message: '한 번 더 누르면 처음 화면으로 가요 · 같은 닉네임으로 다시 들어오면 이어서 해요',
+    });
     reportProgress(null);
     this.cards = DUNGEONS.map((d, i) => this.card(d, i, 200 + i * 280, 280));
   }

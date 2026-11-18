@@ -263,6 +263,10 @@ try {
   log(await waitFor(() => !F.docs.has(sPath)), 'owner unshare deletes shared doc');
   log(F.docs.has(impPath) && F.docs.get(`teachers/T1/questions/${myQid}`).sharedId === null, 'T2 copy stays, T1 question unmarked');
 
+  // 왼쪽 위 로고를 누르면 홈(학급 목록)
+  $('logo-home').click();
+  log(!$('home-view').hidden && $('shared-view').hidden && document.querySelector('[data-view="classes"]').classList.contains('current'), 'logo click -> home (class list)');
+
   $('logout-btn').click();
   log(await waitFor(() => !$('login-view').hidden && $('menu').hidden), '2-9: logout -> login view');
 } catch (e) { out.push('ERROR ' + e.stack); }

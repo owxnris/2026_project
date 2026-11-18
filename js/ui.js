@@ -17,18 +17,22 @@ export function text(scene, x, y, str, size, color = CSS.player) {
 
 // primary: 금색 픽셀 버튼 / 보조: 돌 버튼. onClick이 없으면 누를 수 없다.
 // setBorder(색): 퀴즈 보기 결과 — 금색이면 금색 버튼(정답), 빨강이면 빨간 버튼(오답)
-export function createButton(scene, x, y, label, onClick, { primary = false, w = 240, h = 56 } = {}) {
+// fixed: 화면에 붙어 있게(던전처럼 카메라가 움직여도 제자리) 맨 위에 그린다
+export function createButton(scene, x, y, label, onClick, { primary = false, w = 240, h = 56, fixed = false } = {}) {
   let bg = null;
   let alpha = 1;
   const t = text(scene, x, y, label, 'body', primary ? CSS.bg : CSS.player).setOrigin(0.5).setDepth(1);
   t.setWordWrapWidth(w - 24);
   const zone = scene.add.zone(x, y, w, h);
+  const pin = (o) => (fixed ? o.setScrollFactor(0).setDepth(o === t ? 13 : 12) : o);
+  pin(t);
+  pin(zone);
 
   function draw(border) {
     if (bg) bg.destroy();
     const gold = border === COLORS.good || (border === undefined && primary);
     const red = border === COLORS.bad;
-    bg = panel(scene, x, y, w, h, gold ? UI.parchment : red ? UI.red : UI.stone, gold ? COLORS.good : 0xffffff).setAlpha(alpha);
+    bg = pin(panel(scene, x, y, w, h, gold ? UI.parchment : red ? UI.red : UI.stone, gold ? COLORS.good : 0xffffff).setAlpha(alpha));
     t.setColor(gold ? CSS.bg : CSS.player);
   }
   draw();
@@ -48,14 +52,30 @@ export function createButton(scene, x, y, label, onClick, { primary = false, w =
   };
 }
 
-// 위: 왼쪽 남은 시간 / 가운데 제목 / 오른쪽 코인
-export function createHud(scene, title) {
+// 이전 화면으로 (왼쪽 위). warn이 있으면 한 번 누르면 안내만 하고, 2.5초 안에 한 번 더 눌러야 이동한다
+// (게임 중에 실수로 눌러 판을 잃지 않게). warn: (안내 글) => 화면에 보여 주는 함수
+export function createBackButton(scene, onBack, { warn, message } = {}) {
+  let armed = false;
+  return createButton(scene, 70, 30, '← 뒤로', () => {
+    if (warn && !armed) {
+      armed = true;
+      warn(message);
+      scene.time.delayedCall(2500, () => { armed = false; });
+      return;
+    }
+    onBack();
+  }, { w: 128, h: 44, fixed: true });
+}
+
+// 위: 왼쪽 남은 시간 / 가운데 제목 / 오른쪽 코인. back: 왼쪽 위에 뒤로 버튼이 있으면 시간을 오른쪽으로 민다
+export function createHud(scene, title, { back = false } = {}) {
+  const left = back ? 146 : 16;
   const parts = [];
   const add = (obj) => { parts.push(obj.setScrollFactor(0).setDepth(10)); return obj; };
 
   add(panel(scene, W / 2, HUD_H / 2, W + 12, HUD_H + 6, UI.stone, 0x8898c8).setAlpha(0.95));
-  add(text(scene, 16, 22, '시간', 'small'));
-  const timeText = add(text(scene, 60, 4, '', 'big'));
+  add(text(scene, left, 22, '시간', 'small'));
+  const timeText = add(text(scene, left + 44, 4, '', 'big'));
   const titleText = add(text(scene, W / 2, HUD_H / 2, title, 'small').setOrigin(0.5));
   add(scene.add.sprite(W - 150, HUD_H / 2, 'pp', PP.coin).setScale(3).play('coin_spin'));
   const coinText = add(text(scene, W - 16, 4, '', 'big', CSS.good).setOrigin(1, 0));
