@@ -1,7 +1,7 @@
 // 효과음 (design.md 그래픽 방향): 파일 없이 브라우저(Web Audio)에서 짧은 소리를 만든다.
 // 기본은 꺼짐 — 시작 화면의 소리 버튼으로 켜고, 선택은 이 기기에 기억한다(저장이 막혀도 게임은 그대로).
 const KEY = 'dungeonDash.sound';
-const VOLUME = 0.07; // 교실에서 거슬리지 않게 작게
+const VOLUME = 0.1; // 교실에서 거슬리지 않을 만큼
 
 let on = false;
 try { on = localStorage.getItem(KEY) === 'on'; } catch { /* 저장소를 못 쓰면 꺼진 채로 */ }
@@ -17,11 +17,12 @@ function audio() {
   return ctx;
 }
 
-// 브라우저는 사용자가 누르기 전에는 소리를 막는다 → 첫 클릭·키 입력 때 깨운다
+// 브라우저는 사용자가 직접 누르는 순간에만 소리 장치를 켜 준다 (터치 기기는 손을 뗄 때(touchend), 키보드는 키를 누를 때).
+// 예전에는 첫 입력 한 번만, 그것도 소리가 켜져 있을 때만 깨워서 — 버튼으로 켠 뒤에는 장치가 잠든 채로 남아 소리가 안 날 수 있었다.
+// 이제 매 입력마다 깨운다. 장치를 켜기만 하고 소리는 내지 않으므로 소리가 꺼져 있어도 상관없다
 if (typeof window !== 'undefined') {
-  const wake = () => { if (on) audio(); };
-  window.addEventListener('pointerdown', wake, { once: true });
-  window.addEventListener('keydown', wake, { once: true });
+  const wake = () => { audio(); };
+  ['pointerdown', 'touchend', 'keydown'].forEach((t) => window.addEventListener(t, wake, { capture: true, passive: true }));
 }
 
 export function soundOn() { return on; }

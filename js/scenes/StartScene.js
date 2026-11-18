@@ -60,7 +60,7 @@ export default class StartScene extends Phaser.Scene {
   // 효과음 켜기·끄기 (기본은 꺼짐, 이 기기에 기억). 누르면 버튼 글자를 바꿔 다시 그린다
   drawSoundButton() {
     if (this.soundButton) this.soundButton.destroy();
-    const label = soundOn() ? '소리 켬' : '소리 끔';
+    const label = soundOn() ? '소리 끄기' : '소리 켜기'; // 누르면 할 일을 쓴다
     this.soundButton = createButton(this, W - 96, 36, label, () => {
       setSound(!soundOn());
       this.time.delayedCall(0, () => this.drawSoundButton());
