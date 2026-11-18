@@ -128,7 +128,14 @@
               <select class="input" id="a-concept"></select>
             </label>
           </div>
-          <p class="small-text" id="act-picked"></p>
+          <div class="bulk-row" role="group" aria-label="문제 한꺼번에 고르기">
+            <span class="small-text" id="act-picked"></span>
+            <button class="btn small" type="button" data-bulk="all">보이는 문제 모두 고르기</button>
+            <button class="btn small" type="button" data-bulk="하">하 모두</button>
+            <button class="btn small" type="button" data-bulk="중">중 모두</button>
+            <button class="btn small" type="button" data-bulk="상">상 모두</button>
+            <button class="btn small" type="button" data-bulk="none">모두 빼기</button>
+          </div>
           <div id="act-q-list" class="picker"></div>
           <p class="small-text error" data-act-error="questions"></p>
           <p class="small-text error" id="act-save-error"></p>
@@ -141,50 +148,82 @@
         <p class="small-text error" id="act-error"></p>
         <div id="act-list"></div>
       </div>
-      <div class="tab-panel" data-panel="results" hidden>
-        <div class="filter-row">
-          <label class="field">
-            <span class="small-text">활동</span>
-            <select class="input" id="r-activity"></select>
-          </label>
+      <div class="tab-panel" data-panel="results" data-seg-root hidden>
+        <p class="small-text muted">활동 고르기</p>
+        <div class="chip-row" id="r-activity-chips" role="group" aria-label="활동 고르기"></div>
+        <select class="input" id="r-activity" hidden aria-hidden="true"></select>
+
+        <div class="seg" data-seg="results" role="group" aria-label="볼 내용">
+          <button class="seg-btn" type="button" data-sec="summary">요약</button>
+          <button class="seg-btn" type="button" data-sec="students">학생별</button>
+          <button class="seg-btn" type="button" data-sec="questions">문제별</button>
+          <button class="seg-btn" type="button" data-sec="concepts">개념별</button>
+          <button class="seg-btn" type="button" data-sec="participation">활동별 참여</button>
         </div>
-        <div class="stats" id="r-summary"></div>
-        <p class="small-text" id="r-levels"></p>
 
-        <h3 class="small-text section-title">다음 수업 보충 학습 요약 <span class="muted">— 저장된 결과로 계산</span></h3>
-        <ul id="r-supplement" class="feedback-list"></ul>
-        <button class="btn" id="r-supplement-btn" type="button" hidden>보충 개념 문제로 활동 만들기</button>
+        <div data-sec-panel="summary">
+          <div class="stats" id="r-summary"></div>
+          <p class="small-text" id="r-levels"></p>
+          <h3 class="small-text section-title">다음 수업 보충 학습 요약 <span class="muted">— 저장된 결과로 계산</span></h3>
+          <ul id="r-supplement" class="feedback-list"></ul>
+          <button class="btn" id="r-supplement-btn" type="button" hidden>보충 개념 문제로 활동 만들기</button>
+        </div>
 
-        <h3 class="small-text section-title">활동별 참여율·완료율 <span class="muted">— 완료: 던전을 하나 이상 클리어</span></h3>
-        <div id="r-participation"></div>
+        <div data-sec-panel="participation" hidden>
+          <h3 class="small-text section-title">활동별 참여율·완료율 <span class="muted">— 완료: 던전을 하나 이상 클리어</span></h3>
+          <div id="r-participation"></div>
+        </div>
 
-        <h3 class="small-text section-title">학생별 결과 <span class="muted">— 줄을 누르면 자세한 기록</span></h3>
-        <div id="r-students"></div>
+        <div data-sec-panel="students" hidden>
+          <h3 class="small-text section-title">학생별 결과 <span class="muted">— 줄을 누르면 자세한 기록</span></h3>
+          <div id="r-students"></div>
 
-        <div id="r-detail" class="detail-box" hidden>
-          <div class="page-head sub-head">
-            <p class="body-text" id="r-detail-name"></p>
-            <div class="head-buttons"><button class="btn" id="r-detail-close" type="button">닫기</button></div>
+          <div id="r-detail" class="detail-box" data-seg-root hidden>
+            <div class="page-head sub-head">
+              <p class="body-text" id="r-detail-name"></p>
+              <div class="head-buttons"><button class="btn" id="r-detail-close" type="button">닫기</button></div>
+            </div>
+            <div class="seg seg-small" data-seg="detail" role="group" aria-label="자세한 기록에서 볼 내용">
+              <button class="seg-btn" type="button" data-sec="feedback">맞춤 피드백</button>
+              <button class="seg-btn" type="button" data-sec="trend">활동별 변화</button>
+              <button class="seg-btn" type="button" data-sec="recommend">추천 문제</button>
+              <button class="seg-btn" type="button" data-sec="runs">판별 기록</button>
+              <button class="seg-btn" type="button" data-sec="wrong">틀린 개념·문제</button>
+            </div>
+            <div data-sec-panel="feedback">
+              <h3 class="small-text section-title">맞춤 피드백 <span class="muted">— 모든 활동 기준, 규칙으로 계산</span></h3>
+              <ul id="r-feedback" class="feedback-list"></ul>
+            </div>
+            <div data-sec-panel="trend" hidden>
+              <h3 class="small-text section-title">활동별 변화</h3>
+              <div id="r-trend"></div>
+            </div>
+            <div data-sec-panel="recommend" hidden>
+              <h3 class="small-text section-title">추천 문제 <span class="muted">— 취약 개념과 같은 개념의 내 문제은행 문제</span></h3>
+              <div id="r-recommend"></div>
+              <button class="btn" id="r-recommend-btn" type="button" hidden>추천 문제로 활동 만들기</button>
+            </div>
+            <div data-sec-panel="runs" hidden>
+              <h3 class="small-text section-title">판별 기록</h3>
+              <div id="r-runs"></div>
+            </div>
+            <div data-sec-panel="wrong" hidden>
+              <h3 class="small-text section-title">개념별 오답</h3>
+              <div id="r-student-concepts"></div>
+              <h3 class="small-text section-title">틀린 문제</h3>
+              <div id="r-wrong"></div>
+            </div>
           </div>
-          <h3 class="small-text section-title">맞춤 피드백 <span class="muted">— 모든 활동 기준, 규칙으로 계산</span></h3>
-          <ul id="r-feedback" class="feedback-list"></ul>
-          <h3 class="small-text section-title">활동별 변화</h3>
-          <div id="r-trend"></div>
-          <h3 class="small-text section-title">추천 문제 <span class="muted">— 취약 개념과 같은 개념의 내 문제은행 문제</span></h3>
-          <div id="r-recommend"></div>
-          <button class="btn" id="r-recommend-btn" type="button" hidden>추천 문제로 활동 만들기</button>
-          <h3 class="small-text section-title">판별 기록</h3>
-          <div id="r-runs"></div>
-          <h3 class="small-text section-title">개념별 오답</h3>
-          <div id="r-student-concepts"></div>
-          <h3 class="small-text section-title">틀린 문제</h3>
-          <div id="r-wrong"></div>
         </div>
 
-        <h3 class="small-text section-title">문제별 정답률 <span class="muted">— 정답률 낮은 순</span></h3>
-        <div id="r-questions"></div>
-        <h3 class="small-text section-title">개념별 오답 (학급) <span class="muted" id="r-weak-rule"></span></h3>
-        <div id="r-concepts"></div>
+        <div data-sec-panel="questions" hidden>
+          <h3 class="small-text section-title">문제별 정답률 <span class="muted">— 정답률 낮은 순</span></h3>
+          <div id="r-questions"></div>
+        </div>
+        <div data-sec-panel="concepts" hidden>
+          <h3 class="small-text section-title">개념별 오답 (학급) <span class="muted" id="r-weak-rule"></span></h3>
+          <div id="r-concepts"></div>
+        </div>
       </div>
     </section>
 
@@ -212,6 +251,8 @@
       <div class="button-row">
         <button class="btn primary" id="av-start-btn" type="button" hidden>시작</button>
         <button class="btn primary" id="av-end-btn" type="button" hidden>종료</button>
+        <button class="btn primary" id="av-restart-btn" type="button" hidden>다시 시작</button>
+        <button class="btn danger" id="av-delete-btn" type="button" hidden>활동 삭제</button>
       </div>
     </section>
 

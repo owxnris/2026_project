@@ -164,6 +164,13 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
     - 지금 기본값: 종료 시각이 지나면 교사 화면·학생 게임 모두 끝난 활동으로 본다 (따로 정하면 바꾼다)
 - [x] 5-8 Firebase 설정 (사용자): Spark 무료 요금제 그대로 (업그레이드 없음), Firebase 콘솔에서 Authentication(Google·익명)·Firestore 사용 설정 확인. 규칙 게시용 Firebase CLI 설치·로그인(또는 콘솔에 붙여 넣기)
   - 확인: 콘솔 Authentication 로그인 방법에 Google·익명이 켜져 있다 / Firestore가 만들어져 있다
+- [ ] 5-11 활동 삭제·다시 시작 (2026-11-18 요청)
+  - 확인: 끝난 활동의 '다시 시작' → '제목 · 다시 1' 새 활동이 바로 진행 중, 예전 활동·결과는 남음 / '활동 삭제' → 확인 상자 → 활동과 그 결과가 사라짐 / 진행 중에는 삭제 버튼이 없다
+  - 구현됨 — activities.js deleteActivity·restartActivity, activityView.js(버튼·확인 상자), main.js. 시험 통과(teacher-full 다시 시작·삭제·진행 중 삭제 거부), 실제 Firebase 확인 전 (규칙 변경 없음)
+- [ ] 5-12 문제 한꺼번에 고르기: 보이는 문제 모두·난이도별(하·중·상)·모두 빼기 (2026-11-18 요청)
+  - 구현됨 — activityTab.js, teacher.html. 시험 통과(teacher-full), 실제 화면 확인 전
+- [ ] 8-13 결과 탭 버튼식: 활동 고르기 칩, 보기 버튼(요약·학생별·문제별·개념별·활동별 참여), 자세한 기록도 버튼 (2026-11-18 요청)
+  - 구현됨 — segments.js(신규), resultsTab.js, teacher.html, css/teacher.css. 시험 통과, 캡처로 확인, 실제 화면 확인 전
 - [ ] 5-9 기기 채점 규칙과 시험: js/grading.js·js/runLog.js(순수 함수), 노드 시험 28개(tests/test, npm test) + 규칙 에뮬레이터 11묶음(npm run test:rules)
   - 확인: 채점·중복 지급·시간 초과·입장 3문제·회복·코인 검사·같은 문제 다시 받기·결과 한 번만 통과 (2026-11-11 실제 실행함)
 - 실제 Firebase 배포·검증 절차와 결과 기록: verification.md (V1~V8). 배포 전 점검은 끝났고(2026-11-11), CLI 로그인·배포 명령은 사용자가 한다

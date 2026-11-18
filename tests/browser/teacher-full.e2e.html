@@ -168,6 +168,17 @@ try {
   document.querySelector('[data-tab="activities"]').click();
   $('act-add-btn').click();
   $('act-title').value = '알고리즘 확인'; $('act-minutes').value = '5';
+  // 한꺼번에 고르기: 보이는 문제 모두 → 모두 빼기 → 난이도 '하'만
+  const pickedN = () => Number($('act-picked').textContent.match(/\d+/)[0]);
+  const visible = () => $('act-q-list').querySelectorAll('input[type=checkbox]').length;
+  document.querySelector('[data-bulk="all"]').click();
+  log(pickedN() === visible() && visible() > 1, `bulk: pick all visible (${pickedN()}/${visible()})`);
+  document.querySelector('[data-bulk="none"]').click();
+  log(pickedN() === 0, 'bulk: clear all');
+  document.querySelector('[data-bulk="하"]').click();
+  const easy = [...$('act-q-list').querySelectorAll('tbody tr')].filter((r) => r.cells[2].textContent === '하').length;
+  log(pickedN() === easy && easy > 0, `bulk: pick difficulty 하 only (${pickedN()})`);
+  document.querySelector('[data-bulk="none"]').click();
   const myQid = myQ[0].split('/').pop();
   $('act-q-list').querySelector(`[data-question-id="${myQid}"]`).click();
   $('act-save-btn').click();
@@ -178,6 +189,17 @@ try {
   for (const uid of ['S1', 'S2']) await play(uid, 0, 0, 'failed', a2Path, a2Id);
   document.querySelector('[data-tab="results"]').click();
   sel('r-activity', '');
+  // 활동 고르기 버튼과 보기 버튼
+  const chips = () => [...$('r-activity-chips').querySelectorAll('.chip')];
+  log(chips().length === 3 && chips()[0].classList.contains('current'), `activity chips: 전체 + 2 activities (${chips().map((c) => c.textContent).join('/')})`);
+  chips()[1].click();
+  log($('r-activity').value !== '' && chips()[1].classList.contains('current'), 'activity chip click -> filter set');
+  chips()[0].click();
+  const panel = (n) => document.querySelector(`[data-sec-panel="${n}"]`);
+  document.querySelector('[data-seg="results"] [data-sec="questions"]').click();
+  log(!panel('questions').hidden && panel('summary').hidden && panel('students').hidden, 'results buttons: only the chosen section is shown');
+  document.querySelector('[data-seg="results"] [data-sec="summary"]').click();
+  log(!panel('summary').hidden && panel('questions').hidden, 'results buttons: back to summary');
   log(await waitFor(() => $('r-supplement').textContent.includes('보충할 개념: 정보 · 알고리즘')), `class summary names weak concept (${$('r-supplement').textContent.slice(0, 80)})`);
   log(!$('r-supplement-btn').hidden && $('r-supplement').textContent.includes('보충 학습이 필요한 학생 (학습 수준 하): 바다'), 'supplement: button + students needing support');
   const part = rows('r-participation').map(cells);
@@ -193,6 +215,24 @@ try {
     && $('act-q-list').querySelector(`[data-question-id="${myQid}"]`).checked, 'recommend -> activity form with question picked');
   $('act-cancel-btn').click();
   await T.endActivity(classId, a2Id);
+
+  // 활동 다시 시작: 같은 문제로 새 활동을 만들어 바로 시작, 예전 활동·결과는 그대로
+  const resultsOf = (id) => [...F.docs].filter(([p, v]) => p.startsWith(`classes/${classId}/results/`) && v.activityId === id);
+  const a2Results = resultsOf(a2Id).length;
+  const nid = await T.restartActivity(classId, a2Id);
+  const na = F.docs.get(`classes/${classId}/activities/${nid}`);
+  log(na.status === 'running' && na.title === '알고리즘 확인 · 다시 1' && JSON.stringify(na.questions) === JSON.stringify(F.docs.get(a2Path).questions)
+    && JSON.stringify(F.docs.get(`classes/${classId}/activities/${nid}/answerKey/main`).answers) === JSON.stringify(F.docs.get(`${a2Path}/answerKey/main`).answers), 'restart: new running copy with same questions and answers');
+  log(F.docs.get(a2Path).status === 'ended' && resultsOf(a2Id).length === a2Results, 'restart: old activity and results kept');
+  let delErr = null; try { await T.deleteActivity(classId, nid); } catch (e) { delErr = e; }
+  log(delErr?.reason === 'running' && F.docs.has(`classes/${classId}/activities/${nid}`), 'delete running activity is refused');
+  await T.endActivity(classId, nid);
+  // 활동 삭제: 활동·그 활동의 결과·진행 상황이 지워지고 다른 활동 결과는 남는다
+  const others = [...F.docs].filter(([p, v]) => p.startsWith(`classes/${classId}/results/`) && v.activityId !== a2Id).length;
+  F.setDoc({ path: `${a2Path}/progress/S1` }, { nickname: '하늘', currentDungeon: null, clearedCount: 0, coins: 0, updatedAt: F.serverTimestamp() });
+  await T.deleteActivity(classId, a2Id);
+  log(!F.docs.has(a2Path) && resultsOf(a2Id).length === 0 && !F.docs.has(`${a2Path}/progress/S1`), `delete: activity, its results (${a2Results}) and progress removed`);
+  log([...F.docs].filter(([p]) => p.startsWith(`classes/${classId}/results/`)).length === others, 'delete: other activities\' results kept');
 
   // ── 공유 문제은행: T1이 공유 → T2가 검색·미리보기·가져오기 → 원본과 따로 고치기 ──
   document.querySelector('[data-view="bank"]').click();

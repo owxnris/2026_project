@@ -1,6 +1,7 @@
 // 학급 화면 '결과' 탭 (design.md 결과 분석): 활동으로 거르기 → 학급 통계 → 학생별 결과(줄을 누르면 자세한 기록)
 // → 문제별 정답률 → 개념별 오답(취약 개념). 값은 저장된 결과(results)에서 계산한다.
 import { reasonText } from '../firebase/errors.js';
+import { setupSegments } from './segments.js';
 import { onClassDataChange, getResults, getClassDataError, getStudents } from './classHub.js';
 import {
   OUTCOME_LABEL, percent, filterResults, questionIndex, studentSummary, questionStats, conceptStats,
@@ -43,6 +44,19 @@ function fillActivitySelect() {
   const acts = getActivities();
   select.replaceChildren(new Option('전체 활동', ''), ...acts.map((a) => new Option(a.title, a.id)));
   select.value = acts.some((a) => a.id === selected) ? selected : '';
+  // 활동 고르기 버튼 (선택 상자 대신 보이는 것): 누르면 선택 상자를 바꾸고 다시 계산한다
+  $('r-activity-chips').replaceChildren(...[['', '전체 활동'], ...acts.map((a) => [a.id, a.title])].map(([id, label]) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = id === select.value ? 'chip current' : 'chip';
+    b.textContent = label;
+    b.setAttribute('aria-pressed', String(id === select.value));
+    b.addEventListener('click', () => {
+      select.value = id;
+      select.dispatchEvent(new Event('change'));
+    });
+    return b;
+  }));
 }
 
 function concepts(box, list) {
@@ -181,6 +195,8 @@ export function setupResultsTab(activities, onActivities, bank, make) {
   $('r-weak-rule').textContent = `취약: ${WEAK_MIN_TOTAL}번 이상 풀고 오답률 ${percent(WEAK_RATE)} 이상인 개념`;
   $('r-activity').addEventListener('change', () => { selectedUid = null; render(); });
   $('r-detail-close').addEventListener('click', () => { selectedUid = null; $('r-detail').hidden = true; });
+  setupSegments(document.querySelector('[data-panel="results"]'));
+  setupSegments($('r-detail'));
   onClassDataChange(render);
   onActivities(render);
 }

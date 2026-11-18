@@ -36,6 +36,46 @@ export function watchActivities(classId, onChange, onError) {
   }, onError);
 }
 
+// 활동 삭제: 활동 문서, 실시간 진행 상황, 이 활동의 학생 결과를 함께 지운다 (되돌릴 수 없음 — 화면에서 확인 상자를 거친다)
+// 진행 중인 활동은 지울 수 없다(먼저 종료). 정답표·학생 복습 기록은 아무도 볼 수 없는 채로 남는다(교사가 목록을 읽을 수 없어서)
+export async function deleteActivity(classId, activityId) {
+  const ref = doc(activitiesOf(classId), activityId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+  if (isActivityRunning(snap.data(), serverNow())) throw new ActivityError('running');
+  const [prog, res] = await Promise.all([
+    getDocs(collection(db, 'classes', classId, 'activities', activityId, 'progress')),
+    getDocs(query(collection(db, 'classes', classId, 'results'), where('activityId', '==', activityId))),
+  ]);
+  const refs = [...prog.docs.map((d) => d.ref), ...res.docs.map((d) => d.ref), ref];
+  for (let i = 0; i < refs.length; i += 400) { // 한 번에 쓸 수 있는 수(500) 아래로 나눠서
+    const b = writeBatch(db);
+    refs.slice(i, i + 400).forEach((r) => b.delete(r));
+    await b.commit();
+  }
+}
+
+// 다시 시작: 같은 문제·시간으로 새 활동을 만들어 바로 시작한다. 예전 활동과 학생 결과는 그대로 남는다
+// 돌려줌: 새 활동 id (시작이 막혀도 — 예: 다른 활동 진행 중 — 새 활동은 대기 상태로 남고 오류를 낸다)
+export async function restartActivity(classId, activityId) {
+  const ref = doc(activitiesOf(classId), activityId);
+  const [a, key] = await Promise.all([getDoc(ref), getDoc(doc(db, 'classes', classId, 'activities', activityId, 'answerKey', 'main'))]);
+  if (!a.exists() || !key.exists()) throw new ActivityError('not-found');
+  const act = a.data();
+  const { answers } = key.data();
+  const picked = act.questions.map((q) => ({ ...q, answer: answers[q.id] }));
+  const base = act.title.replace(/ · 다시 \d+$/, '');
+  const n = Number((act.title.match(/ · 다시 (\d+)$/) || [0, 0])[1]) + 1;
+  const newId = await createActivity(classId, { title: `${base} · 다시 ${n}`, totalTimeSec: act.totalTimeSec, picked });
+  try {
+    await startActivity(classId, newId);
+  } catch (e) {
+    e.newId = newId;
+    throw e;
+  }
+  return newId;
+}
+
 // 화면이 이유별 안내를 보여 줄 수 있게 reason·details를 붙인 오류
 export class ActivityError extends Error {
   constructor(reason, details = {}) {

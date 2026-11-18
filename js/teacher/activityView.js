@@ -43,6 +43,7 @@ function renderRanking() {
 const START_ERROR = {
   'already-running': (d) => `진행 중인 활동 '${d.title}'이(가) 있어요. 그 활동을 종료한 뒤 시작할 수 있어요.`,
   'not-waiting': () => '이미 시작했거나 끝난 활동이에요.',
+  running: () => '진행 중인 활동은 지울 수 없어요. 먼저 종료해 주세요.',
 };
 const RULES_HINT = ' — Firestore 규칙이 최신으로 게시되었는지 확인해 주세요 (verification.md)';
 
@@ -65,8 +66,9 @@ function render() {
   $('av-info').textContent = `문제 ${a.questions.length}개 · 전체 시간 ${a.totalTimeSec / 60}분`;
   $('av-start-btn').hidden = state !== 'waiting';
   $('av-end-btn').hidden = state !== 'running';
-  $('av-start-btn').disabled = busy;
-  $('av-end-btn').disabled = busy;
+  $('av-restart-btn').hidden = state !== 'ended';
+  $('av-delete-btn').hidden = state === 'running';
+  ['av-start-btn', 'av-end-btn', 'av-restart-btn', 'av-delete-btn'].forEach((id) => { $(id).disabled = busy; });
 }
 
 function failText(prefix, e) {
@@ -113,6 +115,44 @@ async function onEnd() {
   }
 }
 
+// 다시 시작: 같은 문제로 새 활동을 만들어 바로 시작하고 그 활동 화면으로 간다
+async function onRestart() {
+  $('av-error').textContent = '';
+  const ok = await confirmDelete('같은 문제와 시간으로 새 활동을 만들어 바로 시작할까요? 지금 활동과 학생 결과는 그대로 남아요.', '다시 시작');
+  if (!ok) return;
+  busy = true;
+  render();
+  try {
+    const newId = await store.restart(cls.id, activityId);
+    openActivityView(cls, newId);
+  } catch (e) {
+    if (e.newId) openActivityView(cls, e.newId); // 새 활동은 만들어졌고 시작만 막힘 → 그 화면에서 안내
+    $('av-error').textContent = failText('다시 시작하지 못했어요', e);
+  } finally {
+    busy = false;
+    render();
+  }
+}
+
+// 활동 삭제: 학생 결과도 함께 지워지므로 확인 상자를 거친다
+async function onDelete() {
+  $('av-error').textContent = '';
+  const ok = await confirmDelete('이 활동을 삭제할까요? 이 활동의 학생 결과와 진행 기록도 함께 지워지고 되돌릴 수 없어요.', '삭제');
+  if (!ok) return;
+  busy = true;
+  render();
+  try {
+    await store.remove(cls.id, activityId);
+    closeActivityView();
+    goBack();
+  } catch (e) {
+    $('av-error').textContent = failText('활동을 지우지 못했어요', e);
+  } finally {
+    busy = false;
+    render();
+  }
+}
+
 export function openActivityView(c, id) {
   cls = c;
   activityId = id;
@@ -130,10 +170,15 @@ export function closeActivityView() {
   stopProgress = null;
 }
 
+let goBack = () => {};
+
 export function setupActivityView(s, backToClass) {
   store = s;
+  goBack = backToClass;
   $('av-start-btn').addEventListener('click', onStart);
   $('av-end-btn').addEventListener('click', onEnd);
+  $('av-restart-btn').addEventListener('click', onRestart);
+  $('av-delete-btn').addEventListener('click', onDelete);
   $('av-back-btn').addEventListener('click', () => { closeActivityView(); backToClass(); });
   onClassDataChange(renderRanking);
   setInterval(() => { if (!$('activity-view').hidden) render(); }, 1000);

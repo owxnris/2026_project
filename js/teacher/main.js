@@ -13,7 +13,7 @@ import {
   setupBank, setQuestions, showBankLoading, showBankError, resetBank,
 } from './bankView.js';
 import {
-  createActivity, watchActivities, startActivity, endActivity,
+  createActivity, watchActivities, startActivity, endActivity, restartActivity, deleteActivity,
 } from './activities.js';
 import {
   setupActivityTab, setActivityBank, stopActivities, getActivities, onActivitiesChange,
@@ -122,7 +122,9 @@ if (!isConfigured) {
     share: shareQuestion, reshare: updateSharedFrom,
   });
   setupActivityTab({ create: createActivity, watch: watchActivities }, openActivityView);
-  setupActivityView({ start: startActivity, end: endActivity, getActivities, watchProgress }, backToActivities);
+  setupActivityView({
+    start: startActivity, end: endActivity, restart: restartActivity, remove: deleteActivity, getActivities, watchProgress,
+  }, backToActivities);
   setupClassHub({ watchStudents, watchResults });
   setupStudentsTab();
   setupResultsTab(getActivities, onActivitiesChange, () => myQuestions, (ids, title) => {

@@ -233,6 +233,14 @@ export function setupActivityTab(s, openActivity) {
   $('a-subject').addEventListener('change', () => { fillConceptFilter(); renderPicker(); });
   $('a-difficulty').addEventListener('change', renderPicker);
   $('a-concept').addEventListener('change', renderPicker);
+  // 한꺼번에 고르기: 지금 거르기(과목·난이도·개념)에 보이는 문제 기준. '하/중/상 모두'는 보이는 문제 중 그 난이도만 더한다
+  document.querySelectorAll('[data-bulk]').forEach((btn) => btn.addEventListener('click', () => {
+    const list = filterQuestions(bank, filter());
+    const kind = btn.dataset.bulk;
+    if (kind === 'none') picked.clear();
+    else list.filter((q) => kind === 'all' || q.difficulty === kind).forEach((q) => picked.add(q.id));
+    renderPicker();
+  }));
   $('act-add-btn').addEventListener('click', openForm);
   $('act-cancel-btn').addEventListener('click', closeForm);
   $('act-form').addEventListener('submit', onSave);

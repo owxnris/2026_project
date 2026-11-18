@@ -360,3 +360,8 @@
 - 요청 요약: 무료 배포 사이트에서 테마에 맞는 배경 음악을 받아 넣고, 대기 화면에서도 음악이 나오게
 - 수정한 파일: assets/music/(CC0 곡 5개, 라이선스 원문), js/music.js(신규), js/sound.js(소리 기본 켜짐), 장면 8개(화면별 곡), assets/CREDITS.md, design.md, spec.md, tests/browser/(sound.test·server.mjs)
 - 판단 근거: OpenGameArt의 CC0 칩튠(RandomMind, Juhani Junkala)을 직접 받아 MP3(모든 브라우저 재생)로 쓰고, 같은 곡은 화면이 바뀌어도 이어지게 함. 사용자 요청으로 소리를 기본 켜짐으로 바꿈
+
+[2026-11-18 16:34]
+- 요청 요약: 교사 화면 — 활동 삭제·다시 시작, 결과 분석 가독성(버튼식), 문제 전체·난이도별 선택
+- 수정한 파일: js/teacher/activities.js(deleteActivity·restartActivity), activityView.js, main.js, activityTab.js, resultsTab.js, segments.js(신규), teacher.html, css/teacher.css, design.md, spec.md, tasks.md(5-11·5-12·8-13), tests/browser/teacher-full.e2e.html(시험 12개 추가)
+- 판단 근거: 끝난 활동은 상태를 되돌리지 않고 복사해 다시 시작(예전 결과 보존), 삭제는 결과까지 지우므로 확인 상자와 진행 중 금지, 결과 탭은 한 번에 한 묶음만 보이게 해 긴 페이지를 없앰. 규칙 변경 없이 기존 권한으로 동작

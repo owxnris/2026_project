@@ -339,3 +339,21 @@ h2.body-text, .page-title { font-size: 24px; font-weight: bold; color: var(--nav
   .code-chip { width: 100%; }
   .card, #class-list, .tab-panel, .q-form, #q-list, #shared-list, .av-ranking { padding: 14px; }
 }
+
+/* 결과 탭: 활동 고르기 칩, 보기 버튼 묶음 (한 번에 한 묶음만 보인다) */
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 16px; }
+.chip { border: 1px solid var(--line); background: var(--card); color: var(--white); border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 14px; font-weight: bold; cursor: pointer; }
+.chip:hover { border-color: var(--navy); }
+.chip.current { background: var(--good); border-color: #E8B830; color: #1B1F2A; }
+.seg { display: flex; flex-wrap: wrap; gap: 0; margin: 4px 0 8px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; width: fit-content; background: var(--card); }
+.seg-btn { border: none; border-right: 1px solid var(--line); background: none; color: var(--muted); padding: 10px 18px; font: inherit; font-size: 15px; font-weight: bold; cursor: pointer; }
+.seg-btn:last-child { border-right: none; }
+.seg-btn:hover { color: var(--navy); background: var(--navy-soft); }
+.seg-btn.current { background: var(--navy); color: #fff; }
+.seg-small .seg-btn { padding: 7px 12px; font-size: 14px; }
+[data-sec-panel] > .section-title:first-child { margin-top: 16px; }
+
+/* 문제 고르기: 한꺼번에 고르기 줄 */
+.bulk-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0; }
+.bulk-row #act-picked { margin-right: 8px; font-weight: bold; color: var(--navy); }
+.button-row .btn.danger { margin-left: auto; }
