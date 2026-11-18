@@ -11,13 +11,13 @@ import { confirmDelete } from './confirmDialog.js';
 import { ShareError } from './sharedBank.js';
 
 const $ = (id) => document.getElementById(id);
-const COLUMNS = ['과목', '난이도', '학습 개념', '문제', '정답', '출처', ''];
+const COLUMNS = ['과목', '난이도', '학습 개념', '문제', '정답', '출처', '공유', ''];
 
 // 출처: 직접 만든 문제 / 기본 문제 / 공유 문제은행에서 가져온 문제(작성자 공유 이름)
 function sourceText(q) {
   if (q.source === 'shared') return `공유: ${q.origin?.authorName ?? ''}`;
   if (q.source === 'default') return '기본 문제';
-  return q.sharedId ? '직접 만듦 · 공유함' : '직접 만듦';
+  return '직접 만듦'; // 공유했는지는 '공유' 칸에 따로 보인다
 }
 
 let questions = [];
@@ -119,11 +119,32 @@ function render() {
     [q.subject, q.difficulty, q.learningConcept, q.question, q.choices[q.answer], sourceText(q)].forEach((value) => {
       row.insertCell().textContent = value ?? '';
     });
+    // 공유 칸: 직접 만든 문제만 눈에 띄는 버튼. 이미 공유했으면 '공유됨' 표시와 '공유 갱신'(지금 내용으로 고치기)
+    const shareCell = row.insertCell();
+    shareCell.className = 'share-cell';
+    if (q.source === 'teacher') {
+      if (q.sharedId) {
+        const badge = document.createElement('span');
+        badge.className = 'share-badge';
+        badge.textContent = '✓ 공유됨';
+        shareCell.append(badge);
+      }
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = q.sharedId ? 'btn small' : 'btn small share-btn';
+      b.textContent = q.sharedId ? '공유 갱신' : '공유하기';
+      b.title = q.sharedId ? '공유 문제은행의 문제를 지금 내용으로 고쳐요' : '다른 선생님이 쓸 수 있게 공유 문제은행에 올려요';
+      b.addEventListener('click', () => onShare(q));
+      shareCell.append(b);
+    } else {
+      // 버튼이 없는 이유를 그 자리에 적는다 (기본 문제는 모든 선생님이 이미 불러올 수 있고, 가져온 문제는 원래 작성자 것)
+      shareCell.textContent = q.source === 'shared' ? '가져온 문제' : '직접 만든 문제만';
+      shareCell.title = '직접 만든 문제(문제 추가로 만든 문제)만 공유할 수 있어요';
+      shareCell.classList.add('muted', 'share-none');
+    }
     const actionsCell = row.insertCell();
     actionsCell.className = 'row-actions';
     actionsCell.append(textButton('수정', () => openForm(q)));
-    // 공유: 직접 만든 문제만. 이미 공유했으면 지금 내용으로 공유 문제를 고친다
-    if (q.source === 'teacher') actionsCell.append(textButton(q.sharedId ? '공유 갱신' : '공유', () => onShare(q)));
     actionsCell.append(textButton('삭제', () => onDelete(q), true));
   });
   $('q-list').replaceChildren(table);

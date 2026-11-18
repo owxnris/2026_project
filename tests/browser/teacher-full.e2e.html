@@ -239,7 +239,8 @@ try {
   const myRow = () => rows('q-list').find((r) => r.dataset.questionId === myQid);
   log(myRow().cells[5].textContent === '직접 만듦' && rows('q-list').find((r) => r.dataset.questionId === 'd01').cells[5].textContent === '기본 문제', 'bank source column');
   log(!rows('q-list').find((r) => r.dataset.questionId === 'd01').textContent.includes('공유'), 'default question has no share button');
-  [...myRow().querySelectorAll('button')].find((b) => b.textContent === '공유').click();
+  log(myRow().querySelector('.share-btn')?.textContent === '공유하기', 'own question has a visible 공유하기 button');
+  [...myRow().querySelectorAll('button')].find((b) => b.textContent === '공유하기').click();
   log(await waitFor(() => $('bank-error').textContent.includes('공유할 때 보일 이름을 먼저')), 'share without share name -> asks for name');
   document.querySelector('[data-view="shared"]').click();
   $('share-name').value = 'a@b.com'; $('share-name-btn').click();
@@ -247,13 +248,13 @@ try {
   $('share-name').value = '  정보   선생님 '; $('share-name-btn').click();
   log(await waitFor(() => F.docs.get('teachers/T1').shareName === '정보 선생님'), 'share name saved (normalized)');
   document.querySelector('[data-view="bank"]').click();
-  [...myRow().querySelectorAll('button')].find((b) => b.textContent === '공유').click();
+  [...myRow().querySelectorAll('button')].find((b) => b.textContent === '공유하기').click();
   log(await waitFor(() => [...F.docs].some(([p]) => p.startsWith('sharedQuestions/'))), 'shared doc created');
   const [sPath, sDoc] = [...F.docs].find(([p]) => p.startsWith('sharedQuestions/'));
   const sharedId = sPath.split('/').pop();
   log(Object.keys(sDoc).sort().join() === 'answer,choices,difficulty,learningConcept,ownerUid,question,sharedAt,subject,updatedAt,authorName'.split(',').sort().join()
     && sDoc.authorName === '정보 선생님' && !JSON.stringify(sDoc).includes('@') && !JSON.stringify(sDoc).includes('김선생'), 'shared doc: allowed fields only, no email/real name');
-  log(await waitFor(() => myRow().cells[5].textContent === '직접 만듦 · 공유함' && myRow().textContent.includes('공유 갱신')), 'bank row shows 공유함 + 공유 갱신');
+  log(await waitFor(() => myRow().cells[5].textContent === '직접 만듦' && myRow().textContent.includes('공유 갱신') && myRow().textContent.includes('✓ 공유됨')), 'bank row shows 공유함 + ✓ 공유됨 + 공유 갱신');
   document.querySelector('[data-view="shared"]').click();
   log(await waitFor(() => rows('shared-list').length === 1 && rows('shared-list')[0].textContent.includes('정보 선생님 (나)') && rows('shared-list')[0].textContent.includes('공유 취소')), 'owner sees own shared question with 공유 취소');
 

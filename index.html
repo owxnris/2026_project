@@ -8,6 +8,29 @@
     html, body { margin: 0; height: 100%; background: #1B1F2A; }
     #game { width: 100%; height: 100%; }
   </style>
+  <script>
+    // 체험 모드: ?demo=1로 들어오면 이 브라우저는 체험 모드 — 실제 Firebase 대신 js/demo/sdk.js(이 브라우저 안의 저장소)를 쓴다.
+    // 아래 '체험 끝내기' 또는 ?demo=0으로 나간다. 게임·교사 코드는 바꾸지 않고 불러오는 파일만 바꾼다 (import map)
+    (function () {
+      var q = new URLSearchParams(location.search), on = false;
+      try {
+        if (q.get('demo') === '1') localStorage.setItem('dd.demo', '1');
+        if (q.get('demo') === '0') localStorage.removeItem('dd.demo');
+        on = localStorage.getItem('dd.demo') === '1';
+      } catch (e) { on = q.get('demo') === '1'; }
+      if (!on) return;
+      var base = new URL('js/', document.baseURI).href, map = {};
+      map[base + 'firebase/sdk.js'] = base + 'demo/sdk.js';
+      var m = document.createElement('script');
+      m.type = 'importmap';
+      m.textContent = JSON.stringify({ imports: map });
+      document.currentScript.after(m);
+      var b = document.createElement('script');
+      b.type = 'module';
+      b.src = 'js/demo/banner.js';
+      m.after(b);
+    })();
+  </script>
   <!-- 픽셀 글꼴 Galmuri (SIL OFL 1.1, assets/CREDITS.md) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css">
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>

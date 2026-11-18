@@ -357,3 +357,16 @@ h2.body-text, .page-title { font-size: 24px; font-weight: bold; color: var(--nav
 .bulk-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0; }
 .bulk-row #act-picked { margin-right: 8px; font-weight: bold; color: var(--navy); }
 .button-row .btn.danger { margin-left: auto; }
+
+/* 문제은행 공유: 눈에 띄는 버튼 칸과 안내 */
+.share-cell { white-space: nowrap; }
+.btn.share-btn { background: var(--navy); border-color: var(--navy); color: #fff; }
+.btn.share-btn:hover:not(:disabled) { background: #3A4C82; border-color: #3A4C82; color: #fff; }
+.share-badge { display: inline-block; margin-right: 6px; padding: 2px 8px; border-radius: 999px; background: #E3F4E8; color: #1E7A3C; font-size: 13px; font-weight: bold; }
+.share-hint { background: var(--navy-soft); border-radius: 10px; padding: 10px 14px; margin: 0 0 16px; color: var(--white); font-size: 14px; }
+.share-hint a { color: var(--navy); font-weight: bold; }
+/* 문제은행 표: 짧은 칸(과목·난이도·출처·공유·수정/삭제)은 한 줄로, 문제 글이 남는 폭을 쓴다 */
+#q-list .table th, #q-list .table td:nth-child(1), #q-list .table td:nth-child(2), #q-list .table td:nth-child(3), #q-list .table td:nth-child(6) { white-space: nowrap; }
+#q-list .table td:nth-child(4) { min-width: 180px; }
+.share-none { font-size: 13px; }
+.demo-link { color: var(--navy); font-weight: bold; }

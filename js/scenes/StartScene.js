@@ -56,6 +56,12 @@ export default class StartScene extends Phaser.Scene {
       createButton(this, cx, 362, '선생님 로그인', () => { window.location.href = 'teacher.html'; }, { w: 220, h: 44 });
     }
     this.drawSoundButton();
+    // 체험 모드 입구: 로그인·참여 코드 없이 예시 학급으로 교사·학생 화면을 모두 써 본다 (js/demo)
+    let demo = false;
+    try { demo = localStorage.getItem('dd.demo') === '1'; } catch { /* 무시 */ }
+    if (session.online && !demo) {
+      createButton(this, 100, 36, '체험 모드', () => { window.location.href = 'index.html?demo=1'; }, { w: 170, h: 44 });
+    }
     createGuide(this, GUIDE_TEXT);
   }
 

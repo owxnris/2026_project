@@ -5,6 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>던전 대시 - 교사 플랫폼</title>
   <link rel="stylesheet" href="css/teacher.css">
+  <script>
+    // 체험 모드: ?demo=1로 들어오면 이 브라우저는 체험 모드 — 실제 Firebase 대신 js/demo/sdk.js(이 브라우저 안의 저장소)를 쓴다.
+    // 아래 '체험 끝내기' 또는 ?demo=0으로 나간다. 게임·교사 코드는 바꾸지 않고 불러오는 파일만 바꾼다 (import map)
+    (function () {
+      var q = new URLSearchParams(location.search), on = false;
+      try {
+        if (q.get('demo') === '1') localStorage.setItem('dd.demo', '1');
+        if (q.get('demo') === '0') localStorage.removeItem('dd.demo');
+        on = localStorage.getItem('dd.demo') === '1';
+      } catch (e) { on = q.get('demo') === '1'; }
+      if (!on) return;
+      var base = new URL('js/', document.baseURI).href, map = {};
+      map[base + 'firebase/sdk.js'] = base + 'demo/sdk.js';
+      var m = document.createElement('script');
+      m.type = 'importmap';
+      m.textContent = JSON.stringify({ imports: map });
+      document.currentScript.after(m);
+      var b = document.createElement('script');
+      b.type = 'module';
+      b.src = 'js/demo/banner.js';
+      m.after(b);
+    })();
+  </script>
 </head>
 <body>
   <header class="topbar">
@@ -28,6 +51,7 @@
       <p class="small-text">DUNGEON DASH · 교사 플랫폼</p>
       <button class="btn primary" id="login-btn">Google로 로그인</button>
       <a class="small-text muted" href="index.html">← 학생 참여 화면으로</a>
+      <a class="small-text demo-link" href="teacher.html?demo=1">로그인 없이 체험해 보기 →</a>
       <p class="small-text error" id="error"></p>
     </section>
 
@@ -265,6 +289,7 @@
           <button class="btn" id="q-import-btn" type="button">기본 문제 불러오기</button>
         </div>
       </div>
+      <p class="share-hint">💡 <b>직접 만든 문제</b>는 표 오른쪽 <b>'공유하기'</b> 버튼으로 다른 선생님과 나눌 수 있어요. 처음 한 번은 <a href="#" id="go-shared">공유 문제은행</a>에서 공유할 때 보일 이름을 정해 주세요.</p>
 
       <form id="q-form" class="q-form" novalidate hidden>
         <p class="body-text" id="q-form-title">문제 추가</p>

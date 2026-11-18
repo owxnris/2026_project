@@ -24,6 +24,8 @@ export function setupMenu() {
   document.querySelectorAll('.menu-item').forEach((item) => {
     item.addEventListener('click', () => showView(item.dataset.view));
   });
+  // 문제은행 안내의 '공유 문제은행' 글자 → 공유 문제은행 화면
+  document.getElementById('go-shared').addEventListener('click', (e) => { e.preventDefault(); showView('shared'); });
   // 왼쪽 위 로고(말랑이·던전 대시)를 누르면 홈(학급 목록) — 로그인 전에는 아무 일도 하지 않는다
   document.getElementById('logo-home').addEventListener('click', (e) => {
     e.preventDefault();

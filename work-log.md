@@ -365,3 +365,18 @@
 - 요청 요약: 교사 화면 — 활동 삭제·다시 시작, 결과 분석 가독성(버튼식), 문제 전체·난이도별 선택
 - 수정한 파일: js/teacher/activities.js(deleteActivity·restartActivity), activityView.js, main.js, activityTab.js, resultsTab.js, segments.js(신규), teacher.html, css/teacher.css, design.md, spec.md, tasks.md(5-11·5-12·8-13), tests/browser/teacher-full.e2e.html(시험 12개 추가)
 - 판단 근거: 끝난 활동은 상태를 되돌리지 않고 복사해 다시 시작(예전 결과 보존), 삭제는 결과까지 지우므로 확인 상자와 진행 중 금지, 결과 탭은 한 번에 한 묶음만 보이게 해 긴 페이지를 없앰. 규칙 변경 없이 기존 권한으로 동작
+
+[2026-11-18 16:42]
+- 요청 요약: 문제은행에서 공유 버튼을 찾기 어려움
+- 수정한 파일: js/teacher/bankView.js(공유 칸·공유하기 버튼·공유됨 표시), teacher.html(공유 방법 안내), js/teacher/nav.js(안내의 공유 문제은행 바로가기), css/teacher.css(버튼·표 칸), design.md, tests/browser/teacher-full.e2e.html
+- 판단 근거: 수정·삭제 사이의 작은 글자 버튼이던 공유를 따로 칸의 눈에 띄는 남색 버튼으로 빼고, 공유 상태는 초록 표시로 보여 줌
+
+[2026-11-18 16:43]
+- 요청 요약: 문제은행에 공유하기 버튼이 안 보임
+- 수정한 파일: js/teacher/bankView.js(버튼이 없는 줄에 이유 표시), css/teacher.css
+- 판단 근거: 화면의 문제가 모두 기본 문제라 명세(직접 만든 문제만 공유)대로 버튼이 없었음. 이유를 칸에 적고, 기본 문제도 공유할지는 사용자에게 물음
+
+[2026-11-18 16:52]
+- 요청 요약: 교사·학생 모든 기능을 체험할 수 있는 체험용 계정 (사용자가 체험 모드 방식 선택)
+- 수정한 파일: js/demo/sdk.js·seed.js·banner.js(신규), index.html·teacher.html(체험 모드 import map), js/scenes/StartScene.js(체험 모드 버튼), css/teacher.css, spec.md(체험 모드 절), tasks.md(5-13), tests/browser/demo.test.html(신규)·run-all.sh
+- 판단 근거: 실제 Firebase·Google 계정 없이, 코드는 그대로 두고 저장소만 이 브라우저 안의 것으로 바꿔 실제 데이터와 섞이지 않고 무료 사용량도 쓰지 않음. 교사·학생 탭은 localStorage 알림으로 실시간 연결

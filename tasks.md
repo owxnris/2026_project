@@ -171,6 +171,9 @@ spec.md의 필수 기능을 만드는 순서다. 위에서부터 하나씩 진�
   - 구현됨 — activityTab.js, teacher.html. 시험 통과(teacher-full), 실제 화면 확인 전
 - [ ] 8-13 결과 탭 버튼식: 활동 고르기 칩, 보기 버튼(요약·학생별·문제별·개념별·활동별 참여), 자세한 기록도 버튼 (2026-11-18 요청)
   - 구현됨 — segments.js(신규), resultsTab.js, teacher.html, css/teacher.css. 시험 통과, 캡처로 확인, 실제 화면 확인 전
+- [ ] 5-13 체험 모드: 로그인 없이 예시 학급(코드 111111)으로 교사·학생 화면 모두 체험 (2026-11-18 요청)
+  - 확인: 첫 화면 '체험 모드' → 교사 화면 새 탭에서 로그인 버튼만 눌러 체험 학급·결과 탭 확인 → 학생 탭에서 111111로 참여 → 교사가 '체험 활동' 시작 → 학생 탭 월드맵 / '체험 끝내기'로 실제 서비스 복귀
+  - 구현됨 — js/demo/sdk.js·seed.js·banner.js(신규), index.html·teacher.html(체험 모드 스크립트), StartScene.js(입구 버튼). 시험 통과(tests/browser/demo.test.html 13개: 실제 teacher.html·index.html, 실시간 연결, 실제 Firebase 요청 없음), 실제 화면 확인 전
 - [ ] 5-9 기기 채점 규칙과 시험: js/grading.js·js/runLog.js(순수 함수), 노드 시험 28개(tests/test, npm test) + 규칙 에뮬레이터 11묶음(npm run test:rules)
   - 확인: 채점·중복 지급·시간 초과·입장 3문제·회복·코인 검사·같은 문제 다시 받기·결과 한 번만 통과 (2026-11-11 실제 실행함)
 - 실제 Firebase 배포·검증 절차와 결과 기록: verification.md (V1~V8). 배포 전 점검은 끝났고(2026-11-11), CLI 로그인·배포 명령은 사용자가 한다

@@ -1,0 +1,61 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"></head>
+<body><pre id="out">running</pre>
+<iframe id="t" style="width:1100px;height:700px"></iframe>
+<iframe id="s" style="width:960px;height:560px"></iframe>
+<script type="module">
+// 체험 모드: 실제 teacher.html·index.html을 ?demo=1로 열어 교사 탭과 학생 탭이 이 브라우저 저장소로 이어지는지 본다
+const out = []; const log = (ok, m) => out.push((ok ? 'PASS ' : 'FAIL ') + m);
+const tick = (ms = 60) => new Promise((r) => setTimeout(r, ms));
+async function waitFor(fn, ms = 8000) { const t = Date.now(); while (Date.now() - t < ms) { try { if (fn()) return true; } catch {} await tick(50); } return false; }
+const load = (el, url) => new Promise((r) => { el.onload = r; el.src = url; });
+try {
+  localStorage.removeItem('dd.demo.db'); localStorage.removeItem('dd.demo.teacher'); localStorage.removeItem('dd.demo');
+  const T = document.getElementById('t');
+  const S = document.getElementById('s');
+  await load(T, '/teacher.html?demo=1');
+  const td = () => T.contentDocument;
+  const $ = (id) => td().getElementById(id);
+  log(await waitFor(() => td().getElementById('demo-banner')?.textContent.includes('111111')), 'teacher page shows demo banner with join code');
+  log(await waitFor(() => !$('login-view').hidden), 'teacher login view');
+  $('login-btn').click();
+  log(await waitFor(() => !$('home-view').hidden && $('class-list').textContent.includes('체험 학급')), 'demo login -> class list has 체험 학급 (no Google)');
+  [...$('class-list').querySelectorAll('tbody tr')][0].click();
+  log(await waitFor(() => !$('class-view').hidden && $('detail-code').textContent === '111111'), 'class detail: code 111111');
+  td().querySelector('[data-tab="students"]').click();
+  log(await waitFor(() => $('student-list').querySelectorAll('tbody tr').length === 4), 'four demo students');
+  td().querySelector('[data-tab="results"]').click();
+  log(await waitFor(() => $('r-summary').textContent.includes('참여 학생 4명')), `results tab has seeded data (${$('r-summary').textContent.slice(0, 40)})`);
+  td().querySelector('[data-tab="activities"]').click();
+  const actRow = () => [...$('act-list').querySelectorAll('tbody tr')].find((r) => r.textContent.includes('오늘의 퀴즈'));
+  log(await waitFor(() => actRow()), 'waiting demo activity listed');
+
+  // 학생 탭: 실제 index.html을 체험 모드로 열고, 그 페이지의 모듈로 참여한다
+  await load(S, '/index.html');
+  log(await waitFor(() => S.contentDocument.getElementById('demo-banner')), 'student page also in demo mode (flag remembered)');
+  // 학생 페이지 안에서 모듈을 불러온다 (그 페이지의 import map — 체험용 저장소 — 을 쓰도록)
+  const sc = S.contentDocument.createElement('script');
+  sc.type = 'module';
+  sc.textContent = "import * as st from './js/firebase/student.js'; window.__st = st;";
+  S.contentDocument.head.appendChild(sc);
+  await waitFor(() => S.contentWindow.__st);
+  const join = S.contentWindow.__st;
+  const info = await join.joinClass('111111', '체험학생');
+  log(info.className === '체험 학급 (5학년 1반)', 'student joins with demo code');
+  td().querySelector('[data-tab="students"]').click();
+  log(await waitFor(() => $('student-list').querySelectorAll('tbody tr').length === 5), 'teacher sees the new student (other tab, realtime)');
+  td().querySelector('[data-tab="activities"]').click();
+  let running = [];
+  join.watchRunningActivities(info.classId, (l) => { running = l; });
+  await waitFor(() => actRow());
+  actRow().click();
+  await waitFor(() => !$('activity-view').hidden);
+  $('av-start-btn').click();
+  log(await waitFor(() => running.length === 1 && running[0].endAt), 'teacher start -> student tab sees running activity with end time');
+  log(td().getElementById('av-status').textContent.includes('진행 중'), 'teacher view: 진행 중');
+  // 실제 Firebase 쪽 스크립트를 불러오지 않았는지
+  log(![...S.contentDocument.scripts, ...T.contentDocument.scripts].some((s) => (s.src || '').includes('gstatic.com/firebasejs'))
+    && ![T, S].some((f) => f.contentWindow.performance.getEntriesByType('resource').some((r) => /googleapis|gstatic\.com\/firebasejs/.test(r.name))), 'no real Firebase requests in demo mode');
+} catch (e) { out.push('ERROR ' + e.stack); }
+try { localStorage.removeItem('dd.demo'); } catch {}
+document.getElementById('out').textContent = out.join('\n');
+</script></body></html>
