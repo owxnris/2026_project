@@ -88,7 +88,7 @@ export async function signInAnonymously(a) { a.currentUser = a.currentUser || { 
 // 교사 로그인 흉내 (Google 팝업 대신 시험 교사 T1)
 const authListeners = new Set();
 const fireAuth = () => authListeners.forEach((cb) => cb(auth.currentUser));
-export class GoogleAuthProvider {}
+export class GoogleAuthProvider { setCustomParameters(p) { this.params = p; } }
 export async function signInWithPopup(a) {
   a.currentUser = globalThis.nextTeacher || { uid: 'T1', provider: 'google.com', isAnonymous: false, displayName: '김선생', email: 't1@example.com' };
   fireAuth();

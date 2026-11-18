@@ -11,7 +11,10 @@ export function watchTeacher(callback) {
 }
 
 export async function login() {
-  const { user } = await signInWithPopup(auth, new GoogleAuthProvider());
+  // 매번 계정 고르기 창을 띄운다 (공용 교실 컴퓨터에서 앞 사람 계정으로 바로 들어가지 않게)
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
+  const { user } = await signInWithPopup(auth, provider);
   const ref = doc(db, 'teachers', user.uid);
   if (!(await getDoc(ref)).exists()) {
     await setDoc(ref, { name: user.displayName, email: user.email, createdAt: serverTimestamp() });
