@@ -83,7 +83,8 @@ export function onSnapshot(t, next) {
   listeners.add(fire); setTimeout(fire, 0);
   return () => listeners.delete(fire);
 }
-export async function signInAnonymously(a) { a.currentUser = a.currentUser || { uid: 'S1', provider: 'anonymous' }; return { user: a.currentUser }; }
+let anonCount = 0; // 익명 로그인마다 새 사용자: S1, S2, …
+export async function signInAnonymously(a) { a.currentUser = a.currentUser || { uid: `S${++anonCount}`, provider: 'anonymous' }; return { user: a.currentUser }; }
 
 // 교사 로그인 흉내 (Google 팝업 대신 시험 교사 T1)
 const authListeners = new Set();

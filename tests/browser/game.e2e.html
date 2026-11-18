@@ -130,13 +130,13 @@ try {
   log(r1.coinsSpent === 15 && r1.abilities.shield === true && r1.abilities.dash === 0 && r1.dashesUsed === 0 && r1.hits === 2 && typeof r1.clearSec === 'number', 'abilities and play stats saved');
   log(await waitFor(() => progress()?.clearedCount === 1 && progress().currentDungeon === null), '7-17: progress clearedCount 1');
 
-  // ── 재접속: 처음으로 → 같은 코드, 다른 닉네임 → 처음 닉네임 유지, 깬 던전 이어 받기 ──
+  // ── 재접속: 처음으로 → 같은 코드, 같은 닉네임 → 같은 학생, 깬 던전 이어 받기 ──
   S('Result').scene.start('Start'); await waitFor(() => active('Start'));
   state.cleared = []; state.unlocked = 0; // 새로고침처럼 비움
   S('Start').scene.start('Join'); await waitFor(() => active('Join'));
-  S('Join').code.el.value = '123456'; S('Join').nick.el.value = '다른이름'; S('Join').submit();
+  S('Join').code.el.value = '123456'; S('Join').nick.el.value = '하늘'; S('Join').submit();
   log(await waitFor(() => active('WorldMap')), 'rejoin while running -> straight to world map');
-  log(session.nickname === '하늘' && F.docs.get('classes/C1/students/S1').nickname === '하늘', 'rejoin keeps first nickname, one student doc');
+  log(session.nickname === '하늘' && F.docs.get('classes/C1/students/S1').nickname === '하늘' && !F.docs.has('classes/C1/students/S2'), 'rejoin with same nickname -> same student, one student doc');
   log(state.cleared[0] === true && state.unlocked === 1, 'rejoin restores cleared dungeon (unlocked 1)');
 
   // ── 새 판을 시작하면 끝내지 않은 이전 판은 중도 종료(abandoned)로 저장 (문제 풀이 기록은 남김) ──
@@ -161,6 +161,15 @@ try {
   const failed = results().find((r) => r.outcome === 'failed');
   log(failed.cleared === false && failed.clearSec === null && failed.quizTotal >= 1, 'failed result from ended run keeps quiz record');
   log(results().every((r) => r.coinsEarned === r.quizCorrect * 10 && r.answers.length === r.quizTotal && r.studentUid === 'S1' && r.nickname === '하늘'), 'every result satisfies the rules the server checks (coins, counts, owner)');
+
+  // ── 같은 브라우저, 다른 닉네임 → 다른 학생 (공용 컴퓨터) ──
+  S('Result').scene.start('Start'); await waitFor(() => active('Start'));
+  S('Start').scene.start('Join'); await waitFor(() => active('Join'));
+  S('Join').code.el.value = '123456'; S('Join').nick.el.value = '바다'; S('Join').submit();
+  log(await waitFor(() => active('Waiting')), 'different nickname -> joins (waiting: activity ended)');
+  const { auth: A } = await import('/__test/e2e-app.js');
+  log(session.nickname === '바다' && A.currentUser.uid === 'S2' && F.docs.get('classes/C1/students/S2')?.nickname === '바다', 'different nickname on same browser -> new anonymous student S2');
+  log(F.docs.get('classes/C1/students/S1').nickname === '하늘', 'first student S1 untouched');
 
   // ── 정답 노출 범위 ──
   log(F.readLog.filter(([p]) => /activities\/A1$/.test(p)).every(([, d]) => d.questions.every((q) => !('answer' in q))), 'activity docs have no answer');
