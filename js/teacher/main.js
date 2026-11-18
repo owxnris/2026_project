@@ -81,7 +81,8 @@ function stopBankWatch() {
 }
 
 const ERROR_TEXT = {
-  'auth/unauthorized-domain': '이 주소는 로그인이 허용되지 않았어요. Firebase 콘솔 → Authentication → 설정 → 승인된 도메인에 추가해 주세요.',
+  // 지금 연 주소(호스트)를 그대로 보여 줘서 무엇을 추가할지 바로 알 수 있게 한다 (Live Server는 보통 127.0.0.1)
+  'auth/unauthorized-domain': `이 주소(${location.hostname})는 로그인이 허용되지 않았어요. Firebase 콘솔 → Authentication → 설정 → 승인된 도메인 → '도메인 추가'에 ${location.hostname} 을(를) 넣어 주세요.`,
   'auth/operation-not-allowed': 'Google 로그인이 꺼져 있어요. Firebase 콘솔 → Authentication에서 켜 주세요.',
 };
 
