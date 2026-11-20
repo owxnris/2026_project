@@ -5,7 +5,7 @@ export const RULES = {
   QUIZ_TIME_SEC: 15,
   ANSWER_GRACE_SEC: 3, // 네트워크 지연 여유. 문제를 낸 뒤 15+3초가 지나면 시간 초과(오답)
   COIN_PER_CORRECT: 10,
-  DUNGEON_COUNT: 3,
+  DUNGEON_COUNT: 8,
   REVIEW_RATE: 0.5, // 틀린 문제 다시 내기: 그 학생이 이 활동에서 틀리고 아직 다시 맞히지 못한 문제를 절반 확률로 먼저
 };
 
@@ -57,6 +57,7 @@ export function grade(chosen, correctIndex, late) {
 // run: { status, entryIssued }
 export function issueBlocker(run, quizType) {
   if (run.status !== 'playing') return 'run-finished';
+  if (quizType === 'rush') return null; // 골드 러시: 시간 안에 몇 문제든
   if (quizType !== 'entry' && quizType !== 'revive') return 'bad-quiz-type';
   if (quizType === 'entry' && run.entryIssued >= RULES.ENTRY_QUIZ_COUNT) return 'entry-done';
   if (quizType === 'revive' && run.entryIssued < RULES.ENTRY_QUIZ_COUNT) return 'entry-not-done';
@@ -97,7 +98,7 @@ export function buildResult({ run, attempts, student, activityId, outcome, stats
     quizType: a.quizType,
   }));
   const wrongConcepts = [...new Set(answers.filter((a) => !a.correct).map((a) => a.learningConcept))];
-  const s = outcome === 'abandoned'
+  const s = outcome === 'abandoned' || outcome === 'goldrush'
     ? { abilities: null, coinsSpent: null, dashesUsed: null, hits: null, falls: null, clearSec: null }
     : stats;
   return {

@@ -63,7 +63,7 @@ function renderList() {
     const open = () => onOpenActivity(current, a.id);
     row.addEventListener('click', open);
     row.addEventListener('keydown', (e) => { if (e.key === 'Enter') open(); });
-    row.insertCell().textContent = a.title;
+    row.insertCell().textContent = a.mode === 'goldrush' ? `[골드 러시] ${a.title}` : a.title;
     row.insertCell().textContent = `${a.questions.length}개`;
     row.insertCell().textContent = `${a.totalTimeSec / 60}분`;
     const state = activityState(a, now);
@@ -170,6 +170,7 @@ function openForm() {
   picked.clear();
   $('act-title').value = '';
   $('act-minutes').value = '10';
+  $('act-mode').value = 'adventure';
   $('a-subject').value = '';
   $('a-difficulty').value = '';
   clearErrors();
@@ -212,6 +213,7 @@ async function onSave(event) {
       title,
       totalTimeSec: Number(minutes) * 60,
       picked: bank.filter((q) => picked.has(q.id)),
+      mode: $('act-mode').value,
     });
     if (current === target) {
       closeForm();

@@ -32,18 +32,18 @@ try {
     log(d.level.doors.every(on) && on(d.level.flag), `${d.name}: doors and flag on platforms`);
   });
 
-  resetGame(); restoreCleared(2);
+  resetGame(); restoreCleared(6);
   S('Start').scene.start('WorldMap');
-  log(await waitFor(() => active('WorldMap')) && state.unlocked === 2, '3rd dungeon unlocked after 2 clears');
-  S('WorldMap').scene.start('Dungeon', { dungeon: 2 });
+  log(await waitFor(() => active('WorldMap')) && state.unlocked === 6, 'frozen castle (room 7) unlocked after 6 clears');
+  S('WorldMap').scene.start('Dungeon', { dungeon: 6 });
   log(await waitFor(() => active('Dungeon')), 'frozen castle dungeon builds');
   const D = S('Dungeon');
   D.player.body.reset(1500, 420); await tick(200);
   log(D.checkpoint === 1, 'passing door 1 sets checkpoint');
   D.player.body.reset(1950, 700); await tick(200);
   log(Math.abs(D.player.x - 1450) < 30 && state.play.falls === 1, `fall -> respawn at door 1 (x=${Math.round(D.player.x)})`);
-  D.onClear();
-  log(await waitFor(() => active('Result')) && S('Result').children.list.some((c) => (c.text || '').startsWith('준비된 던전을 모두 클리어했어요')), 'clearing last dungeon -> all-cleared reward');
+  S('Dungeon').scene.start('Dungeon', { dungeon: 7 }); await waitFor(() => active('Dungeon') && S('Dungeon').index === 7); log(S('Dungeon').level.width === 3800, 'last room (얼음 왕좌) builds'); S('Dungeon').onClear();
+  log(await waitFor(() => active('Result')) && S('Result').children.list.some((c) => (c.text || '').startsWith('모든 방을 정복했어요')), 'clearing last room -> all rooms conquered message');
 } catch (e) { out.push('ERROR ' + e.stack); }
 document.getElementById('out').textContent = out.join('\n');
 </script></body></html>

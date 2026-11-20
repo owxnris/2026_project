@@ -3,11 +3,13 @@
 import { RULES } from './config.js';
 import { serverNow } from './firebase/clock.js';
 import { session } from './session.js';
+import { saveAdventure } from './firebase/adventure.js';
 
 export const state = {
   coins: 0,
-  unlocked: 0, // 도전할 수 있는 가장 높은 던전 번호
+  unlocked: 0, // 도전할 수 있는 가장 높은 방 번호
   cleared: [],
+  gold: 0, // 모험 내내 쌓이는 골드 (정답 1개 = 10, 수업이 바뀌어도 이어진다)
   endTime: 0,
   timedOut: false,
   // 던전 한 판의 플레이 기록 (결과 저장용)
@@ -45,6 +47,7 @@ export function recordQuiz(correct, quizType) {
   state.play.quizTotal += 1;
   state.totalQuiz += 1;
   if (!correct) return;
+  state.gold += RULES.COIN_PER_CORRECT;
   state.play.quizCorrect += 1;
   state.totalCorrect += 1;
   if (quizType === 'entry') state.play.entryCorrect += 1;
@@ -64,6 +67,19 @@ export function clearDungeon(index) {
   state.cleared[index] = true;
   state.unlocked = Math.max(state.unlocked, index + 1);
   state.coins = 0; // 던전이 끝나면 남은 코인은 사라진다
+  saveAdventureNow();
+}
+
+// 앞에서부터 이어서 깬 방 수 (방은 차례로 열린다)
+export function clearedRoomCount() {
+  let n = 0;
+  while (state.cleared[n]) n += 1;
+  return n;
+}
+
+// 모험 기록 저장 (깬 방 수·골드). 실패해도 게임은 계속
+export function saveAdventureNow() {
+  return saveAdventure({ clearedCount: clearedRoomCount(), gold: state.gold });
 }
 
 // 시간이 다 되거나 교사가 활동을 종료하면 어느 화면에서든 최종 결과 화면으로 보낸다.

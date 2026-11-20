@@ -93,7 +93,8 @@ service cloud.firestore {
       match /activities/{activityId} {
         allow read: if ownsClass(classId) || inClass(classId);
         allow create: if ownsClass(classId)
-          && request.resource.data.keys().hasOnly(['title', 'totalTimeSec', 'status', 'startAt', 'endAt', 'questions', 'createdAt'])
+          && request.resource.data.keys().hasOnly(['title', 'totalTimeSec', 'status', 'startAt', 'endAt', 'questions', 'createdAt', 'mode'])
+          && (!('mode' in request.resource.data) || request.resource.data.mode in ['adventure', 'goldrush'])
           && request.resource.data.status == 'waiting'
           && request.resource.data.startAt == null
           && request.resource.data.endAt == null
@@ -136,11 +137,25 @@ service cloud.firestore {
 
         // 실시간 진행 상황: 학생은 자기 문서만 쓰고 읽는다 (다시 들어올 때 깬 던전 수를 이어 받기 위해)
         match /progress/{studentUid} {
-          allow read: if ownsClass(classId) || (inClass(classId) && request.auth.uid == studentUid);
+          // 골드 러시 활동이면 같은 학급 학생도 읽는다 (실시간 순위·참가자 수)
+          allow read: if ownsClass(classId) || (inClass(classId) && (request.auth.uid == studentUid
+            || get(/databases/$(database)/documents/classes/$(classId)/activities/$(activityId)).data.get('mode', 'adventure') == 'goldrush'));
           allow create, update: if inClass(classId) && request.auth.uid == studentUid
             && request.resource.data.keys().hasOnly(['nickname', 'currentDungeon', 'clearedCount', 'coins', 'updatedAt']);
           allow delete: if ownsClass(classId);
         }
+      }
+
+      // 모험 기록(2026-11-18): 학생별 깬 방 수·누적 골드 — 수업이 바뀌어도 이어진다. 본인만 쓰고, 줄일 수 없다. 소유 교사는 읽는다
+      match /adventure/{studentUid} {
+        allow read: if ownsClass(classId) || (inClass(classId) && request.auth.uid == studentUid);
+        allow create, update: if inClass(classId) && request.auth.uid == studentUid
+          && request.resource.data.keys().hasOnly(['nickname', 'clearedCount', 'gold', 'updatedAt'])
+          && request.resource.data.clearedCount is int && request.resource.data.clearedCount >= 0 && request.resource.data.clearedCount <= 8
+          && request.resource.data.gold is int && request.resource.data.gold >= 0
+          && (resource == null || (request.resource.data.clearedCount >= resource.data.clearedCount
+            && request.resource.data.gold >= resource.data.gold));
+        allow delete: if ownsClass(classId);
       }
 
       // 결과: 학생 기기가 판이 끝날 때 한 번 만든다. 문서 번호 = '내uid_…' → 내 번호만 쓸 수 있고, 만들기만 되며 고칠 수 없다 → 같은 판은 한 번만 저장된다
@@ -157,15 +172,15 @@ service cloud.firestore {
           && request.resource.data.nickname == get(/databases/$(database)/documents/classes/$(classId)/students/$(request.auth.uid)).data.nickname
           && request.resource.data.createdAt == request.time
           && exists(/databases/$(database)/documents/classes/$(classId)/activities/$(request.resource.data.activityId))
-          && request.resource.data.dungeon is int && request.resource.data.dungeon >= 0 && request.resource.data.dungeon < 3
-          && request.resource.data.outcome in ['cleared', 'failed', 'abandoned']
+          && request.resource.data.dungeon is int && request.resource.data.dungeon >= 0 && request.resource.data.dungeon < 8
+          && request.resource.data.outcome in ['cleared', 'failed', 'abandoned', 'goldrush']
           && request.resource.data.cleared == (request.resource.data.outcome == 'cleared')
           && request.resource.data.quizCorrect is int && request.resource.data.quizCorrect >= 0
           && request.resource.data.quizTotal is int && request.resource.data.quizCorrect <= request.resource.data.quizTotal
           && request.resource.data.answers is list && request.resource.data.answers.size() == request.resource.data.quizTotal
           && request.resource.data.wrongConcepts is list
           && request.resource.data.coinsEarned == request.resource.data.quizCorrect * 10
-          && (request.resource.data.outcome == 'abandoned'
+          && (request.resource.data.outcome in ['abandoned', 'goldrush']
             ? (request.resource.data.coinsSpent == null && request.resource.data.abilities == null
               && request.resource.data.dashesUsed == null && request.resource.data.hits == null
               && request.resource.data.falls == null && request.resource.data.clearSec == null)

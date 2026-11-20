@@ -8,6 +8,7 @@ export const session = {
   className: '',
   nickname: '',
   activityId: null,
+  mode: 'adventure', // 진행 중 활동의 종류: 'adventure'(던전 모험) | 'goldrush'(골드 러시 이벤트)
   ended: false, // 교사가 활동을 종료했으면 true
 };
 

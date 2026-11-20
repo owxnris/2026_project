@@ -380,3 +380,28 @@
 - 요청 요약: 교사·학생 모든 기능을 체험할 수 있는 체험용 계정 (사용자가 체험 모드 방식 선택)
 - 수정한 파일: js/demo/sdk.js·seed.js·banner.js(신규), index.html·teacher.html(체험 모드 import map), js/scenes/StartScene.js(체험 모드 버튼), css/teacher.css, spec.md(체험 모드 절), tasks.md(5-13), tests/browser/demo.test.html(신규)·run-all.sh
 - 판단 근거: 실제 Firebase·Google 계정 없이, 코드는 그대로 두고 저장소만 이 브라우저 안의 것으로 바꿔 실제 데이터와 섞이지 않고 무료 사용량도 쓰지 않음. 교사·학생 탭은 localStorage 알림으로 실시간 연결
+
+[2026-11-18 17:03]
+- 요청 요약: 원래 개발로 복귀 — 터치 조작(D-3b), 결과 CSV 내려받기(D-11)
+- 수정한 파일: js/touch.js(신규), js/scenes/DungeonScene.js, js/teacher/csv.js(신규), js/teacher/resultsTab.js, teacher.html, css/teacher.css, design.md, tasks.md, tests/test/csv.test.js·tests/browser/touch.test.html(신규), teacher-full.e2e.html, run-all.sh
+- 판단 근거: 키보드만 되던 게임을 태블릿 교실에서도 쓸 수 있게 하고, 교사가 결과를 엑셀로 보관·평가할 수 있게 함
+
+[2026-11-18 17:05]
+- 요청 요약: 던전 차별화 요청 중 구현 가능하고 추천하는 범위 정리
+- 수정한 파일: 없음 (검토)
+- 판단 근거: 기존 구조(Firestore 실시간·활동·결과)로 되는 것과 무리가 큰 것을 나눠 교육 효과·작업량·위험 기준으로 추천
+
+[2026-11-18 18:28]
+- 요청 요약: 던전 차별화 1차 — 던전 지도(방 8개)·이어하기(모험 기록)·짧은 이야기
+- 수정한 파일: js/dungeons.js(방 8개), js/story.js·js/firebase/adventure.js(신규), js/scenes/WorldMapScene.js(지도), WaitingScene·StartScene·ResultScene·DungeonScene, js/state.js, js/art.js, js/grading.js·js/teacher/analysis.js(방 수 8), firestore.rules(adventure, 방 번호 0~7), tests(rules·game·dungeon3), spec.md·design.md·원다현_tasks.md(14단계)
+- 판단 근거: 기존 퀴즈·던전·Firestore를 그대로 써서 방 = 학습 활동 단위로 잇고, 수업마다 처음부터 하던 것을 학생별 기록으로 이어 가게 함. 이야기는 고정 짧은 글로 학습 흐름을 막지 않게 함
+
+[2026-11-18 20:50]
+- 요청 요약: 던전 차별화 2차 — 골드 러시 이벤트
+- 수정한 파일: js/scenes/GoldRushScene.js·js/firebase/goldrush.js·js/goldrushBoard.js(신규), QuizScene·ResultScene·WaitingScene, js/main.js, js/grading.js·js/quiz.js·js/session.js, js/teacher/activities.js·activityTab.js·activityView.js·analysis.js·csv.js, teacher.html, firestore.rules, js/demo/seed.js, tests(goldrush.e2e·goldrush.test·rules·teacher-full·shot), spec.md·design.md·원다현_tasks.md
+- 판단 근거: 새 서버 없이 기존 활동(시작·종료·시간)과 Firestore 실시간 구독(진행 상황)을 재사용해 실제 여러 기기 현황을 보여 주고, 푼 문제는 결과로 남겨 학습 분석과 이어지게 함
+
+[2026-11-18 21:44]
+- 요청 요약: 갑자기 Google 로그인이 안 됨
+- 수정한 파일: index.html·teacher.html(체험 모드 표시를 이 탭에만: sessionStorage, 예전 localStorage 표시 지움), js/demo/banner.js(새 탭 링크에 ?demo=1, 체험 모드 로그인 버튼 글자), js/scenes/StartScene.js, tests/browser/demo.test.html
+- 판단 근거: 체험 모드를 한 번 켜면 브라우저에 계속 남아 교사 화면의 Google 로그인 버튼이 체험 선생님으로 바로 들어가던 것이 가장 유력한 원인. 탭을 닫으면 체험이 끝나게 바꾸고 버튼 글자로 구분

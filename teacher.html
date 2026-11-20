@@ -7,13 +7,14 @@
   <link rel="stylesheet" href="css/teacher.css">
   <script>
     // 체험 모드: ?demo=1로 들어오면 이 브라우저는 체험 모드 — 실제 Firebase 대신 js/demo/sdk.js(이 브라우저 안의 저장소)를 쓴다.
-    // 아래 '체험 끝내기' 또는 ?demo=0으로 나간다. 게임·교사 코드는 바꾸지 않고 불러오는 파일만 바꾼다 (import map)
+    // 이 탭에서만 체험 모드다(sessionStorage) — 탭·브라우저를 닫거나 '체험 끝내기'·?demo=0이면 실제 서비스. 게임·교사 코드는 그대로이고 불러오는 파일만 바꾼다 (import map)
     (function () {
       var q = new URLSearchParams(location.search), on = false;
       try {
-        if (q.get('demo') === '1') localStorage.setItem('dd.demo', '1');
-        if (q.get('demo') === '0') localStorage.removeItem('dd.demo');
-        on = localStorage.getItem('dd.demo') === '1';
+        localStorage.removeItem('dd.demo'); // 예전 방식(브라우저에 계속 남던 표시) 지우기
+        if (q.get('demo') === '1') sessionStorage.setItem('dd.demo', '1');
+        if (q.get('demo') === '0') sessionStorage.removeItem('dd.demo');
+        on = sessionStorage.getItem('dd.demo') === '1';
       } catch (e) { on = q.get('demo') === '1'; }
       if (!on) return;
       var base = new URL('js/', document.baseURI).href, map = {};
@@ -136,6 +137,13 @@
               <span class="small-text">전체 시간(분)</span>
               <input class="input" id="act-minutes" type="number" min="1" step="1">
               <span class="small-text error" data-act-error="minutes"></span>
+            </label>
+            <label class="field">
+              <span class="small-text">활동 종류</span>
+              <select class="input" id="act-mode">
+                <option value="adventure">던전 모험 (지도·퀴즈·던전)</option>
+                <option value="goldrush">골드 러시 (시간 안에 퀴즈로 골드 모으기)</option>
+              </select>
             </label>
           </div>
           <div class="filter-row">

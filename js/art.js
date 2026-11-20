@@ -15,6 +15,7 @@ const SHEETS = [
 // 시트 안의 그림 번호 (왼쪽 위부터 0, 가로로 센다)
 export const TD = {
   hero: 108, // 플레이어: 말랑한 청록 유령 '말랑이'
+  wizard: 84, // 안내자 마법사 루미 (이야기)
   wall: 57, wallTop: 40, window: 28, banner: 29, gargoyle: 19,
   slab: 37, slabL: 36, slabR: 39,
   door: 45, doorOpen: 33,

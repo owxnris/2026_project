@@ -8,7 +8,8 @@ import { DUNGEONS } from '../dungeons.js';
 import { state, checkTimeout, recordQuiz } from '../state.js';
 import { reportProgress } from '../progress.js';
 import { session } from '../session.js';
-import { beginRun, nextQuestion, submitAnswer } from '../quiz.js';
+import { beginRun, nextQuestion, submitAnswer, hasOpenRun } from '../quiz.js';
+import { liveBoard } from '../firebase/goldrush.js';
 import { errorReason } from '../firebase/clock.js';
 import {
   text, createButton, createHud, createBackButton,
@@ -39,8 +40,9 @@ export default class QuizScene extends Phaser.Scene {
     backdrop(this);
     fadeIn(this);
     if (this.mode === 'entry') playMusic('map'); // 회복 퀴즈는 던전 음악을 그대로
+    if (this.mode === 'rush') playMusic('dungeon1');
     panel(this, W / 2, 150, 900, 150, UI.wood, 0x8a6a8a).setAlpha(0.92);
-    const title = this.mode === 'entry' ? `${DUNGEONS[this.dungeon].name} 입장 퀴즈` : '코인 회복 퀴즈';
+    const title = this.mode === 'entry' ? `${DUNGEONS[this.dungeon].name} 입장 퀴즈` : this.mode === 'rush' ? '골드 러시! 정답마다 골드 10' : '코인 회복 퀴즈';
     if (this.mode === 'entry') state.coins = 0;
     // 입장 퀴즈에서만 뒤로 갈 수 있다 (회복 퀴즈는 맞혀야 던전으로 돌아간다)
     this.hud = createHud(this, title, { back: this.mode === 'entry' });
@@ -52,7 +54,10 @@ export default class QuizScene extends Phaser.Scene {
       });
     }
     this.bar = this.add.rectangle((W - BAR_W) / 2, H - GUIDE_H / 2, BAR_W, 8, COLORS.player).setOrigin(0, 0.5);
+    if (this.mode === 'rush') this.setupRush();
     if (this.mode === 'entry') this.request(() => beginRun(this.dungeon), () => this.showQuestion());
+    // 골드 러시: 한 이벤트에 판 하나 (현황 화면에 다녀와도 이어서)
+    else if (this.mode === 'rush' && !hasOpenRun()) this.request(() => beginRun(0), () => this.showQuestion());
     else this.showQuestion();
   }
 
@@ -124,7 +129,8 @@ export default class QuizScene extends Phaser.Scene {
 
     const head = this.mode === 'entry'
       ? `문제 ${this.count + 1}/${RULES.ENTRY_QUIZ_COUNT} · ${q.subject}`
-      : `정답을 맞혀야 다시 움직일 수 있어요 · ${q.subject}`;
+      : this.mode === 'rush' ? `골드 러시 ${this.count + 1}번째 문제 · ${q.subject}`
+        : `정답을 맞혀야 다시 움직일 수 있어요 · ${q.subject}`;
     this.items.push(text(this, W / 2, 90, head, 'small').setOrigin(0.5));
     this.items.push(text(this, W / 2, 180, q.question, 'body')
       .setOrigin(0.5).setWordWrapWidth(860));
@@ -153,7 +159,7 @@ export default class QuizScene extends Phaser.Scene {
       recordQuiz(correct, this.mode);
       play(correct ? 'correct' : 'wrong');
       if (correct) reportProgress();
-      this.items.push(text(this, W / 2, 470, correct ? `정답! 코인 +${RULES.COIN_PER_CORRECT}` : (chosen === null ? '시간 초과 — 금색 테두리가 정답이에요' : '오답 — 금색 테두리가 정답이에요'), 'small', correct ? CSS.good : CSS.bad).setOrigin(0.5));
+      this.items.push(text(this, W / 2, 470, correct ? `정답! ${this.mode === 'rush' ? '골드' : '코인'} +${RULES.COIN_PER_CORRECT}` : (chosen === null ? '시간 초과 — 금색 테두리가 정답이에요' : '오답 — 금색 테두리가 정답이에요'), 'small', correct ? CSS.good : CSS.bad).setOrigin(0.5));
       this.hud.update();
       this.time.delayedCall(1000, () => this.next(correct));
     });
@@ -161,7 +167,10 @@ export default class QuizScene extends Phaser.Scene {
 
   next(correct) {
     if (state.timedOut) return;
-    if (this.mode === 'entry') {
+    if (this.mode === 'rush') {
+      this.count += 1;
+      this.showQuestion();
+    } else if (this.mode === 'entry') {
       this.count += 1;
       if (this.count < RULES.ENTRY_QUIZ_COUNT) this.showQuestion();
       else this.scene.start('Shop', { dungeon: this.dungeon });
@@ -171,6 +180,18 @@ export default class QuizScene extends Phaser.Scene {
     } else {
       this.showQuestion();
     }
+  }
+
+  // 골드 러시: 왼쪽 위 '현황'(이벤트 화면) 버튼과 오른쪽 위 실시간 내 순위·참가자 수 (Firestore 실제 데이터)
+  setupRush() {
+    createBackButton(this, () => this.scene.start('GoldRush'));
+    this.rushInfo = text(this, W - 20, 78, '', 'small', CSS.good).setOrigin(1, 0.5).setDepth(11);
+    this.stopBoard = liveBoard((b) => {
+      if (!this.alive) return;
+      const me = b.rank ? `내 순위 ${b.rank}위 · ` : '';
+      this.rushInfo.setText(`${me}참가 ${b.participants}명 · 총 골드 ${b.totalGold}`);
+    });
+    this.events.once('shutdown', () => this.stopBoard?.());
   }
 
   update(time) {

@@ -83,4 +83,11 @@ export async function seed({ docs, Timestamp }) {
     questions: todayQs.map(activityQuestion), createdAt: ts(now),
   });
   put(`classes/${C}/activities/demo-now/answerKey/main`, { answers: answerKeyOf(todayQs) });
+
+  // 골드 러시 이벤트(대기): 시작하면 학생 탭이 이벤트 화면으로 — 시간 안에 퀴즈로 골드 모으기
+  put(`classes/${C}/activities/demo-rush`, {
+    title: '골드 러시: 5분 퀴즈 대결', totalTimeSec: 300, status: 'waiting', startAt: null, endAt: null,
+    questions: todayQs.map(activityQuestion), createdAt: ts(now - 1000), mode: 'goldrush',
+  });
+  put(`classes/${C}/activities/demo-rush/answerKey/main`, { answers: answerKeyOf(todayQs) });
 }

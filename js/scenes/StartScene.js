@@ -1,5 +1,6 @@
 import { LAYOUT, GUIDE_TEXT, CSS } from '../config.js';
-import { resetGame } from '../state.js';
+import { state, resetGame, restoreCleared } from '../state.js';
+import { loadAdventure, setAdventureBase } from '../firebase/adventure.js';
 import { setQuestions } from '../questions.js';
 import { session, leaveActivity } from '../session.js';
 import { text, createButton, createGuide } from '../ui.js';
@@ -50,7 +51,12 @@ export default class StartScene extends Phaser.Scene {
         return;
       }
       resetGame(); // Firebase 설정값이 없을 때의 예비 흐름: 바로 월드맵 (임시 300초)
-      this.scene.start('WorldMap');
+      loadAdventure().then((adv) => {
+        setAdventureBase(adv);
+        restoreCleared(adv.clearedCount);
+        state.gold = adv.gold;
+        this.scene.start('WorldMap');
+      });
     }, { primary: true });
     if (session.online) {
       createButton(this, cx, 362, '선생님 로그인', () => { window.location.href = 'teacher.html'; }, { w: 220, h: 44 });
@@ -58,7 +64,7 @@ export default class StartScene extends Phaser.Scene {
     this.drawSoundButton();
     // 체험 모드 입구: 로그인·참여 코드 없이 예시 학급으로 교사·학생 화면을 모두 써 본다 (js/demo)
     let demo = false;
-    try { demo = localStorage.getItem('dd.demo') === '1'; } catch { /* 무시 */ }
+    try { demo = sessionStorage.getItem('dd.demo') === '1'; } catch { /* 무시 */ }
     if (session.online && !demo) {
       createButton(this, 100, 36, '체험 모드', () => { window.location.href = 'index.html?demo=1'; }, { w: 170, h: 44 });
     }

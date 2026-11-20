@@ -138,6 +138,9 @@ try {
   log(await waitFor(() => active('WorldMap')), 'rejoin while running -> straight to world map');
   log(session.nickname === '하늘' && F.docs.get('classes/C1/students/S1').nickname === '하늘' && !F.docs.has('classes/C1/students/S2'), 'rejoin with same nickname -> same student, one student doc');
   log(state.cleared[0] === true && state.unlocked === 1, 'rejoin restores cleared dungeon (unlocked 1)');
+  const adv = F.docs.get('classes/C1/adventure/S1');
+  log(adv && adv.clearedCount === 1 && adv.gold > 0 && adv.gold === state.gold && adv.nickname === '하늘', `adventure record saved (rooms ${adv?.clearedCount}, gold ${adv?.gold})`);
+  log(S('WorldMap').selected === 1, 'map opens on the next room (continue adventure)');
 
   // ── 새 판을 시작하면 끝내지 않은 이전 판은 중도 종료(abandoned)로 저장 (문제 풀이 기록은 남김) ──
   S('WorldMap').scene.start('Quiz', { mode: 'entry', dungeon: 1 });

@@ -59,7 +59,7 @@ test('개념별: 과목 + 개념 단위, 틀린 학생 수, 취약 기준', () =
 });
 
 test('학급 통계', () => {
-  assert.deepEqual(classSummary(results), { students: 2, runs: 4, quizTotal: 9, quizCorrect: 6, rate: 6 / 9, clearsByDungeon: [1, 0, 0] });
+  assert.deepEqual(classSummary(results), { students: 2, runs: 4, quizTotal: 9, quizCorrect: 6, rate: 6 / 9, clearsByDungeon: [1, 0, 0, 0, 0, 0, 0, 0] }); // 방 8개 (2026-11-18)
   assert.equal(classSummary(filterResults(results, 'A2')).runs, 1);
 });
 

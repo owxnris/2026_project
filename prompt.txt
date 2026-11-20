@@ -1175,3 +1175,140 @@ google 로 로그인하고 계정을 선택하는게 아니라 기존에 들어�
 
 
 오케이 다시 원래 작업 개발로 넘어가자.
+
+
+# Dungeon Game Differentiation – Realistic MVP Implementation
+
+We want to improve the unique dungeon identity of our educational game based on feedback that quiz systems, incorrect-answer analysis, and classroom management are already common features in existing educational platforms.
+
+The goal is NOT to build a full RPG or MMO. The goal is to make our existing educational game feel like a continuous dungeon adventure with meaningful progression.
+
+## 1. Analyze Before Modifying
+
+First inspect the existing codebase.
+
+- Identify the current tech stack, UI structure, database, authentication, and state management.
+- Identify existing quiz, classroom, reward, and game features.
+- Reuse existing components and infrastructure.
+- Do not duplicate existing features or rewrite the project.
+
+Before implementing, provide a brief plan of which existing files and systems will be affected.
+
+## 2. Dungeon Map & Room Unlocking (Priority 1)
+
+Implement a simple predefined dungeon map.
+
+- Use approximately 5–10 predefined connected rooms.
+- Display locked, unlocked, and completed room states.
+- Completing an existing learning activity unlocks the next room.
+- Each room should have a name and a simple theme or description.
+- Clicking an available room should allow the player to enter it.
+- Avoid procedural map generation or complex navigation systems.
+
+The map should be functional, not just decorative.
+
+## 3. Persistent Progress & Continue Adventure (Priority 2)
+
+Allow players to continue their dungeon progress between sessions.
+
+Save relevant data using the existing storage/database architecture:
+
+- Completed rooms
+- Unlocked rooms
+- Current progression
+- Gold or rewards, if already supported or easy to integrate
+
+On returning to the game, show a "Continue Adventure" option that takes the player to their current progression.
+
+Do not introduce a new database or backend if the existing architecture can support this.
+
+## 4. Lightweight Story & Quest System (Priority 3)
+
+Add simple predefined narrative elements.
+
+- Short story text at the beginning of a stage.
+- Simple NPC dialogue or quest descriptions where appropriate.
+- Give each learning activity a reason within the dungeon story.
+- Display a short completion message when a room is cleared.
+- Reveal the next objective after completing a stage.
+
+Use static predefined content. Do not implement AI-generated dialogue, complex branching stories, or multiple endings.
+
+Keep the narrative short and do not interrupt the learning flow unnecessarily.
+
+## 5. Gold Rush Event MVP (Priority 4)
+
+Implement a simple time-limited event called Gold Rush.
+
+Features:
+
+- Event page or entry point
+- Start and end time
+- Countdown timer
+- Join event button
+- Event-specific quiz or learning activity using existing quiz components
+- Gold rewards for correct answers or completed activities
+- Participant count, total gold, and leaderboard if supported by the current backend
+- Event result summary when the event ends
+
+Use the existing backend and database if available.
+
+If real-time multiplayer infrastructure is not already present, do NOT build a complex WebSocket or MMO system. Use a simpler database-based implementation with refresh or periodic polling if feasible.
+
+Never display fake participants or fake live activity as real data.
+
+If the current architecture cannot support real shared event data, implement the UI and the locally functional event flow, and clearly identify what is required for true multi-user functionality.
+
+## 6. UI Requirements
+
+- Keep the existing design system and visual style.
+- Make the dungeon map and progression visually clear.
+- Clearly differentiate locked, available, and completed rooms.
+- Provide a clear Continue Adventure entry point.
+- Keep Gold Rush visually distinct from normal learning.
+- Avoid excessive new screens, dashboards, or decorative elements.
+- Ensure the features connect to the existing game flow.
+
+## 7. Scope & Constraints
+
+This is a realistic MVP for an existing student project.
+
+- Prioritize functionality over visual decoration.
+- Avoid overengineering.
+- Do not add unnecessary dependencies.
+- Do not change unrelated features.
+- Do not replace the existing architecture.
+- Do not implement a full RPG, MMO, real-time combat, chat, party system, procedural dungeon generation, or complex branching narrative.
+- Test the new flow and existing functionality after implementation.
+
+## Implementation Order
+
+1. Dungeon map and room unlocking.
+2. Persistent progression and Continue Adventure.
+3. Lightweight story and quest integration.
+4. Gold Rush event MVP.
+5. UI polish and testing.
+
+If a feature is too complex for the current architecture, implement the simplest working version and explain the limitation instead of expanding the project scope.
+
+At the end, report:
+- What was implemented
+- Which features are actually functional
+- What data is persisted
+- What remains mocked or local-only
+- What backend or infrastructure is required for real multiplayer functionality
+
+
+구현 가능한 범위에서 가능하고 추천하는거 정리해줘
+
+
+1차 진행
+
+
+2차 진행
+
+
+지금 갑자기 구글 로그인이 안돼
+
+
+다음 개발 포인트는 뭐야

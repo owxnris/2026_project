@@ -46,6 +46,10 @@ before(async () => {
     await setDoc(doc(db, 'classes/C1/activities/A1/answerKey/main'), { answers: { q: 1 } });
     await setDoc(doc(db, 'classes/C1/results/ST_old'), { studentUid: 'ST', quizCorrect: 1 });
     await setDoc(doc(db, 'classes/C1/results/ST2_old'), { studentUid: 'ST2', quizCorrect: 1 });
+    // 골드 러시 활동과 진행 상황 (순위 읽기 시험용)
+    await setDoc(doc(db, 'classes/C1/activities/GR'), { title: 'g', totalTimeSec: 60, status: 'running', mode: 'goldrush', questions: [{ id: 'q' }] });
+    await setDoc(doc(db, 'classes/C1/activities/GR/progress/ST2'), { nickname: '바다', currentDungeon: null, clearedCount: 0, coins: 50 });
+    await setDoc(doc(db, 'classes/C1/activities/A1/progress/ST2'), { nickname: '바다', currentDungeon: 0, clearedCount: 1, coins: 10 });
   });
 });
 after(async () => { await env.cleanup(); });
@@ -102,6 +106,36 @@ test('학생 권한: 활동·정답표·자기 progress는 되고, 활동 고치
   await assertFails(setDoc(doc(out, 'classes/C1/results/OUT_r1'), result({ studentUid: 'OUT' })), '학급 밖 학생은 결과를 못 쓴다');
 });
 
+test('모험 기록(adventure): 본인만 쓰고 줄일 수 없다, 소유 교사는 읽는다', async () => {
+  const st = student('ST');
+  const adv = (o = {}) => ({ nickname: '하늘', clearedCount: 2, gold: 50, updatedAt: serverTimestamp(), ...o });
+  await assertSucceeds(setDoc(doc(st, 'classes/C1/adventure/ST'), adv()));
+  await assertSucceeds(setDoc(doc(st, 'classes/C1/adventure/ST'), adv({ clearedCount: 3, gold: 80 })), '늘리기는 된다');
+  await assertFails(setDoc(doc(st, 'classes/C1/adventure/ST'), adv({ clearedCount: 1, gold: 80 })), '깬 방 수를 줄일 수 없다');
+  await assertFails(setDoc(doc(st, 'classes/C1/adventure/ST'), adv({ clearedCount: 3, gold: 10 })), '골드를 줄일 수 없다');
+  await assertFails(setDoc(doc(st, 'classes/C1/adventure/ST'), adv({ clearedCount: 9 })), '방은 8개까지');
+  await assertFails(setDoc(doc(st, 'classes/C1/adventure/ST'), adv({ extra: 1 })), '정해지지 않은 필드');
+  await assertFails(setDoc(doc(student('ST2'), 'classes/C1/adventure/ST'), adv({ clearedCount: 8 })), '남의 기록은 못 쓴다');
+  await assertFails(getDoc(doc(student('ST2'), 'classes/C1/adventure/ST')), '남의 기록은 못 읽는다');
+  await assertSucceeds(getDoc(doc(teacher('A'), 'classes/C1/adventure/ST')), '소유 교사는 읽는다');
+  await assertFails(getDoc(doc(teacher('B'), 'classes/C1/adventure/ST')), '다른 교사는 못 읽는다');
+});
+
+test('골드 러시: 활동 종류(mode), 같은 학급 학생의 순위 읽기, goldrush 결과', async () => {
+  const a = teacher('A');
+  await assertSucceeds(setDoc(doc(a, 'classes/C1/activities/G1'), newAct({ mode: 'goldrush' })));
+  await assertFails(setDoc(doc(a, 'classes/C1/activities/G2'), newAct({ mode: 'pvp' })), '정해진 종류만');
+  await assertSucceeds(setDoc(doc(a, 'classes/C1/activities/G3'), newAct({ mode: 'adventure' })));
+  const st = student('ST');
+  await assertSucceeds(getDocs(collection(st, 'classes/C1/activities/GR/progress')), '골드 러시면 같은 학급 학생이 순위를 읽는다');
+  await assertFails(getDoc(doc(st, 'classes/C1/activities/A1/progress/ST2')), '보통 활동이면 남의 진행 상황은 못 읽는다');
+  await assertFails(getDocs(collection(student('OUT'), 'classes/C1/activities/GR/progress')), '학급 밖 학생은 못 읽는다');
+  await assertFails(setDoc(doc(st, 'classes/C1/activities/GR/progress/ST2'), { nickname: '바다', currentDungeon: null, clearedCount: 0, coins: 0, updatedAt: serverTimestamp() }), '남의 골드는 못 바꾼다');
+  await assertSucceeds(setDoc(doc(st, 'classes/C1/results/ST_rush1'), abandoned({ outcome: 'goldrush' })), 'goldrush 결과(플레이 기록 null)');
+  await assertFails(setDoc(doc(st, 'classes/C1/results/ST_rush2'), abandoned({ outcome: 'goldrush', hits: 1 })), 'goldrush인데 던전 플레이 기록이 있음');
+  await assertFails(setDoc(doc(st, 'classes/C1/results/ST_rush3'), abandoned({ outcome: 'goldrush', coinsEarned: 999 })), '골드 = 맞힌 수 × 10');
+});
+
 test('복습 기록(learners): 본인만 읽고 쓴다, 형식 검사', async () => {
   const st = student('ST');
   await assertSucceeds(setDoc(doc(st, 'classes/C1/activities/A1/learners/ST'), { wrong: ['q'] }));
@@ -128,7 +162,7 @@ test('결과 쓰기: 내 번호로 한 번만, 값이 규칙을 지킬 때만', 
   await assertFails(setDoc(doc(st, 'classes/C1/results/ST_run7'), result({ answers: [ANS] })), '풀이 기록 수 = 푼 수');
   await assertFails(setDoc(doc(st, 'classes/C1/results/ST_run8'), result({ cleared: false })), 'cleared는 outcome과 일치');
   await assertFails(setDoc(doc(st, 'classes/C1/results/ST_run9'), result({ activityId: 'NOPE' })), '없는 활동');
-  await assertFails(setDoc(doc(st, 'classes/C1/results/ST_runA'), result({ dungeon: 3 })), '던전 번호 범위');
+  await assertFails(setDoc(doc(st, 'classes/C1/results/ST_runA'), result({ dungeon: 8 })), '방 번호 범위 (0~7)');
   await assertFails(setDoc(doc(st, 'classes/C1/results/ST_runB'), result({ outcome: 'won' })), 'outcome 값');
   await assertFails(setDoc(doc(st, 'classes/C1/results/ST_runC'), result({ email: 'a@b.c' })), '정해지지 않은 필드');
   await assertFails(setDoc(doc(st, 'classes/C1/results/ST_runD'), result({ createdAt: Timestamp.fromMillis(1) })), '저장 시각은 서버 시각');

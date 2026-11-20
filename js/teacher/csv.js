@@ -2,7 +2,7 @@
 // 표 만들기는 순수 함수라 node --test로 시험한다 (tests/test/csv.test.js)
 import { studentSummary, levelOf } from './analysis.js';
 
-const OUTCOME = { cleared: '클리어', failed: '실패', abandoned: '중도 종료' };
+const OUTCOME = { cleared: '클리어', failed: '실패', abandoned: '중도 종료', goldrush: '골드 러시' };
 
 // 칸에 쉼표·따옴표·줄바꿈이 있으면 따옴표로 감싼다. 엑셀이 수식으로 읽지 않게 =,+,-,@로 시작하는 글은 앞에 '를 붙인다
 function cell(v) {

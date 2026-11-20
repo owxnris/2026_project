@@ -11,6 +11,7 @@ import { onClassDataChange, getStudents, getResults } from './classHub.js';
 import { ranking, filterResults } from './analysis.js';
 import { message, renderTable } from './tableUtil.js';
 import { DUNGEONS } from '../dungeons.js';
+import { boardOf } from '../goldrushBoard.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -28,6 +29,14 @@ function renderRanking() {
   const students = getStudents();
   if (students.length === 0) {
     message(box, '아직 참여한 학생이 없어요. 학생에게 참여 코드를 알려 주세요.');
+    return;
+  }
+  // 골드 러시: 실시간 진행 상황의 골드 순위 + 참가자 수·총 골드 (실제 참가 학생만)
+  if (activity()?.mode === 'goldrush') {
+    const b = boardOf(Object.entries(progress).map(([uid, p]) => ({ uid, ...p })), null, 100);
+    $('av-info').textContent = `골드 러시 · 참가 ${b.participants}명 / ${students.length}명 · 총 골드 ${b.totalGold}`;
+    if (b.participants === 0) { message(box, '아직 참가한 학생이 없어요. 학생 화면에서 \'참여하기\'를 누르면 여기에 보여요.'); return; }
+    renderTable(box, ['순위', '닉네임', '골드'], b.all.map((p) => [p.rank, p.nickname, `${p.gold} 골드`]), { className: 'rank-table' });
     return;
   }
   const rows = ranking(filterResults(getResults(), activityId), students, progress);
@@ -63,7 +72,7 @@ function render() {
   const sec = state === 'ended' ? 0 : remainingSec(a, serverNow());
   $('av-time').textContent = formatClock(sec);
   $('av-time').classList.toggle('error', state === 'running' && sec <= 10);
-  $('av-info').textContent = `문제 ${a.questions.length}개 · 전체 시간 ${a.totalTimeSec / 60}분`;
+  if (a.mode !== 'goldrush') $('av-info').textContent = `문제 ${a.questions.length}개 · 전체 시간 ${a.totalTimeSec / 60}분`;
   $('av-start-btn').hidden = state !== 'waiting';
   $('av-end-btn').hidden = state !== 'running';
   $('av-restart-btn').hidden = state !== 'ended';

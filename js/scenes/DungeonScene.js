@@ -42,7 +42,7 @@ export default class DungeonScene extends Phaser.Scene {
     this.clearing = false;
     this.airJumped = false;
     this.checkpoint = 0; // 지나간 문 수 (0 = 출발지)
-    this.theme = THEMES[this.index] || THEMES[0];
+    this.theme = THEMES[this.dungeon.theme ?? 0];
     this.wasGround = true;
     this.landAt = -1000;
     this.nextBlink = 0;
@@ -55,7 +55,7 @@ export default class DungeonScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, L.width, H);
     this.cameras.main.setBackgroundColor(this.theme.bg);
     fadeIn(this);
-    playMusic(`dungeon${this.index}`);
+    playMusic(`dungeon${this.dungeon.theme ?? 0}`);
 
     this.buildBackdrop(L);
     this.buildCourse(L);

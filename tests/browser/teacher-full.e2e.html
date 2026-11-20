@@ -205,11 +205,11 @@ try {
   const origClick = HTMLAnchorElement.prototype.click; let fname = ''; HTMLAnchorElement.prototype.click = function () { fname = this.download; };
   $('r-csv-students').click();
   const sCsv = await blob.text();
-  log(fname.endsWith('_전체 활동_학생별 요약.csv') && sCsv.startsWith(String.fromCharCode(0xFEFF) + '닉네임,맞힌 문제') && sCsv.includes('하늘,') && sCsv.includes('바다,'), `CSV students (${fname})`);
+  const bom = new Uint8Array(await blob.arrayBuffer()).slice(0, 3); // 엑셀 한글용 BOM (text()는 BOM을 지워서 바이트로 본다)
+  log(fname.endsWith('_전체 활동_학생별 요약.csv') && sCsv.replace(String.fromCharCode(0xFEFF), '').startsWith('닉네임,맞힌 문제') && bom[0] === 0xEF && bom[1] === 0xBB && sCsv.includes('하늘,') && sCsv.includes('바다,'), `CSV students (${fname})`);
   $('r-csv-runs').click();
   const rCsv = await blob.text();
-  log(rCsv.includes('정보·수학 복습') && rCsv.includes('클리어') && rCsv.split('
-').filter(Boolean).length >= 5, 'CSV runs: one line per run with activity title');
+  log(rCsv.includes('정보·수학 복습') && rCsv.includes('클리어') && rCsv.split(String.fromCharCode(10)).filter((l) => l.trim()).length >= 5, 'CSV runs: one line per run with activity title');
   URL.createObjectURL = origUrl; HTMLAnchorElement.prototype.click = origClick;
   log(await waitFor(() => $('r-supplement').textContent.includes('보충할 개념: 정보 · 알고리즘')), `class summary names weak concept (${$('r-supplement').textContent.slice(0, 80)})`);
   log(!$('r-supplement-btn').hidden && $('r-supplement').textContent.includes('보충 학습이 필요한 학생 (학습 수준 하): 바다'), 'supplement: button + students needing support');
@@ -314,6 +314,11 @@ try {
   await tick(); $('confirm-ok').click();
   log(await waitFor(() => !F.docs.has(sPath)), 'owner unshare deletes shared doc');
   log(F.docs.has(impPath) && F.docs.get(`teachers/T1/questions/${myQid}`).sharedId === null, 'T2 copy stays, T1 question unmarked');
+
+  // 골드 러시 활동: 활동 표에 종류가 보이고, 양식에 종류 고르기가 있다
+  const grId = await T.createActivity(classId, { title: '구구단 대결', totalTimeSec: 300, picked: [{ id: 'g1', subject: '수학', difficulty: '하', learningConcept: '곱셈', question: '2×3', choices: ['5', '6', '7', '8'], answer: 1 }], mode: 'goldrush' });
+  log(F.docs.get(`classes/${classId}/activities/${grId}`).mode === 'goldrush' && $('act-mode').options.length === 2, 'gold rush activity + activity type select');
+  await T.deleteActivity(classId, grId);
 
   // 왼쪽 위 로고를 누르면 홈(학급 목록)
   $('logo-home').click();

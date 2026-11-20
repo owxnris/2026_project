@@ -1,7 +1,7 @@
 // 결과 분석 (순수 함수): 학급 결과(results)를 교사 화면에서 모아 계산한다 (따로 저장하지 않는다 — spec.md 학습 분석)
 // 과목은 결과에 없으므로 결과의 activityId로 그 활동의 문제 사본에서 찾는다.
 
-export const OUTCOME_LABEL = { cleared: '클리어', failed: '실패', abandoned: '중도 종료' };
+export const OUTCOME_LABEL = { cleared: '클리어', failed: '실패', abandoned: '중도 종료', goldrush: '골드 러시' };
 
 // 취약 개념 기준 (기본값, spec.md): 푼 횟수 3번 이상이고 오답률 50% 이상
 export const WEAK_MIN_TOTAL = 3;
@@ -115,7 +115,7 @@ export function conceptStats(results, qIndex) {
 }
 
 // 학급 통계 (기본값, spec.md): 참여 학생 수, 판 수, 푼 문제 수, 평균 정답률, 던전별 클리어한 학생 수
-export function classSummary(results, dungeonCount = 3) {
+export function classSummary(results, dungeonCount = 8) {
   const students = new Set(results.map((r) => r.studentUid));
   const quizTotal = results.reduce((n, r) => n + r.quizTotal, 0);
   const quizCorrect = results.reduce((n, r) => n + r.quizCorrect, 0);

@@ -36,14 +36,14 @@ function action(label, onClick, href) {
   if (onClick) el.addEventListener('click', onClick);
   menu.appendChild(el);
 }
-action(onTeacher ? '학생 화면 새 탭으로 열기' : '교사 화면 새 탭으로 열기', null, onTeacher ? 'index.html' : 'teacher.html');
+action(onTeacher ? '학생 화면 새 탭으로 열기' : '교사 화면 새 탭으로 열기', null, onTeacher ? 'index.html?demo=1' : 'teacher.html?demo=1'); // 새 탭도 체험 모드로
 action('처음부터 다시', () => {
   if (!window.confirm('체험 데이터를 처음 상태로 되돌릴까요? 이 브라우저에서 만든 체험 기록이 지워져요.')) return;
   resetDemo();
   location.reload();
 });
 action('체험 끝내기', () => {
-  try { localStorage.removeItem('dd.demo'); } catch { /* 무시 */ }
+  try { sessionStorage.removeItem('dd.demo'); localStorage.removeItem('dd.demo'); } catch { /* 무시 */ }
   location.href = location.pathname; // ?demo 없이 다시 열기 → 실제 서비스
 });
 
@@ -56,5 +56,8 @@ pill.addEventListener('click', () => {
   pill.textContent = `체험 모드 · 코드 ${DEMO_CODE} ${menu.hidden ? '▾' : '▴'}`;
 });
 box.append(menu, pill);
+// 교사 로그인 버튼: 체험 모드에서는 Google 창 없이 체험 선생님으로 들어간다는 것을 글자로 알린다
+const relabel = () => { const btn = document.getElementById('login-btn'); if (btn) btn.textContent = '체험 선생님으로 들어가기 (Google 로그인 아님)'; };
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', relabel); else relabel();
 const attach = () => document.body.appendChild(box);
 if (document.body) attach(); else document.addEventListener('DOMContentLoaded', attach);

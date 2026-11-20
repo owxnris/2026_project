@@ -10,7 +10,8 @@ import { activityQuestion, answerKeyOf } from './activityRules.js';
 const activitiesOf = (classId) => collection(db, 'classes', classId, 'activities');
 
 // 활동 문서(정답 없는 문제 사본)와 정답표(answerKey/main)를 한 번에 저장한다. picked: 문제은행 문제(id·answer 포함)
-export async function createActivity(classId, { title, totalTimeSec, picked }) {
+// mode: 'adventure'(던전 모험, 기본) | 'goldrush'(골드 러시: 시간 안에 퀴즈만 풀어 골드 모으기)
+export async function createActivity(classId, { title, totalTimeSec, picked, mode = 'adventure' }) {
   const ref = doc(activitiesOf(classId));
   const batch = writeBatch(db);
   batch.set(ref, {
@@ -21,6 +22,7 @@ export async function createActivity(classId, { title, totalTimeSec, picked }) {
     endAt: null,
     questions: picked.map(activityQuestion),
     createdAt: serverTimestamp(),
+    mode: mode === 'goldrush' ? 'goldrush' : 'adventure',
   });
   batch.set(doc(db, 'classes', classId, 'activities', ref.id, 'answerKey', 'main'), { answers: answerKeyOf(picked) });
   await batch.commit();
@@ -66,7 +68,7 @@ export async function restartActivity(classId, activityId) {
   const picked = act.questions.map((q) => ({ ...q, answer: answers[q.id] }));
   const base = act.title.replace(/ · 다시 \d+$/, '');
   const n = Number((act.title.match(/ · 다시 (\d+)$/) || [0, 0])[1]) + 1;
-  const newId = await createActivity(classId, { title: `${base} · 다시 ${n}`, totalTimeSec: act.totalTimeSec, picked });
+  const newId = await createActivity(classId, { title: `${base} · 다시 ${n}`, totalTimeSec: act.totalTimeSec, picked, mode: act.mode });
   try {
     await startActivity(classId, newId);
   } catch (e) {

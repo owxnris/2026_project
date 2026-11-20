@@ -9,7 +9,7 @@ const tick = (ms = 60) => new Promise((r) => setTimeout(r, ms));
 async function waitFor(fn, ms = 8000) { const t = Date.now(); while (Date.now() - t < ms) { try { if (fn()) return true; } catch {} await tick(50); } return false; }
 const load = (el, url) => new Promise((r) => { el.onload = r; el.src = url; });
 try {
-  localStorage.removeItem('dd.demo.db'); localStorage.removeItem('dd.demo.teacher'); localStorage.removeItem('dd.demo');
+  localStorage.removeItem('dd.demo.db'); localStorage.removeItem('dd.demo.teacher'); sessionStorage.removeItem('dd.demo'); localStorage.removeItem('dd.demo');
   const T = document.getElementById('t');
   const S = document.getElementById('s');
   await load(T, '/teacher.html?demo=1');
@@ -56,6 +56,6 @@ try {
   log(![...S.contentDocument.scripts, ...T.contentDocument.scripts].some((s) => (s.src || '').includes('gstatic.com/firebasejs'))
     && ![T, S].some((f) => f.contentWindow.performance.getEntriesByType('resource').some((r) => /googleapis|gstatic\.com\/firebasejs/.test(r.name))), 'no real Firebase requests in demo mode');
 } catch (e) { out.push('ERROR ' + e.stack); }
-try { localStorage.removeItem('dd.demo'); } catch {}
+try { sessionStorage.removeItem('dd.demo'); } catch {}
 document.getElementById('out').textContent = out.join('\n');
 </script></body></html>

@@ -5,8 +5,10 @@
 import { reasonText } from '../firebase/errors.js';
 import { COLORS, CSS, LAYOUT, RULES } from '../config.js';
 import { DUNGEONS } from '../dungeons.js';
-import { state, checkTimeout } from '../state.js';
-import { leaveActivity } from '../session.js';
+import { ROOMS, GUIDE_NAME, nextObjective } from '../story.js';
+import { state, checkTimeout, saveAdventureNow } from '../state.js';
+import { session, leaveActivity } from '../session.js';
+import { liveBoard } from '../firebase/goldrush.js';
 import { hasOpenRun, finishRun, playStats } from '../quiz.js';
 import { errorReason } from '../firebase/clock.js';
 import { text, createButton, createHud } from '../ui.js';
@@ -39,14 +41,20 @@ export default class ResultScene extends Phaser.Scene {
     backdrop(this);
     fadeIn(this);
     playMusic('map');
+    saveAdventureNow(); // 이 판에서 모은 골드를 모험 기록에
     panel(this, cx, 290, 480, 380, UI.wood, 0x8a6a8a).setAlpha(0.92);
     this.hud = createHud(this, '결과');
     const open = hasOpenRun();
+    const rush = session.mode === 'goldrush' && this.mode !== 'clear';
     if (this.mode === 'clear') this.drawClear();
+    else if (rush) this.drawRush();
     else this.drawFinal();
     if (open) {
-      const outcome = this.mode === 'clear' ? 'cleared' : 'failed';
-      this.save(outcome, this.mode === 'clear' ? this.stats : playStats(false));
+      if (rush) this.save('goldrush', null); // 골드 러시: 푼 문제 기록만 (던전 플레이 기록 없음)
+      else {
+        const outcome = this.mode === 'clear' ? 'cleared' : 'failed';
+        this.save(outcome, this.mode === 'clear' ? this.stats : playStats(false));
+      }
     }
   }
 
@@ -78,11 +86,32 @@ export default class ResultScene extends Phaser.Scene {
     this.add.rectangle(LEFT, 280, RIGHT - LEFT, 1, COLORS.player, 0.2).setOrigin(0, 0.5);
     text(this, LEFT, 306, '얻은 코인', 'body').setOrigin(0, 0.5);
     text(this, RIGHT, 306, String(p.quizCorrect * RULES.COIN_PER_CORRECT), 'big', CSS.good).setOrigin(1, 0.5);
-    const next = DUNGEONS[this.dungeon + 1];
-    const reward = next?.level ? `다음 던전 '${next.name}'이(가) 열렸어요` : '준비된 던전을 모두 클리어했어요';
-    this.add.rectangle(cx, 352, RIGHT - LEFT, 36, COLORS.player, 0.1);
-    text(this, cx, 352, `${reward} · 남은 코인은 사라졌어요`, 'small').setOrigin(0.5);
+    // 이야기: 깬 방 한마디 + 다음 목표 (안내자 루미)
+    this.add.rectangle(cx, 350, RIGHT - LEFT + 40, 52, COLORS.player, 0.1);
+    text(this, cx, 338, `${GUIDE_NAME}: ${ROOMS[this.dungeon]?.clear ?? ''}`, 'small', CSS.good).setOrigin(0.5).setWordWrapWidth(500);
+    text(this, cx, 362, nextObjective(this.dungeon, DUNGEONS.map((d) => d.name)), 'small').setOrigin(0.5).setWordWrapWidth(500).setFontSize(13);
     createButton(this, cx, 410, '월드맵으로', () => this.scene.start('WorldMap'), { primary: true });
+  }
+
+  // 골드 러시 결과: 내 골드·순위, 참가자 수·총 골드, 상위 5명 (실시간 현황의 마지막 값)
+  drawRush() {
+    const head = this.mode === 'ended' ? '선생님이 골드 러시를 끝냈어요' : '골드 러시 끝!';
+    text(this, cx, 110, head, 'body', CSS.good).setOrigin(0.5);
+    this.line(160, '내가 모은 골드', `${state.coins} 골드`);
+    this.line(186, '맞힌 문제', `${state.totalCorrect} / ${state.totalQuiz}`);
+    const sum = text(this, cx, 220, '', 'small', CSS.good).setOrigin(0.5);
+    let rows = [];
+    const stop = liveBoard((b) => {
+      if (!this.alive) return;
+      rows.forEach((o) => o.destroy());
+      sum.setText(`참가 ${b.participants}명 · 총 골드 ${b.totalGold}${b.rank ? ` · 내 순위 ${b.rank}위` : ''}`);
+      rows = b.top.map((p, i) => text(this, cx, 250 + i * 24, `${p.rank}위  ${p.nickname}  ${p.gold} 골드`, 'small', p.uid === b.me ? CSS.good : CSS.player).setOrigin(0.5));
+    });
+    this.events.once('shutdown', stop);
+    createButton(this, cx, 400, '처음으로', () => {
+      leaveActivity();
+      this.scene.start('Start');
+    }, { primary: true });
   }
 
   // 최종 결과 (시간 종료·교사 종료): 이번 활동 전체
@@ -91,7 +120,7 @@ export default class ResultScene extends Phaser.Scene {
     const head = this.mode === 'ended' ? '선생님이 활동을 끝냈어요' : '시간 종료!';
     text(this, cx, 110, head, 'body', CSS.bad).setOrigin(0.5);
     text(this, cx, 150, '이번 활동 최종 결과', 'small').setOrigin(0.5).setAlpha(0.6);
-    this.line(195, '클리어한 던전', `${count}개`);
+    this.line(195, '모험 지도', `깬 방 ${count}/${DUNGEONS.length} · 골드 ${state.gold}`);
     this.line(225, '맞힌 문제', `${state.totalCorrect} / ${state.totalQuiz}`);
     const rate = state.totalQuiz ? Math.round((state.totalCorrect / state.totalQuiz) * 100) : 0;
     this.add.rectangle(LEFT, 250, RIGHT - LEFT, 1, COLORS.player, 0.2).setOrigin(0, 0.5);

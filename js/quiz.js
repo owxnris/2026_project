@@ -25,7 +25,7 @@ async function activityData() {
 
 // 결과 문서를 만들어 저장한다. 판 번호가 문서 번호라서 같은 판은 한 번만 저장된다 (이미 있으면 저장된 것으로 본다)
 async function saveOutcome(r, outcome, stats) {
-  if (outcome !== 'abandoned') {
+  if (outcome !== 'abandoned' && outcome !== 'goldrush') { // 골드 러시는 던전 플레이 기록이 없다
     const err = statsError(outcome, stats, r.coinsEarned);
     if (err) throw new Error(`플레이 기록이 올바르지 않아요 (${err})`);
   }
