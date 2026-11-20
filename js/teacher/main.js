@@ -19,7 +19,9 @@ import {
   setupActivityTab, setActivityBank, stopActivities, getActivities, onActivitiesChange,
 } from './activityTab.js';
 import { setupActivityView, openActivityView, closeActivityView } from './activityView.js';
-import { watchStudents, watchResults, watchProgress } from './classData.js';
+import {
+  watchStudents, watchResults, watchProgress, watchAdventures,
+} from './classData.js';
 import { setupClassHub, closeClassData } from './classHub.js';
 import { setupStudentsTab } from './studentsTab.js';
 import { setupResultsTab, refreshResults } from './resultsTab.js';
@@ -125,7 +127,7 @@ if (!isConfigured) {
   setupActivityView({
     start: startActivity, end: endActivity, restart: restartActivity, remove: deleteActivity, getActivities, watchProgress,
   }, backToActivities);
-  setupClassHub({ watchStudents, watchResults });
+  setupClassHub({ watchStudents, watchResults, watchAdventures });
   setupStudentsTab();
   setupResultsTab(getActivities, onActivitiesChange, () => myQuestions, (ids, title) => {
     backToActivities();

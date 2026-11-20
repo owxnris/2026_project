@@ -100,6 +100,11 @@ try {
   F.setDoc({ path: `classes/${classId}/students/S2` }, { nickname: '바다', joinCode: code, joinedAt: F.serverTimestamp() });
   document.querySelector('[data-tab="students"]').click();
   log(await waitFor(() => rows('student-list').length === 2 && $('student-count').textContent === '참여한 학생 2명'), '6-6: students tab realtime (2)');
+  // 학생별 모험 진행: 학생 기기가 쓴 모험 기록이 학생 탭에 실시간으로
+  F.setDoc({ path: `classes/${classId}/adventure/S1` }, { nickname: '하늘', clearedCount: 3, gold: 120, updatedAt: F.serverTimestamp() });
+  log(await waitFor(() => cells(rows('student-list').find((r) => r.cells[0].textContent === '하늘')).slice(2).join('|') === "3/8 · 다음 '용암 광산'|120"
+    && cells(rows('student-list').find((r) => r.cells[0].textContent === '바다')).slice(2).join('|') === '아직 시작 전|0'
+    && $('student-count').textContent.includes('평균 깬 방 1.5/8')), 'students tab shows each student adventure progress and gold');
 
   // ── 시작 → 진행 중 화면 순위 ──
   document.querySelector('[data-tab="activities"]').click();

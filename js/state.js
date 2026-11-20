@@ -17,6 +17,8 @@ export const state = {
   // 이번 활동 전체의 퀴즈 기록 (최종 결과 화면용)
   totalCorrect: 0,
   totalQuiz: 0,
+  // 이번 활동에서 푼 문제 (학생 맞춤 복습용, js/review.js): { id, subject, concept, question, choices, chosen, correctIndex, correct }
+  reviewLog: [],
 };
 
 // abilities: 이번 판에 산 능력 (보호막·이단 점프는 산 판에만), dashLeft: 남은 대시, shieldLeft: 보호막이 남았는지
@@ -36,6 +38,7 @@ export function resetGame(endTimeMs = serverNow() + RULES.TOTAL_TIME_SEC * 1000)
   state.timedOut = false;
   state.totalCorrect = 0;
   state.totalQuiz = 0;
+  state.reviewLog = [];
 }
 
 export function resetPlay() {

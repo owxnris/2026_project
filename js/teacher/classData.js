@@ -17,6 +17,13 @@ export function watchResults(classId, onChange, onError) {
   return onSnapshot(collection(db, 'classes', classId, 'results'), (snap) => onChange(listOf(snap)), onError);
 }
 
+// 학생별 모험 기록 { [studentUid]: { clearedCount, gold } } — 규칙을 아직 게시하지 않았으면 빈 값 (학생 목록은 그대로)
+export function watchAdventures(classId, onChange) {
+  return onSnapshot(collection(db, 'classes', classId, 'adventure'), (snap) => {
+    onChange(Object.fromEntries(listOf(snap).map((a) => [a.id, a])));
+  }, () => onChange({}));
+}
+
 // 활동 하나의 진행 상황 { [studentUid]: { nickname, currentDungeon, clearedCount, coins } }
 export function watchProgress(classId, activityId, onChange) {
   return onSnapshot(collection(db, 'classes', classId, 'activities', activityId, 'progress'), (snap) => {

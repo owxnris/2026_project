@@ -405,3 +405,8 @@
 - 요청 요약: 갑자기 Google 로그인이 안 됨
 - 수정한 파일: index.html·teacher.html(체험 모드 표시를 이 탭에만: sessionStorage, 예전 localStorage 표시 지움), js/demo/banner.js(새 탭 링크에 ?demo=1, 체험 모드 로그인 버튼 글자), js/scenes/StartScene.js, tests/browser/demo.test.html
 - 판단 근거: 체험 모드를 한 번 켜면 브라우저에 계속 남아 교사 화면의 Google 로그인 버튼이 체험 선생님으로 바로 들어가던 것이 가장 유력한 원인. 탭을 닫으면 체험이 끝나게 바꾸고 버튼 글자로 구분
+
+[2026-11-20 15:18]
+- 요청 요약: 다음 개발 1·2 — 교사 화면 학생별 모험 진행(14-5), 학생 맞춤 복습(12-9)
+- 수정한 파일: js/review.js(신규), js/state.js·js/quiz.js·js/scenes/QuizScene.js·ResultScene.js(복습 기록·최종 결과 화면·틀린 문제 상자), js/teacher/classData.js·classHub.js·studentsTab.js·main.js(모험 기록 구독·학생 탭 칸), spec.md·design.md·원다현_tasks.md, tests(review.test·game·teacher-full·shot)
+- 판단 근거: 규칙 변경 없이 — 학생 복습은 기기 안 이번 활동 기록으로 규칙 기반 한마디(3문제 미만이면 말하지 않음), 교사는 이미 읽기 허용된 모험 기록을 학생 탭에 보여 줌

@@ -61,11 +61,13 @@ export async function beginRun(dungeon) {
 export async function nextQuestion(quizType) {
   if (!session.online) {
     const q = nextLocal();
-    return { attemptId: null, question: q, timeLimitSec: RULES.QUIZ_TIME_SEC, local: q };
+    return { attemptId: null, question: q, timeLimitSec: RULES.QUIZ_TIME_SEC, local: q, concept: q.learningConcept };
   }
   if (!run) throw new RunError('run-finished');
   const d = await activityData();
-  return issue(run, d.questions, quizType, serverNow());
+  const item = issue(run, d.questions, quizType, serverNow());
+  item.concept = d.questions.find((q) => q.id === item.question.id)?.learningConcept; // 복습용 (화면에는 안 보임)
+  return item;
 }
 
 // 답 내기 (chosen: 0~3, 시간 초과는 null): { correct, correctIndex }

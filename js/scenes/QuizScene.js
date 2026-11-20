@@ -157,6 +157,10 @@ export default class QuizScene extends Phaser.Scene {
         sparkle(this, ox, oy, 0xffd54f, 18);
       }
       recordQuiz(correct, this.mode);
+      const q = this.item.question; // 학생 맞춤 복습 기록 (최종 결과 화면)
+      state.reviewLog.push({
+        id: q.id, subject: q.subject, concept: this.item.concept, question: q.question, choices: q.choices, chosen, correctIndex, correct,
+      });
       play(correct ? 'correct' : 'wrong');
       if (correct) reportProgress();
       this.items.push(text(this, W / 2, 470, correct ? `정답! ${this.mode === 'rush' ? '골드' : '코인'} +${RULES.COIN_PER_CORRECT}` : (chosen === null ? '시간 초과 — 금색 테두리가 정답이에요' : '오답 — 금색 테두리가 정답이에요'), 'small', correct ? CSS.good : CSS.bad).setOrigin(0.5));

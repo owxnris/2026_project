@@ -9,6 +9,7 @@ import { ROOMS, GUIDE_NAME, nextObjective } from '../story.js';
 import { state, checkTimeout, saveAdventureNow } from '../state.js';
 import { session, leaveActivity } from '../session.js';
 import { liveBoard } from '../firebase/goldrush.js';
+import { reviewSummary } from '../review.js';
 import { hasOpenRun, finishRun, playStats } from '../quiz.js';
 import { errorReason } from '../firebase/clock.js';
 import { text, createButton, createHud } from '../ui.js';
@@ -108,10 +109,36 @@ export default class ResultScene extends Phaser.Scene {
       rows = b.top.map((p, i) => text(this, cx, 250 + i * 24, `${p.rank}위  ${p.nickname}  ${p.gold} 골드`, 'small', p.uid === b.me ? CSS.good : CSS.player).setOrigin(0.5));
     });
     this.events.once('shutdown', stop);
-    createButton(this, cx, 400, '처음으로', () => {
-      leaveActivity();
-      this.scene.start('Start');
-    }, { primary: true });
+    this.endButtons(410);
+  }
+
+  // 아래 버튼: 틀린 문제 다시 보기(있을 때) + 처음으로
+  endButtons(y) {
+    const r = reviewSummary(state.reviewLog);
+    const toStart = () => { leaveActivity(); this.scene.start('Start'); };
+    if (r.wrongQuestions.length) {
+      createButton(this, cx - 125, y, `틀린 문제 (${r.wrongQuestions.length})`, () => this.showReview(r), { w: 230, h: 52 });
+      createButton(this, cx + 125, y, '처음으로', toStart, { primary: true, w: 200, h: 52 });
+    } else {
+      createButton(this, cx, y, '처음으로', toStart, { primary: true });
+    }
+  }
+
+  // 틀린 문제 다시 보기: 문제·정답·내가 고른 답 (최근 것부터 5개)
+  showReview(r) {
+    const items = [];
+    const close = () => items.forEach((o) => o.destroy());
+    items.push(this.add.rectangle(cx, LAYOUT.H / 2, W, LAYOUT.H, 0x0b1020, 0.8).setInteractive().setDepth(10.5));
+    items.push(panel(this, cx, 280, 760, 420, UI.wood, 0x8a6a8a).setDepth(11));
+    items.push(text(this, cx, 96, '틀린 문제 다시 보기', 'body', CSS.good).setOrigin(0.5).setDepth(11.5));
+    r.wrongQuestions.slice(0, 5).forEach((w, i) => {
+      const y = 140 + i * 56;
+      items.push(text(this, 150, y, `${i + 1}. ${w.question}`, 'small').setOrigin(0, 0.5).setDepth(11.5).setWordWrapWidth(660));
+      items.push(text(this, 170, y + 22, `정답: ${w.answer}  ·  내가 고른 답: ${w.chosen}${w.concept ? `  ·  개념: ${w.concept}` : ''}`, 'small', CSS.good).setOrigin(0, 0.5).setDepth(11.5).setFontSize(14));
+    });
+    if (r.wrongQuestions.length > 5) items.push(text(this, cx, 420, `외 ${r.wrongQuestions.length - 5}문제는 선생님과 함께 복습해요`, 'small').setOrigin(0.5).setDepth(11.5).setAlpha(0.7));
+    const b = createButton(this, cx, 455, '닫기', close, { primary: true, w: 160, h: 48, fixed: true });
+    items.push({ destroy: () => b.destroy() });
   }
 
   // 최종 결과 (시간 종료·교사 종료): 이번 활동 전체
@@ -124,12 +151,16 @@ export default class ResultScene extends Phaser.Scene {
     this.line(225, '맞힌 문제', `${state.totalCorrect} / ${state.totalQuiz}`);
     const rate = state.totalQuiz ? Math.round((state.totalCorrect / state.totalQuiz) * 100) : 0;
     this.add.rectangle(LEFT, 250, RIGHT - LEFT, 1, COLORS.player, 0.2).setOrigin(0, 0.5);
-    text(this, LEFT, 280, '정답률', 'body').setOrigin(0, 0.5);
-    text(this, RIGHT, 280, `${rate}%`, 'big', CSS.good).setOrigin(1, 0.5);
-    createButton(this, cx, 350, '처음으로', () => {
-      leaveActivity();
-      this.scene.start('Start');
-    }, { primary: true });
+    text(this, LEFT, 275, '정답률', 'body').setOrigin(0, 0.5);
+    text(this, RIGHT, 275, `${rate}%`, 'big', CSS.good).setOrigin(1, 0.5);
+    // 학생 맞춤 복습: 한마디 + 다시 볼 개념 (이번 활동에서 푼 문제로, 규칙 기반)
+    const r = reviewSummary(state.reviewLog);
+    const color = r.tone === 'good' ? CSS.good : r.tone === 'bad' ? CSS.bad : CSS.player;
+    text(this, cx, 318, r.message, 'small', color).setOrigin(0.5).setWordWrapWidth(440).setFontSize(14);
+    if (r.weakConcepts.length) {
+      text(this, cx, 346, `다시 볼 개념: ${r.weakConcepts.map((c) => `${c.concept}(${c.wrong}번 틀림)`).join(' · ')}`, 'small').setOrigin(0.5).setWordWrapWidth(440).setFontSize(14);
+    }
+    this.endButtons(400);
   }
 
   async save(outcome, stats) {
