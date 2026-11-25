@@ -9,6 +9,7 @@ import {
 } from '../ui.js';
 import { reportProgress } from '../progress.js';
 import { playMusic } from '../music.js';
+import { balance } from '../cosmetics.js';
 import { ROOMS, PROLOGUE, GUIDE_NAME } from '../story.js';
 import { prologueSeen, markPrologueSeen } from '../firebase/adventure.js';
 import {
@@ -32,6 +33,7 @@ export default class WorldMapScene extends Phaser.Scene {
       warn: (m) => this.guide.notice(m, CSS.bad), message: '한 번 더 누르면 처음 화면으로 가요 · 같은 닉네임으로 다시 들어오면 이어서 해요',
     });
     reportProgress(null);
+    createButton(this, 870, 96, '꾸미기', () => this.scene.start('Wardrobe'), { w: 140, h: 44 });
     this.drawPath();
     this.cards = DUNGEONS.map((d, i) => this.room(d, i));
     this.infoItems = [];
@@ -122,6 +124,6 @@ export default class WorldMapScene extends Phaser.Scene {
   update() {
     if (checkTimeout(this)) return;
     this.hud.update();
-    this.hud.setTitle(`던전 지도 · 깬 방 ${clearedRoomCount()}/${DUNGEONS.length} · 골드 ${state.gold}`);
+    this.hud.setTitle(`던전 지도 · 깬 방 ${clearedRoomCount()}/${DUNGEONS.length} · 골드 ${balance(state.gold, state.style.spent)}`); // 쓸 수 있는 골드
   }
 }

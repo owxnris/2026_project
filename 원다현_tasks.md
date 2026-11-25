@@ -454,10 +454,12 @@ D-1 → D-2·D-3 → D-4 → (사용자: 11-5 플레이 감각 점검) → D-5 �
 - [ ] 14-1 던전 지도: 방 8개(코스 5개 새로), 클리어·도전 가능·잠김 표시, 방 고르기·입장
   - 구현됨 — js/dungeons.js, WorldMapScene.js, DungeonScene.js(테마·음악은 방의 theme). 시험: dungeon3.e2e 22개(8방 코스 점검·마지막 방), 캡처 확인. 실제 플레이 감각(새 코스 난이도) 확인 전
 - [ ] 14-2 이어하기: 학생별 모험 기록(깬 방·골드) 저장·복원, 대기 화면 '이어서 모험하기', 지도는 다음 방부터
-  - 구현됨 — js/firebase/adventure.js(신규), state.js(골드·clearedRoomCount), WaitingScene·StartScene·ResultScene, firestore.rules(adventure, 방 번호 0~7). 시험: game.e2e(기록 저장·다음 방), 규칙 에뮬레이터 12묶음 통과. **규칙 다시 게시 필요(사용자)**, 실제 Firebase 확인 전
+  - 구현됨 — js/firebase/adventure.js(신규), state.js(골드·clearedRoomCount), WaitingScene·StartScene·ResultScene, firestore.rules(adventure, 방 번호 0~7). 시험: game.e2e(기록 저장·다음 방), 규칙 에뮬레이터 12묶음 통과. 규칙 게시 완료(사용자, 2026-11-25), 실제 Firebase 확인 전
 - [ ] 14-3 이야기·퀘스트: 프롤로그, 방 설명·퀘스트, 클리어 한마디·다음 목표
   - 구현됨 — js/story.js(신규), 지도·결과 화면. 캡처 확인, 실제 화면 확인 전
 - [ ] 14-4 (2차) 골드 러시 이벤트: 교사가 종류 '골드 러시'로 만들어 시작 → 학생 이벤트 화면(남은 시간·실시간 현황·참여) → 시간 안에 퀴즈로 골드 → 끝나면 요약·결과 저장
-  - 구현됨 — js/scenes/GoldRushScene.js·js/firebase/goldrush.js·js/goldrushBoard.js(신규), QuizScene(rush 모드), ResultScene(요약·goldrush 결과), WaitingScene, grading.js·quiz.js, 교사 activities.js·activityTab.js·activityView.js·teacher.html, firestore.rules(mode·순위 읽기·goldrush 결과), 체험 모드 예시 활동. 시험: goldrush.e2e 15개, 노드 3개, 규칙 에뮬레이터 13묶음 통과. **규칙 다시 게시 필요(사용자)**, 실제 여러 기기 확인 전
+  - 구현됨 — js/scenes/GoldRushScene.js·js/firebase/goldrush.js·js/goldrushBoard.js(신규), QuizScene(rush 모드), ResultScene(요약·goldrush 결과), WaitingScene, grading.js·quiz.js, 교사 activities.js·activityTab.js·activityView.js·teacher.html, firestore.rules(mode·순위 읽기·goldrush 결과), 체험 모드 예시 활동. 시험: goldrush.e2e 15개, 노드 3개, 규칙 에뮬레이터 13묶음 통과. 규칙 게시 완료(사용자, 2026-11-25), 실제 여러 기기 확인 전
 - [ ] 14-5 교사 화면에서 학생별 모험 진행(깬 방·골드) 보기
   - 구현됨(2026-11-20) — classData.js watchAdventures, classHub.js, studentsTab.js, main.js. teacher-full 통과, 실제 화면 확인 전 (규칙 게시 후)
+- [ ] 14-6 말랑이 꾸미기(골드 쓰는 곳): 몸 색 5·모자 5, 사기·입기, 모험 기록에 저장, 던전·대기 화면에 꾸민 모습 (2026-11-25)
+  - 구현됨 — js/cosmetics.js·js/scenes/WardrobeScene.js(신규), art.js(색 바꾼 말랑이·모자 그림), adventure.js·state.js(꾸미기 저장), DungeonScene·WaitingScene·WorldMapScene, firestore.rules(spent·owned·look). 시험: wardrobe.e2e 9개, 노드 4개, 규칙 에뮬레이터 13묶음 통과. **규칙 다시 게시 필요(사용자)**, 실제 화면 확인 전

@@ -410,3 +410,13 @@
 - 요청 요약: 다음 개발 1·2 — 교사 화면 학생별 모험 진행(14-5), 학생 맞춤 복습(12-9)
 - 수정한 파일: js/review.js(신규), js/state.js·js/quiz.js·js/scenes/QuizScene.js·ResultScene.js(복습 기록·최종 결과 화면·틀린 문제 상자), js/teacher/classData.js·classHub.js·studentsTab.js·main.js(모험 기록 구독·학생 탭 칸), spec.md·design.md·원다현_tasks.md, tests(review.test·game·teacher-full·shot)
 - 판단 근거: 규칙 변경 없이 — 학생 복습은 기기 안 이번 활동 기록으로 규칙 기반 한마디(3문제 미만이면 말하지 않음), 교사는 이미 읽기 허용된 모험 기록을 학생 탭에 보여 줌
+
+[2026-11-25 11:32]
+- 요청 요약: 최신 Firestore 규칙을 콘솔에 게시했다고 사용자 알림
+- 수정한 파일: 원다현_tasks.md(14-2·14-4 규칙 게시 완료 표시)
+- 판단 근거: 사용자가 직접 게시함. 기능 동작은 실제 화면 확인 전이라 체크하지 않음
+
+[2026-11-25 12:02]
+- 요청 요약: 확인은 나중에, 다음 개발 먼저 — 말랑이 꾸미기(모은 골드 쓰는 곳)
+- 수정한 파일: js/cosmetics.js·js/scenes/WardrobeScene.js(신규), js/art.js, js/firebase/adventure.js, js/state.js, js/main.js, DungeonScene·WaitingScene·WorldMapScene·StartScene, firestore.rules, spec.md·design.md·원다현_tasks.md(14-6), tests(cosmetics.test·wardrobe.e2e·rules·shot·run-all)
+- 판단 근거: 쌓이기만 하던 골드에 쓸 곳을 만들어 이어하기·골드 러시의 동기를 줌. 모은 골드는 그대로 두고 쓴 골드를 따로 세어 교사 화면·순위에 영향 없음. 규칙 시험용 Java·firebase-tools는 임시 폴더가 지워져 C:/Users/RDWON/.dungeon-dash-tools에 다시 받음

@@ -4,12 +4,14 @@ import { RULES } from './config.js';
 import { serverNow } from './firebase/clock.js';
 import { session } from './session.js';
 import { saveAdventure } from './firebase/adventure.js';
+import { normalize } from './cosmetics.js';
 
 export const state = {
   coins: 0,
   unlocked: 0, // 도전할 수 있는 가장 높은 방 번호
   cleared: [],
   gold: 0, // 모험 내내 쌓이는 골드 (정답 1개 = 10, 수업이 바뀌어도 이어진다)
+  style: normalize(), // 말랑이 꾸미기 { owned, look: { color, hat }, spent } — 쓸 수 있는 골드 = gold − style.spent
   endTime: 0,
   timedOut: false,
   // 던전 한 판의 플레이 기록 (결과 저장용)
@@ -82,7 +84,7 @@ export function clearedRoomCount() {
 
 // 모험 기록 저장 (깬 방 수·골드). 실패해도 게임은 계속
 export function saveAdventureNow() {
-  return saveAdventure({ clearedCount: clearedRoomCount(), gold: state.gold });
+  return saveAdventure({ clearedCount: clearedRoomCount(), gold: state.gold, ...state.style });
 }
 
 // 시간이 다 되거나 교사가 활동을 종료하면 어느 화면에서든 최종 결과 화면으로 보낸다.

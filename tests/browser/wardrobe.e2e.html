@@ -1,0 +1,58 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<script type="importmap">
+{ "imports": {
+  "http://127.0.0.1:5599/js/firebase/sdk.js": "/__test/e2e-sdk.js",
+  "http://127.0.0.1:5599/js/firebase/app.js": "/__test/off-app.js"
+} }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script></head>
+<body><div id="game"></div><pre id="out">running</pre>
+<script type="module">
+// 말랑이 꾸미기: 골드로 사기·입기, 골드 부족, 모험 기록에 저장, 던전에서 꾸민 모습 (Firebase 없는 예비 흐름 = 이 브라우저 저장)
+var out = []; window.addEventListener('error', (e) => out.push('WINERR ' + e.message));
+const log = (ok, m) => out.push((ok ? 'PASS ' : 'FAIL ') + m);
+const tick = (ms = 50) => new Promise((r) => setTimeout(r, ms));
+async function waitFor(fn, ms = 5000) { const t = Date.now(); while (Date.now() - t < ms) { try { if (fn()) return true; } catch {} await tick(30); } return false; }
+try {
+  localStorage.removeItem('dd.adventure');
+  const { COLORS, LAYOUT, PHYS } = await import('/js/config.js');
+  const scenes = await Promise.all(['Boot', 'Start', 'Join', 'Waiting', 'WorldMap', 'Quiz', 'Shop', 'Dungeon', 'Result', 'GoldRush', 'Wardrobe'].map((n) => import(`/js/scenes/${n}Scene.js`).then((m) => m.default)));
+  const { state, resetGame } = await import('/js/state.js');
+  const C = await import('/js/cosmetics.js');
+  const { loadAdventure, setAdventureBase } = await import('/js/firebase/adventure.js');
+  const game = new Phaser.Game({ type: Phaser.CANVAS, parent: 'game', width: LAYOUT.W, height: LAYOUT.H, backgroundColor: COLORS.bg,
+    fps: { forceSetTimeOut: true, target: 60 }, dom: { createContainer: true }, physics: { default: 'arcade', arcade: { gravity: { y: PHYS.GRAVITY } } }, scene: scenes });
+  const active = (k) => game.scene.isActive(k); const S = (k) => game.scene.getScene(k);
+  await waitFor(() => active('Start'));
+  resetGame();
+  state.gold = 200; // 퀴즈로 모은 골드라고 치고
+  S('Start').scene.start('WorldMap');
+  await waitFor(() => active('WorldMap'));
+  S('WorldMap').scene.start('Wardrobe');
+  log(await waitFor(() => active('Wardrobe')), 'map -> wardrobe');
+  const W = S('Wardrobe');
+  const item = (id) => C.COLORS.find((c) => c.id === id) || C.HATS.find((h) => h.id === id);
+  W.pick(item('pink'));
+  log(state.style.look.color === 'pink' && state.style.spent === 60 && state.style.owned.includes('pink'), 'buy pink: -60 gold, worn');
+  W.pick(item('crown'));
+  log(state.style.look.hat === 'none' && state.style.spent === 60, 'crown (250) not affordable with 140 -> nothing changes');
+  W.pick(item('leaf'));
+  log(state.style.look.hat === 'leaf' && state.style.spent === 100, 'buy leaf hat: -40');
+  W.pick(item('mint')); W.pick(item('pink'));
+  log(state.style.spent === 100 && state.style.look.color === 'pink', 'switching to owned colors is free');
+  log(state.gold === 200, 'collected gold stays 200 (spent is separate)');
+  await tick(100);
+  const saved = await loadAdventure();
+  log(saved.spent === 100 && saved.look.color === 'pink' && saved.look.hat === 'leaf' && saved.owned.includes('leaf'), 'saved in adventure record (comes back next class)');
+
+  // 던전: 꾸민 말랑이 (분홍 몸 + 새싹 모자가 몸을 따라감)
+  W.scene.start('Dungeon', { dungeon: 0 });
+  await waitFor(() => active('Dungeon'));
+  const D = S('Dungeon');
+  await tick(300);
+  log(D.hero.texture.key === 'hero_pink' && D.dress.hat?.texture.key === 'hat_leaf', 'dungeon hero wears pink + leaf hat');
+  D.player.body.reset(400, 300); await tick(200);
+  log(Math.abs(D.dress.hat.x - D.hero.x) < 1 && Math.abs(D.dress.hat.y - D.hero.y) < 1, 'hat follows the hero');
+} catch (e) { out.push('ERROR ' + e.stack); }
+document.getElementById('out').textContent = out.join('\n');
+</script></body></html>

@@ -55,6 +55,7 @@ export default class StartScene extends Phaser.Scene {
         setAdventureBase(adv);
         restoreCleared(adv.clearedCount);
         state.gold = adv.gold;
+        state.style = { owned: adv.owned, look: adv.look, spent: adv.spent };
         this.scene.start('WorldMap');
       });
     }, { primary: true });

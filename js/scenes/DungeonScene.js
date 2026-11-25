@@ -8,9 +8,10 @@ import { playStats } from '../quiz.js';
 import { play } from '../sound.js';
 import { reportProgress } from '../progress.js';
 import {
-  SCALE, TD, PP, THEMES, sprite, tiles, tinted, dot, coinPop, sparkle, reducedMotion, fadeIn,
+  SCALE, TD, PP, THEMES, sprite, tiles, tinted, dot, coinPop, sparkle, reducedMotion, fadeIn, dressedHero,
 } from '../art.js';
 import { playMusic } from '../music.js';
+import { COLORS as SKINS } from '../cosmetics.js';
 import { isTouchDevice, createTouchControls } from '../touch.js';
 
 // 안내 줄: 조작과 가진 능력 (예: ←→ 이동 · Space 점프 · Shift 대시(남은 2회) · 보호막 · 이단 점프)
@@ -65,7 +66,10 @@ export default class DungeonScene extends Phaser.Scene {
     this.player = this.add.rectangle(L.start.x, L.start.y, 32, 48, COLORS.player).setVisible(false);
     this.physics.add.existing(this.player);
     this.player.body.setCollideWorldBounds(true);
-    this.hero = sprite(this, L.start.x, L.start.y + 24 + FOOT, 'td', TD.hero).setOrigin(0.5, 1).setDepth(5);
+    // 말랑이 꾸미기(몸 색·모자)를 입힌다 — 모자는 몸 그림을 따라간다 (updateArt의 sync)
+    const look = state.style.look;
+    this.dress = dressedHero(this, L.start.x, L.start.y + 24 + FOOT, look, SKINS.find((c) => c.id === look.color));
+    this.hero = this.dress.body.setDepth(5);
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
 
     this.physics.add.collider(this.player, this.platforms);
@@ -203,8 +207,8 @@ export default class DungeonScene extends Phaser.Scene {
 
     this.hero.setPosition(p.x, p.y + 24 + FOOT + oy).setScale(SCALE * sx, SCALE * sy).setFlipX(this.facing < 0).setAlpha(p.alpha);
     if (time > this.nextBlink) {
-      this.hero.setTexture('hero_blink');
-      this.time.delayedCall(130, () => this.hero.setTexture('td', TD.hero));
+      this.hero.setTexture(...this.dress.keys.blink);
+      this.time.delayedCall(130, () => this.hero.setTexture(...this.dress.keys.base));
       this.nextBlink = time + 2200 + Math.random() * 2500;
     }
     this.monsters.forEach(({ r, m }) => {
@@ -212,6 +216,7 @@ export default class DungeonScene extends Phaser.Scene {
       m.setFlipX(p.x < m.x);
     });
     this.backWall.tilePositionX = this.cameras.main.scrollX * 0.25;
+    this.dress.sync();
   }
 
   onResume() {

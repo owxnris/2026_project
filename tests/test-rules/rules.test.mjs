@@ -118,6 +118,10 @@ test('모험 기록(adventure): 본인만 쓰고 줄일 수 없다, 소유 교�
   await assertFails(setDoc(doc(student('ST2'), 'classes/C1/adventure/ST'), adv({ clearedCount: 8 })), '남의 기록은 못 쓴다');
   await assertFails(getDoc(doc(student('ST2'), 'classes/C1/adventure/ST')), '남의 기록은 못 읽는다');
   await assertSucceeds(getDoc(doc(teacher('A'), 'classes/C1/adventure/ST')), '소유 교사는 읽는다');
+  // 말랑이 꾸미기: 쓴 골드 ≤ 모은 골드, 쓴 골드는 줄일 수 없다
+  await assertSucceeds(setDoc(doc(st, 'classes/C1/adventure/ST'), adv({ clearedCount: 3, gold: 80, spent: 60, owned: ['mint', 'none', 'pink'], look: { color: 'pink', hat: 'none' } })));
+  await assertFails(setDoc(doc(st, 'classes/C1/adventure/ST'), adv({ clearedCount: 3, gold: 80, spent: 90, owned: [], look: {} })), '모은 골드보다 많이 쓸 수 없다');
+  await assertFails(setDoc(doc(st, 'classes/C1/adventure/ST'), adv({ clearedCount: 3, gold: 80, spent: 0, owned: [], look: {} })), '쓴 골드를 줄일 수 없다 (공짜로 되돌리기 금지)');
   await assertFails(getDoc(doc(teacher('B'), 'classes/C1/adventure/ST')), '다른 교사는 못 읽는다');
 });
 

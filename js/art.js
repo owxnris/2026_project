@@ -136,6 +136,66 @@ export function dot(scene, color) {
   return key;
 }
 
+// ── 말랑이 꾸미기 (js/cosmetics.js) ──
+// 몸 색: 원래 그림(108번)의 밝은·몸·그림자 세 색을 고른 팔레트로 바꾼 그림을 만든다 (눈 감은 그림도 함께)
+const HERO_COLORS = [[0x69, 0xff, 0xd4], [0x43, 0xe1, 0xb3], [0x25, 0x95, 0x6a]];
+const hexRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+export function heroKeys(scene, colorId = 'mint', palette = null) {
+  if (!palette) return { base: ['td', TD.hero], blink: ['hero_blink'] };
+  const key = `hero_${colorId}`;
+  if (!scene.textures.exists(key)) {
+    const src = scene.textures.get('td').getSourceImage();
+    const to = palette.map(hexRgb);
+    [[key, false], [`${key}_blink`, true]].forEach(([k, blink]) => {
+      const t = scene.textures.createCanvas(k, 16, 16);
+      const ctx = t.getContext();
+      ctx.drawImage(src, (TD.hero % 12) * 16, Math.floor(TD.hero / 12) * 16, 16, 16, 0, 0, 16, 16);
+      if (blink) { ctx.fillStyle = '#43e1b3'; ctx.fillRect(6, 7, 1, 1); ctx.fillRect(9, 7, 1, 1); }
+      const img = ctx.getImageData(0, 0, 16, 16);
+      for (let i = 0; i < img.data.length; i += 4) {
+        const n = HERO_COLORS.findIndex(([r, g, b]) => img.data[i] === r && img.data[i + 1] === g && img.data[i + 2] === b);
+        if (n >= 0) [img.data[i], img.data[i + 1], img.data[i + 2]] = to[n];
+      }
+      ctx.putImageData(img, 0, 0);
+      t.refresh();
+    });
+  }
+  return { base: [key], blink: [`${key}_blink`] };
+}
+
+// 모자: 말랑이 그림(16px)과 같은 칸에 겹쳐 그리는 16px 픽셀 그림 (이 프로젝트에서 직접 그림)
+const HAT_ART = {
+  leaf: { rows: ['........AAA.....', '.......ABBBA....', '.......AAAA.....', '.......AC.......'], colors: { A: '#3f2631', B: '#7bd34f', C: '#8a5a3a' } },
+  bow: { rows: ['................', '.........AA.AA..', '.........ABABA..', '.........AA.AA..'], colors: { A: '#3f2631', B: '#ff7eb6' } },
+  wizard: { rows: ['........A.......', '.......ABA......', '......ABBBA.....', '.....ABBCBBA....', '....AAAAAAAAA...'], colors: { A: '#3f2631', B: '#7a4fd0', C: '#ffd54f' } },
+  crown: { rows: ['.....A.AA.A.....', '.....ABAABA.....', '.....ABBBBA.....', '.....AAAAAA.....'], colors: { A: '#3f2631', B: '#ffd54f' } },
+};
+export function hatKey(scene, hatId) {
+  const art = HAT_ART[hatId];
+  if (!art) return null;
+  const key = `hat_${hatId}`;
+  if (!scene.textures.exists(key)) {
+    const rows = [...art.rows];
+    while (rows.length < 16) rows.push('................');
+    pixelTexture(scene, key, rows, art.colors);
+  }
+  return key;
+}
+
+// 꾸민 말랑이 하나: 몸 그림 + 모자 그림(같은 위치·크기로 따라감). look: { color, hat }, colorDef: cosmetics COLORS 항목
+export function dressedHero(scene, x, y, look, colorDef, scale = SCALE) {
+  const keys = heroKeys(scene, look.color, colorDef?.palette);
+  const body = scene.add.image(x, y, ...keys.base).setScale(scale).setOrigin(0.5, 1);
+  const hk = hatKey(scene, look.hat);
+  const hat = hk ? scene.add.image(x, y, hk).setScale(scale).setOrigin(0.5, 1) : null;
+  const sync = () => {
+    if (!hat) return;
+    hat.setPosition(body.x, body.y).setScale(body.scaleX, body.scaleY).setFlipX(body.flipX).setAlpha(body.alpha).setDepth(body.depth + 0.1);
+  };
+  sync();
+  return { body, hat, keys, sync };
+}
+
 // 그림 하나 (3배)
 export function sprite(scene, x, y, sheet, frame, scale = SCALE) {
   return scene.add.image(x, y, sheet, frame).setScale(scale);

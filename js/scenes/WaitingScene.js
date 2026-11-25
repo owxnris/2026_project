@@ -11,8 +11,9 @@ import { loadAdventure, setAdventureBase } from '../firebase/adventure.js';
 import { DUNGEONS } from '../dungeons.js';
 import { text, createBackButton } from '../ui.js';
 import {
-  backdrop, fadeIn, panel, sprite, UI, TD, SCALE,
+  backdrop, fadeIn, panel, sprite, dressedHero, UI, TD, SCALE,
 } from '../art.js';
+import { COLORS as SKINS } from '../cosmetics.js';
 import { playMusic } from '../music.js';
 
 const cx = LAYOUT.W / 2;
@@ -30,6 +31,7 @@ export default class WaitingScene extends Phaser.Scene {
     // 기다리는 동안 말랑이가 통통 뛴다
     const hero = sprite(this, cx, 470, 'td', TD.hero).setOrigin(0.5, 1).setScale(SCALE + 1);
     this.tweens.add({ targets: hero, y: 440, duration: 380, yoyo: true, repeat: -1, ease: 'Quad.out', repeatDelay: 700 });
+    this.heroImage = hero;
     text(this, cx, 200, session.className, 'body').setOrigin(0.5);
     text(this, cx, 245, `${session.nickname} · 선생님이 시작하면 게임이 열려요`, 'small').setOrigin(0.5);
     this.error = text(this, cx, 300, '', 'small', CSS.bad).setOrigin(0.5);
@@ -37,6 +39,10 @@ export default class WaitingScene extends Phaser.Scene {
     this.adventure = loadAdventure();
     this.adventure.then((adv) => {
       if (!this.scene.isActive()) return;
+      // 꾸민 말랑이 (몸 색·모자)
+      const d = dressedHero(this, cx, 470, adv.look, SKINS.find((c) => c.id === adv.look.color), SCALE + 1);
+      this.heroImage.destroy();
+      this.tweens.add({ targets: d.body, y: 440, duration: 380, yoyo: true, repeat: -1, ease: 'Quad.out', repeatDelay: 700, onUpdate: d.sync });
       const msg = adv.clearedCount > 0
         ? `이어서 모험하기 · 깬 방 ${adv.clearedCount}/${DUNGEONS.length} · 골드 ${adv.gold} — 다음은 '${DUNGEONS[Math.min(adv.clearedCount, DUNGEONS.length - 1)].name}'`
         : '새 모험 시작 · 첫 번째 방 \'잊혀진 숲\'부터 열려요';
@@ -58,6 +64,7 @@ export default class WaitingScene extends Phaser.Scene {
         setAdventureBase(adv);
         restoreCleared(Math.max(n, adv.clearedCount));
         state.gold = adv.gold;
+        state.style = { owned: adv.owned, look: adv.look, spent: adv.spent };
         if (this.scene.isActive()) this.scene.start(session.mode === 'goldrush' ? 'GoldRush' : 'WorldMap');
       });
     }, (e) => {

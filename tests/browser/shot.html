@@ -14,13 +14,13 @@ const q = new URLSearchParams(location.search);
 const out = document.getElementById('out'); const errs = [];
 window.addEventListener('error', (e) => { errs.push(e.message); out.textContent = errs.join('\n'); });
 const { COLORS, LAYOUT, PHYS } = await import('/js/config.js');
-const scenes = await Promise.all(['Boot', 'Start', 'Join', 'Waiting', 'WorldMap', 'Quiz', 'Shop', 'Dungeon', 'Result', 'GoldRush'].map((n) => import(`/js/scenes/${n}Scene.js`).then((m) => m.default)));
+const scenes = await Promise.all(['Boot', 'Start', 'Join', 'Waiting', 'WorldMap', 'Quiz', 'Shop', 'Dungeon', 'Result', 'GoldRush', 'Wardrobe'].map((n) => import(`/js/scenes/${n}Scene.js`).then((m) => m.default)));
 const { state, resetGame, restoreCleared } = await import('/js/state.js');
 const game = new Phaser.Game({ type: Phaser.CANVAS, parent: 'game', width: LAYOUT.W, height: LAYOUT.H, backgroundColor: COLORS.bg, pixelArt: true,
   fps: { forceSetTimeOut: true, target: 60 }, dom: { createContainer: true }, physics: { default: 'arcade', arcade: { gravity: { y: PHYS.GRAVITY } } }, scene: scenes });
 const tick = (ms) => new Promise((r) => setTimeout(r, ms));
 while (!game.scene.isActive('Start')) await tick(50);
-resetGame(); restoreCleared(Number(q.get('cleared') || 1)); state.coins = 35;
+resetGame(); restoreCleared(Number(q.get('cleared') || 1)); state.coins = 35; if (q.get('gold')) state.gold = Number(q.get('gold'));
 if (q.get('review')) { const A = (id, c, ok, ch) => ({ id, subject: '수학', concept: c, question: id + ' 문제는 무엇일까요?', choices: ['가', '나', '다', '라'], chosen: ch, correctIndex: 1, correct: ok }); state.reviewLog = [A('q1', '곱셈', false, 0), A('q2', '분수', true, 1), A('q3', '곱셈', false, null), A('q4', '나눗셈', false, 2), A('q5', '분수', true, 1)]; state.totalQuiz = 5; state.totalCorrect = 2; }
 const target = q.get('scene') || 'Dungeon';
 const data = JSON.parse(q.get('data') || '{"dungeon":0}');

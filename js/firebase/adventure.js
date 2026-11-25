@@ -1,43 +1,53 @@
-// 학생 모험 기록: 깬 방 수·누적 골드를 수업(활동)이 바뀌어도 이어 간다.
+// 학생 모험 기록: 깬 방 수·누적 골드·말랑이 꾸미기(산 물건·입은 것·쓴 골드)를 수업(활동)이 바뀌어도 이어 간다.
 // - 온라인: Firestore classes/{학급}/adventure/{학생 uid} (학생 본인만 쓰고, 소유 교사가 읽는다 — firestore.rules)
 // - Firebase 설정값이 없는 예비 흐름: 이 브라우저(localStorage)
 // 학생 계정이 익명이라 같은 브라우저 + 같은 닉네임일 때 이어진다 (다른 기기로 옮기면 새 기록)
 import { doc, getDoc, setDoc, serverTimestamp } from './sdk.js';
 import { db, auth } from './app.js';
 import { session } from '../session.js';
+import { normalize } from '../cosmetics.js';
 
 const LOCAL_KEY = 'dd.adventure';
 const ref = () => doc(db, 'classes', session.classId, 'adventure', auth.currentUser.uid);
-const EMPTY = { clearedCount: 0, gold: 0 };
+const EMPTY = { clearedCount: 0, gold: 0, ...normalize() };
 
+// 돌려줌: { clearedCount, gold, spent, owned, look }
 export async function loadAdventure() {
   try {
-    if (!session.online) return { ...EMPTY, ...JSON.parse(localStorage.getItem(LOCAL_KEY) || '{}') };
-    const snap = await getDoc(ref());
-    return snap.exists() ? { ...EMPTY, ...snap.data() } : { ...EMPTY };
+    const raw = !session.online
+      ? JSON.parse(localStorage.getItem(LOCAL_KEY) || '{}')
+      : await getDoc(ref()).then((snap) => (snap.exists() ? snap.data() : {}));
+    return { clearedCount: raw.clearedCount ?? 0, gold: raw.gold ?? 0, ...normalize(raw) };
   } catch {
     return { ...EMPTY }; // 읽지 못하면 처음부터 (게임은 막지 않는다)
   }
 }
 
-// 깬 방 수와 골드는 줄어들지 않는다 (규칙도 같은 조건)
+// 깬 방 수·모은 골드·쓴 골드는 줄어들지 않는다 (규칙도 같은 조건)
 let last = { ...EMPTY };
-export function saveAdventure({ clearedCount, gold }) {
-  const next = { clearedCount: Math.max(clearedCount, last.clearedCount), gold: Math.max(gold, last.gold) };
-  if (next.clearedCount === last.clearedCount && next.gold === last.gold) return Promise.resolve();
+export function saveAdventure({ clearedCount, gold, spent = last.spent, owned = last.owned, look = last.look }) {
+  const next = {
+    clearedCount: Math.max(clearedCount, last.clearedCount),
+    gold: Math.max(gold, last.gold),
+    spent: Math.max(spent, last.spent),
+    owned: [...owned],
+    look: { ...look },
+  };
+  if (JSON.stringify(next) === JSON.stringify(last)) return Promise.resolve();
+  const prev = last;
   last = next;
   if (!session.online) {
     try { localStorage.setItem(LOCAL_KEY, JSON.stringify(next)); } catch { /* 이번 탭만 */ }
     return Promise.resolve();
   }
   return setDoc(ref(), { nickname: session.nickname, ...next, updatedAt: serverTimestamp() }).catch(() => {
-    last = { ...EMPTY }; // 다음에 다시 쓰도록
+    last = prev; // 다음에 다시 쓰도록
   });
 }
 
 // 불러온 값을 기준점으로 삼는다 (다른 학생으로 바뀌었을 때 이전 값이 남지 않게)
 export function setAdventureBase(adv) {
-  last = { clearedCount: adv.clearedCount, gold: adv.gold };
+  last = { clearedCount: adv.clearedCount, gold: adv.gold, spent: adv.spent ?? 0, owned: [...(adv.owned ?? EMPTY.owned)], look: { ...(adv.look ?? EMPTY.look) } };
 }
 
 // 프롤로그를 본 적 있는지 (이 브라우저·학생마다)
