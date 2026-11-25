@@ -1330,3 +1330,221 @@ firebash에 올려야하는 규칙을 너가 직접 텍스트로 보내줘ㅓ
 
 
 지금 확인 어려운데 다른거 먼저 실행해줘
+
+
+// 던전 대시 Firestore 보안 규칙 (초안)
+// 게시: 프로젝트 폴더에서 firebase deploy --only firestore:rules (또는 Firebase 콘솔 → Firestore Database → 규칙 탭에 붙여 넣고 '게시').
+// 교사 = Google 로그인 사용자, 학생 = 익명 로그인 사용자.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isTeacher() {
+      return signedIn() && request.auth.token.firebase.sign_in_provider == 'google.com';
+    }
+    function classDoc(classId) {
+      return get(/databases/$(database)/documents/classes/$(classId));
+    }
+    function ownsClass(classId) {
+      return isTeacher() && classDoc(classId).data.ownerUid == request.auth.uid;
+    }
+    function inClass(classId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/classes/$(classId)/students/$(request.auth.uid));
+    }
+
+    // 교사 정보와 문제은행: 본인만
+    match /teachers/{uid} {
+      allow read, write: if isTeacher() && request.auth.uid == uid;
+      match /questions/{qid} {
+        allow read, write: if isTeacher() && request.auth.uid == uid;
+      }
+    }
+
+    // 교사 간 공유 문제은행: 교사(Google 로그인)는 모두 읽고, 올린 교사만 고치고 지운다
+    // 개인 정보가 실리지 않도록 정해진 필드만 허용한다 (작성자는 교사가 정한 공유 이름, 이메일·학생 정보 없음)
+    function validShared(d) {
+      return d.keys().hasOnly(['subject', 'difficulty', 'learningConcept', 'question', 'choices', 'answer',
+                               'ownerUid', 'authorName', 'sharedAt', 'updatedAt'])
+        && d.subject is string && d.difficulty in ['하', '중', '상']
+        && d.learningConcept is string && d.learningConcept.size() > 0
+        && d.question is string && d.question.size() > 0
+        && d.choices is list && d.choices.size() == 4
+        && d.answer is int && d.answer >= 0 && d.answer <= 3
+        && d.authorName is string && d.authorName.size() > 0 && d.authorName.size() <= 20
+        && !d.authorName.matches('.*@.*');
+    }
+    match /sharedQuestions/{sharedId} {
+      allow read: if isTeacher();
+      allow create: if isTeacher() && request.resource.data.ownerUid == request.auth.uid && validShared(request.resource.data);
+      allow update: if isTeacher() && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid && validShared(request.resource.data);
+      allow delete: if isTeacher() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    // 참여 코드 → 학급 찾기: 코드 하나 조회만, 목록 조회 불가
+    // 학급 문서와 같은 일괄 쓰기(batch)로 만든다.
+    match /joinCodes/{code} {
+      allow get: if signedIn();
+      allow list: if false;
+      // 이미 있는 코드에 쓰면 create가 아니라 update라서 막힌다 → 다른 학급 코드를 덮어쓸 수 없다
+      allow create: if isTeacher()
+        && request.resource.data.keys().hasOnly(['classId', 'ownerUid'])
+        && request.resource.data.ownerUid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/classes/$(request.resource.data.classId)).data.ownerUid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/classes/$(request.resource.data.classId)).data.joinCode == code;
+      // 자기가 만든 코드만 지울 수 있다
+      allow delete: if isTeacher() && resource.data.ownerUid == request.auth.uid;
+      allow update: if false;
+    }
+
+    match /classes/{classId} {
+      allow read: if (isTeacher() && resource.data.ownerUid == request.auth.uid) || inClass(classId);
+      allow create: if isTeacher() && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if isTeacher() && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid;
+      allow delete: if isTeacher() && resource.data.ownerUid == request.auth.uid;
+
+      // 학생 참여: 본인 문서만, 참여 코드가 이 학급을 가리켜야 한다
+      match /students/{studentUid} {
+        allow read: if ownsClass(classId) || request.auth.uid == studentUid;
+        // 이미 참여한 학생이 다시 쓰면 update라서 막힌다 → 앱에서 먼저 문서가 있는지 확인한다
+        // 닉네임은 1~10자 (JoinScene과 같다). 겹치는 닉네임은 막지 않는다 (학생은 uid로 구분)
+        allow create: if signedIn() && request.auth.uid == studentUid
+          && request.resource.data.keys().hasOnly(['nickname', 'joinCode', 'joinedAt'])
+          && request.resource.data.nickname is string
+          && request.resource.data.nickname.size() > 0
+          && request.resource.data.nickname.size() <= 10
+          && request.resource.data.joinCode is string
+          && get(/databases/$(database)/documents/joinCodes/$(request.resource.data.joinCode)).data.classId == classId;
+        allow delete: if ownsClass(classId);
+        allow update: if false;
+      }
+
+      // 학습 활동: 교사가 대기 상태로 만들고, 학급 학생은 읽기만 (Cloud Functions 없음 — 모두 Firestore 규칙으로 지킨다)
+      // 시작·종료는 교사가 고치되 허용된 세 가지 변경만 된다 (제목·문제·전체 시간은 만든 뒤 고칠 수 없다)
+      match /activities/{activityId} {
+        allow read: if ownsClass(classId) || inClass(classId);
+        allow create: if ownsClass(classId)
+          && request.resource.data.keys().hasOnly(['title', 'totalTimeSec', 'status', 'startAt', 'endAt', 'questions', 'createdAt', 'mode'])
+          && (!('mode' in request.resource.data) || request.resource.data.mode in ['adventure', 'goldrush'])
+          && request.resource.data.status == 'waiting'
+          && request.resource.data.startAt == null
+          && request.resource.data.endAt == null
+          && request.resource.data.totalTimeSec is int
+          && request.resource.data.totalTimeSec > 0
+          && request.resource.data.questions is list
+          && request.resource.data.questions.size() > 0;
+        allow update: if ownsClass(classId) && (
+          // ① 시작: 대기 → 진행 중, startAt은 서버 시각
+          (resource.data.status == 'waiting'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'startAt'])
+            && request.resource.data.status == 'running'
+            && request.resource.data.startAt == request.time)
+          // ② 종료 시각 정하기: startAt + 전체 시간 (1초 안쪽 오차 허용)
+          || (resource.data.status == 'running' && resource.data.endAt == null
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['endAt'])
+            && request.resource.data.endAt >= resource.data.startAt + duration.value(resource.data.totalTimeSec, 's')
+            && request.resource.data.endAt <= resource.data.startAt + duration.value(resource.data.totalTimeSec + 1, 's'))
+          // ③ 종료: 진행 중 → 종료
+          || (resource.data.status == 'running'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+            && request.resource.data.status == 'ended'));
+        allow delete: if ownsClass(classId);
+
+        // 정답표: 소유 교사가 만들고, 같은 학급 학생은 읽는다 (학생 기기가 채점한다 — 기기 조작으로 정답을 볼 수 있는 한계, spec.md)
+        match /answerKey/{keyId} {
+          allow read: if ownsClass(classId) || inClass(classId);
+          allow create: if ownsClass(classId);
+          allow update, delete: if false;
+        }
+
+        // 학생별 복습 기록(틀리고 아직 다시 맞히지 못한 문제 id): 그 학생 본인만
+        match /learners/{studentUid} {
+          allow read: if inClass(classId) && request.auth.uid == studentUid;
+          allow create, update: if inClass(classId) && request.auth.uid == studentUid
+            && request.resource.data.keys().hasOnly(['wrong'])
+            && request.resource.data.wrong is list && request.resource.data.wrong.size() <= 200;
+          allow delete: if ownsClass(classId);
+        }
+
+        // 실시간 진행 상황: 학생은 자기 문서만 쓰고 읽는다 (다시 들어올 때 깬 던전 수를 이어 받기 위해)
+        match /progress/{studentUid} {
+          // 골드 러시 활동이면 같은 학급 학생도 읽는다 (실시간 순위·참가자 수)
+          allow read: if ownsClass(classId) || (inClass(classId) && (request.auth.uid == studentUid
+            || get(/databases/$(database)/documents/classes/$(classId)/activities/$(activityId)).data.get('mode', 'adventure') == 'goldrush'));
+          allow create, update: if inClass(classId) && request.auth.uid == studentUid
+            && request.resource.data.keys().hasOnly(['nickname', 'currentDungeon', 'clearedCount', 'coins', 'updatedAt']);
+          allow delete: if ownsClass(classId);
+        }
+      }
+
+      // 모험 기록(2026-11-18): 학생별 깬 방 수·누적 골드 — 수업이 바뀌어도 이어진다. 본인만 쓰고, 줄일 수 없다. 소유 교사는 읽는다
+      match /adventure/{studentUid} {
+        allow read: if ownsClass(classId) || (inClass(classId) && request.auth.uid == studentUid);
+        allow create, update: if inClass(classId) && request.auth.uid == studentUid
+          && request.resource.data.keys().hasOnly(['nickname', 'clearedCount', 'gold', 'updatedAt'])
+          && request.resource.data.clearedCount is int && request.resource.data.clearedCount >= 0 && request.resource.data.clearedCount <= 8
+          && request.resource.data.gold is int && request.resource.data.gold >= 0
+          && (resource == null || (request.resource.data.clearedCount >= resource.data.clearedCount
+            && request.resource.data.gold >= resource.data.gold));
+        allow delete: if ownsClass(classId);
+      }
+
+      // 결과: 학생 기기가 판이 끝날 때 한 번 만든다. 문서 번호 = '내uid_…' → 내 번호만 쓸 수 있고, 만들기만 되며 고칠 수 없다 → 같은 판은 한 번만 저장된다
+      // 값의 형식·범위를 규칙이 검사한다: 얻은 코인 = 맞힌 문제 수 × 10, 쓴 코인 ≤ 얻은 코인.
+      // (맞힌 문제 수 자체는 기기가 정하므로 조작하면 속일 수 있다 — 서버 검증이 없는 한계, spec.md)
+      match /results/{resultId} {
+        allow read: if ownsClass(classId) || (inClass(classId) && resource.data.studentUid == request.auth.uid);
+        allow create: if inClass(classId) && resultId.matches(request.auth.uid + '_.*')
+          && request.resource.data.keys().hasOnly([
+               'studentUid', 'nickname', 'activityId', 'dungeon', 'outcome', 'cleared',
+               'quizCorrect', 'quizTotal', 'answers', 'wrongConcepts', 'coinsEarned', 'coinsSpent',
+               'abilities', 'dashesUsed', 'hits', 'falls', 'clearSec', 'createdAt'])
+          && request.resource.data.studentUid == request.auth.uid
+          && request.resource.data.nickname == get(/databases/$(database)/documents/classes/$(classId)/students/$(request.auth.uid)).data.nickname
+          && request.resource.data.createdAt == request.time
+          && exists(/databases/$(database)/documents/classes/$(classId)/activities/$(request.resource.data.activityId))
+          && request.resource.data.dungeon is int && request.resource.data.dungeon >= 0 && request.resource.data.dungeon < 8
+          && request.resource.data.outcome in ['cleared', 'failed', 'abandoned', 'goldrush']
+          && request.resource.data.cleared == (request.resource.data.outcome == 'cleared')
+          && request.resource.data.quizCorrect is int && request.resource.data.quizCorrect >= 0
+          && request.resource.data.quizTotal is int && request.resource.data.quizCorrect <= request.resource.data.quizTotal
+          && request.resource.data.answers is list && request.resource.data.answers.size() == request.resource.data.quizTotal
+          && request.resource.data.wrongConcepts is list
+          && request.resource.data.coinsEarned == request.resource.data.quizCorrect * 10
+          && (request.resource.data.outcome in ['abandoned', 'goldrush']
+            ? (request.resource.data.coinsSpent == null && request.resource.data.abilities == null
+              && request.resource.data.dashesUsed == null && request.resource.data.hits == null
+              && request.resource.data.falls == null && request.resource.data.clearSec == null)
+            : (request.resource.data.coinsSpent is int && request.resource.data.coinsSpent >= 0
+              && request.resource.data.coinsSpent <= request.resource.data.coinsEarned
+              && request.resource.data.abilities is map
+              && request.resource.data.dashesUsed is int && request.resource.data.dashesUsed >= 0
+              && request.resource.data.hits is int && request.resource.data.hits >= 0
+              && request.resource.data.falls is int && request.resource.data.falls >= 0
+              && (request.resource.data.outcome == 'cleared'
+                ? (request.resource.data.clearSec is number && request.resource.data.clearSec >= 0)
+                : request.resource.data.clearSec == null)));
+        allow update: if false;
+        allow delete: if ownsClass(classId);
+      }
+    }
+  }
+}
+
+지금 이건데 여기에 위의 내용 추가해서 하나로 보내줘
+
+
+근데 말랑이 꾸미기가 일회적 포인트인데 왜 필요해
+
+
+C
+
+골드 모으는 방법이 불분명 - 교사가 따로 누르지 않더라도, 전체 접속 해야하는 인원이 20명이라면 한명 당 모든걸 다 깨면 50코인씩 모이고 먼저 들어가서 보물상자를 캐고 있을 수 잇도록 광산처럼. 근데 혼자선 절대 안되고 그래도 한 참여인원으 절반 이상부터 조금씩 돈 캐서 학급 코인으로 완성해서 아직 못온 친구들한테 지원가게는 못하나 
+한국어 지원이 잘 안되는 듯 한국어 기리 겹치거나 가독성이 좀 안좋은 것 같고. 잊혀진 숲,이끼 덮인 길, 거미 둥지, 용암광산에서 들어가는 표지?가 같아서 아쉽고. 
+게임하면서 화살표 표시 대시 이러ㄴ표시가 말랑이를 가려서 수정해주고
+
+소리  끄고 키는거 ? 를 게임 접속해서도 선택할 수 잇게 하고 
+지금 레벨에 따른 장애물 통과가 너무 비슷해서 난도에 따라 뭐 장애물이 어렵다던지, 나한테 총을 쏜다던지 이런게 필요할듯

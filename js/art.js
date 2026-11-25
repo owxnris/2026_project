@@ -5,6 +5,7 @@ import { LAYOUT } from './config.js';
 
 export const SCALE = 3;
 export const FONT_PIXEL = '"Galmuri11", "Malgun Gothic", sans-serif';
+export const FONT_SMALL = '"Galmuri14", "Galmuri11", "Malgun Gothic", sans-serif'; // 작은 글자(15px)용
 
 const SHEETS = [
   { key: 'td', url: 'assets/kenney/tiny-dungeon.png', size: 16 }, // Tiny Dungeon: 던전 타일·캐릭터·몬스터·물약
@@ -21,7 +22,7 @@ export const TD = {
   door: 45, doorOpen: 33,
   chest: 89,
   potionGreen: 114, potionBlue: 116, shield: 102,
-  bat: 120, ghost: 121, spider: 122, snail: 123, rat: 124, cyclops: 109, crab: 110,
+  bat: 120, ghost: 121, spider: 122, snail: 123, rat: 124, cyclops: 109, crab: 110, darkWizard: 111,
 };
 export const PP = { coin: 151, coin2: 152, flag: 111, flag2: 112, pole: 131, heart: 44, lock: 28, key: 27 };
 export const UI = { wood: 11, parchment: 10, stone: 13, stoneLight: 12, red: 70, blue: 73, green: 74, white: 69, ribbonL: 83, ribbonM: 84, ribbonR: 85 };

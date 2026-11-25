@@ -420,3 +420,29 @@
 - 요청 요약: 확인은 나중에, 다음 개발 먼저 — 말랑이 꾸미기(모은 골드 쓰는 곳)
 - 수정한 파일: js/cosmetics.js·js/scenes/WardrobeScene.js(신규), js/art.js, js/firebase/adventure.js, js/state.js, js/main.js, DungeonScene·WaitingScene·WorldMapScene·StartScene, firestore.rules, spec.md·design.md·원다현_tasks.md(14-6), tests(cosmetics.test·wardrobe.e2e·rules·shot·run-all)
 - 판단 근거: 쌓이기만 하던 골드에 쓸 곳을 만들어 이어하기·골드 러시의 동기를 줌. 모은 골드는 그대로 두고 쓴 골드를 따로 세어 교사 화면·순위에 영향 없음. 규칙 시험용 Java·firebase-tools는 임시 폴더가 지워져 C:/Users/RDWON/.dungeon-dash-tools에 다시 받음
+
+[2026-11-25 12:10]
+- 요청 요약: 콘솔에 있는 규칙에 꾸미기 변경을 합친 전체 규칙 텍스트 요청
+- 수정한 파일: 없음 (firestore.rules 전체를 그대로 전달)
+- 판단 근거: 붙여 주신 규칙은 저장소의 직전 버전과 같고 모험 기록 블록만 바뀌어, 저장소의 현재 firestore.rules가 곧 합친 결과
+
+[2026-11-25 12:12]
+- 요청 요약: 말랑이 꾸미기가 일회성인데 왜 필요한지 문의
+- 수정한 파일: 없음 (검토)
+- 판단 근거: 만든 이유와 한계(다 사면 끝남·학습 연결 약함)를 솔직히 정리하고, 유지·보완·빼기 선택지를 제시
+
+[2026-11-25 12:40]
+- 요청 요약: 'C' 선택 — 학급 보물상자(학생들이 골드를 함께 넣어 교사가 정한 보상을 열고, 다음 목표로 이어지는 골드 쓰는 곳) 구현
+- 수정한 파일: js/chest.js·js/firebase/chest.js·js/scenes/ChestScene.js(신규), js/main.js, js/scenes/WorldMapScene.js·WaitingScene.js·StartScene.js, js/state.js, js/firebase/adventure.js·sdk.js, js/demo/sdk.js·seed.js, teacher.html, css/teacher.css, js/teacher/main.js·classData.js·classHub.js·studentsTab.js, firestore.rules, spec.md·design.md·원다현_tasks.md(14-7), tests(chest.test·chest.e2e·teacher-full·e2e-sdk·rules·shot·shot-on·run-all)
+- 판단 근거: 꾸미기는 다 사면 끝나는 일회성이라, 목표가 계속 바뀌는 학급 공동 목표로 골드에 지속적인 쓸모와 협동 동기를 줌. Cloud Functions 없이 batch + getAfter 규칙으로 '넣은 만큼만 합계 증가'를 보장
+
+[2026-11-25 13:30]
+- 요청 요약: 골드 모으는 방법(학급 광산 아이디어) 문의, 한글 가독성·겹침, 지도 방 표지가 같음, 터치 버튼이 말랑이를 가림
+- 수정한 파일: js/config.js, js/art.js, js/ui.js, js/touch.js, js/scenes/StartScene.js·JoinScene.js·QuizScene.js·ResultScene.js·GoldRushScene.js·WorldMapScene.js·WardrobeScene.js·DungeonScene.js, design.md, 원다현_tasks.md(14-8)
+- 판단 근거: 픽셀 글꼴을 어중간한 크기(13·14·16·28·64px)로 쓰면 획이 뭉개져 제 크기(12의 배수·Galmuri14 15px)로 맞춤. 지도 그림은 테마별 번갈아 써서 겹쳤던 것을 방마다 고정. 광산은 범위가 커서 설계 질문에 답을 받고 계획 승인 대기
+
+[2026-11-25 15:10]
+- 요청 요약: 게임 중에도 소리 켜기·끄기, 레벨에 따라 장애물 난도 차이(선택: 따라오는 유령), 이어서 학급 광산(답한 설계대로)
+- 수정한 파일: js/ui.js, js/scenes/WaitingScene.js, js/chasers.js(신규), js/scenes/DungeonScene.js, js/dungeons.js, js/mine.js·js/firebase/mine.js·js/scenes/MineScene.js(신규), js/progress.js, js/scenes/QuizScene.js·ShopScene.js·WorldMapScene.js, js/state.js, js/quiz.js, js/grading.js, js/main.js, js/teacher/activityView.js·classData.js·main.js·activities.js, teacher.html, firestore.rules, spec.md, design.md, 원다현_tasks.md(14-9~14-11), tests(dungeon3·mine.e2e·mine.test·rules·shot·shot-on·run-all)
+- 판단 근거: 장애물은 사용자가 고른 '따라오는 유령'만 성 두 방에 넣음(말랑이보다 느리게 해 멈추지 않으면 피할 수 있게). 광산은 서버 없이 규칙으로 '다 깬 학생만·한 번에 30까지·완성 후 지원 코인 20'을 지키고, 쓰기 수를 아끼려 3초마다 모아서 씀
+

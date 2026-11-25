@@ -17,6 +17,8 @@ export class Timestamp {
 }
 export const ts = (ms) => Timestamp.fromMillis(ms);
 export const serverTimestamp = () => ({ __serverTs: true });
+export const increment = (n) => ({ __inc: n }); // 지금 값에 더하기 (여러 학생이 동시에 넣어도 합계가 맞게)
+const merge = (prev = {}, data) => Object.fromEntries([...Object.entries(prev), ...Object.entries(data).map(([k, v]) => [k, v && v.__inc !== undefined ? (prev[k] ?? 0) + v.__inc : v])]);
 // 쓰기 직전: serverTimestamp 자리를 서버 시각(여기서는 이 기기 시각 + 시험이 정한 오프셋)으로 바꾼다
 export let serverOffsetMs = 0;
 export const setServerOffset = (ms) => { serverOffsetMs = ms; };
@@ -65,7 +67,7 @@ export async function setDoc(ref, data) {
   docs.set(ref.path, resolve(data)); emit();
   if (takeFlag(loseWriteOnce, ref.path)) throw netErr();
 }
-export async function updateDoc(ref, data) { docs.set(ref.path, { ...docs.get(ref.path), ...resolve(data) }); emit(); }
+export async function updateDoc(ref, data) { docs.set(ref.path, resolve(merge(docs.get(ref.path), data))); emit(); }
 export async function addDoc(col, data) { const r = doc(col); docs.set(r.path, resolve(data)); emit(); return r; }
 export async function deleteDoc(ref) { docs.delete(ref.path); emit(); }
 export async function getCountFromServer(col) { return { data: () => ({ count: colDocs(col).length }) }; }
@@ -73,7 +75,7 @@ export function writeBatch() {
   const ops = [];
   return {
     set(ref, data) { ops.push(() => docs.set(ref.path, resolve(data))); },
-    update(ref, data) { ops.push(() => docs.set(ref.path, { ...docs.get(ref.path), ...resolve(data) })); },
+    update(ref, data) { ops.push(() => docs.set(ref.path, resolve(merge(docs.get(ref.path), data)))); },
     delete(ref) { ops.push(() => docs.delete(ref.path)); },
     async commit() { ops.forEach((op) => op()); emit(); },
   };

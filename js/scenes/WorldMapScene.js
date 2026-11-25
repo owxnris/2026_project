@@ -20,6 +20,9 @@ const { W } = LAYOUT;
 // 방 위치: 왼쪽 아래에서 오른쪽 위로 굽이치는 길 (고정)
 const POS = [[90, 330], [205, 235], [320, 320], [435, 225], [550, 310], [665, 215], [780, 300], [880, 190]];
 
+// 방마다 다른 그림 (지도에서 방을 구별): 숲 달팽이 · 이끼 길 박쥐 · 거미 둥지 거미 · 용암 광산 게 · 불꽃 갱도 외눈 거인 · 무너진 다리 쥐 · 얼어붙은 성 유령 · 얼음 왕좌 어둠 마법사
+const ROOM_ICONS = [TD.snail, TD.bat, TD.spider, TD.crab, TD.cyclops, TD.rat, TD.ghost, TD.darkWizard];
+
 export default class WorldMapScene extends Phaser.Scene {
   constructor() { super('WorldMap'); }
 
@@ -34,6 +37,9 @@ export default class WorldMapScene extends Phaser.Scene {
     });
     reportProgress(null);
     createButton(this, 870, 96, '꾸미기', () => this.scene.start('Wardrobe'), { w: 140, h: 44 });
+    createButton(this, 715, 96, '보물상자', () => this.scene.start('Chest'), { w: 150, h: 44 });
+    // 학급 광산: 8개 방을 다 깬 학생만 (js/mine.js)
+    if (clearedRoomCount() >= DUNGEONS.length) createButton(this, 570, 96, '광산', () => this.scene.start('Mine'), { w: 120, h: 44, primary: true });
     this.drawPath();
     this.cards = DUNGEONS.map((d, i) => this.room(d, i));
     this.infoItems = [];
@@ -68,19 +74,20 @@ export default class WorldMapScene extends Phaser.Scene {
     const tint = st === '잠김' ? 0x8090a8 : (st === '클리어' ? COLORS.good : 0xffffff);
     const base = add(panel(this, x, y, 84, 84, frame, tint));
     add(this.add.rectangle(x, y, 60, 60, th.bg));
-    const m = add(sprite(this, x, y + 4, 'td', i % 2 ? th.flyer : th.ground[i % th.ground.length]));
-    add(text(this, x - 30, y - 32, String(i + 1), 'small', st === '클리어' ? CSS.bg : CSS.player).setOrigin(0.5).setStroke('#1B1F2A', st === '클리어' ? 0 : 4));
+    const m = add(sprite(this, x, y + 4, 'td', ROOM_ICONS[i] ?? th.flyer));
+    add(text(this, x - 30, y - 32, String(i + 1), 'small', CSS.player).setOrigin(0.5).setStroke('#1B1F2A', 4));
     if (st === '클리어') add(this.add.image(x + 32, y - 32, 'star').setScale(2));
     if (st === '잠김') {
       parts.forEach((p) => p.setAlpha(0.45));
-      add(sprite(this, x, y + 4, 'pp', PP.lock, 2.4));
+      m.setAlpha(0.7); // 잠긴 방도 어떤 방인지 그림은 보이게
+      add(sprite(this, x + 24, y + 24, 'pp', PP.lock, 1.8)); // 자물쇠는 오른쪽 아래 작게
     }
     if (st === '도전 가능') {
       // 지금 도전할 방은 통통 뛰며 눈에 띄게
       this.tweens.add({ targets: base, scale: SCALE * 1.08, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
       this.tweens.add({ targets: m, y: y - 2, duration: 300, yoyo: true, repeat: -1 });
     }
-    add(text(this, x, y + 54, d.name, 'small', st === '잠김' ? CSS.player : CSS.good).setOrigin(0.5).setAlpha(st === '잠김' ? 0.5 : 1).setFontSize(14));
+    add(text(this, x, y + 54, d.name, 'small', st === '잠김' ? CSS.player : CSS.good).setOrigin(0.5).setStroke('#1B1F2A', 4).setAlpha(st === '잠김' ? 0.6 : 1));
     this.add.zone(x, y, 96, 110).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.select(i));
     return { status: st, parts };
   }
@@ -96,7 +103,7 @@ export default class WorldMapScene extends Phaser.Scene {
       panel(this, W / 2, y, W - 60, 92, UI.wood, 0x8a6a8a).setAlpha(0.95),
       sprite(this, 70, y + 4, 'td', TD.wizard),
       text(this, 108, y - 30, `${i + 1}. ${d.name} — ${ROOMS[i]?.desc ?? ''}`, 'small', CSS.good).setOrigin(0, 0.5),
-      text(this, 108, y + 2, `${GUIDE_NAME}: ${ROOMS[i]?.quest ?? ''}`, 'small').setOrigin(0, 0.5).setWordWrapWidth(560).setFontSize(14),
+      text(this, 108, y + 2, `${GUIDE_NAME}: ${ROOMS[i]?.quest ?? ''}`, 'small').setOrigin(0, 0.5).setWordWrapWidth(560),
     ];
     if (st === '잠김') {
       items.push(text(this, 760, y, '앞 방을 깨면 열려요', 'small').setOrigin(0.5).setAlpha(0.7));

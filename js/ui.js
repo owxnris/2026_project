@@ -1,13 +1,15 @@
 // design.md 규칙을 따르는 글자·버튼·상단 정보줄·하단 안내줄. 그림은 픽셀 아트 패널(art.js)
 import { COLORS, CSS, SIZE, LAYOUT } from './config.js';
 import { state, remainingSeconds } from './state.js';
-import { FONT_PIXEL as FONT, panel, UI, PP } from './art.js';
+import { soundOn, setSound } from './sound.js';
+import { refreshMusic } from './music.js';
+import { FONT_PIXEL as FONT, FONT_SMALL, panel, UI, PP } from './art.js';
 
 const { W, H, HUD_H, GUIDE_H } = LAYOUT;
 
 export function text(scene, x, y, str, size, color = CSS.player) {
   return scene.add.text(x, y, str, {
-    fontFamily: FONT,
+    fontFamily: size === 'small' ? FONT_SMALL : FONT,
     fontSize: SIZE[size],
     fontStyle: size === 'big' ? 'bold' : 'normal',
     color,
@@ -77,6 +79,7 @@ export function createHud(scene, title, { back = false } = {}) {
   add(text(scene, left, 22, '시간', 'small'));
   const timeText = add(text(scene, left + 44, 4, '', 'big'));
   const titleText = add(text(scene, W / 2, HUD_H / 2, title, 'small').setOrigin(0.5));
+  createSoundToggle(scene, W - 214, HUD_H / 2).forEach((o) => parts.push(o));
   add(scene.add.sprite(W - 150, HUD_H / 2, 'pp', PP.coin).setScale(3).play('coin_spin'));
   const coinText = add(text(scene, W - 16, 4, '', 'big', CSS.good).setOrigin(1, 0));
 
@@ -99,6 +102,24 @@ export function createHud(scene, title, { back = false } = {}) {
   };
 }
 
+// 소리 켜기·끄기 작은 버튼 (♪, 꺼지면 빨간 빗금) — 게임 중 어느 화면에서나 (2026-11-25 사용자 요청)
+// 효과음·음악 모두 같은 설정(sound.js, 이 기기에 기억)
+export function createSoundToggle(scene, x, y) {
+  const bg = panel(scene, x, y, 48, 42, UI.stone, 0xb8c4e8).setScrollFactor(0).setDepth(10);
+  const icon = text(scene, x, y, '♪', 'body').setOrigin(0.5).setScrollFactor(0).setDepth(11);
+  const slash = scene.add.line(0, 0, x - 14, y + 12, x + 14, y - 12, COLORS.bad).setOrigin(0).setLineWidth(3).setScrollFactor(0).setDepth(12);
+  const paint = () => { slash.setVisible(!soundOn()); icon.setAlpha(soundOn() ? 1 : 0.5); };
+  paint();
+  const zone = scene.add.zone(x, y, 56, 50).setScrollFactor(0).setDepth(13).setInteractive({ useHandCursor: true });
+  zone.on('pointerdown', (pointer, lx, ly, ev) => {
+    ev?.stopPropagation?.();
+    setSound(!soundOn());
+    refreshMusic();
+    paint();
+  });
+  return [bg, icon, slash, zone];
+}
+
 // 아래: 작은 안내 한 줄
 export function createGuide(scene, str) {
   let base = str;
@@ -106,6 +127,7 @@ export function createGuide(scene, str) {
   const t = text(scene, W / 2, H - GUIDE_H / 2, str, 'small').setOrigin(0.5).setScrollFactor(0).setDepth(10);
   let timer = null;
   return {
+    text: t,
     notice: (msg, color) => {
       t.setText(msg).setColor(color);
       if (timer) timer.remove();

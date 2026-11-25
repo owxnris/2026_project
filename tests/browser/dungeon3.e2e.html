@@ -42,6 +42,21 @@ try {
   log(D.checkpoint === 1, 'passing door 1 sets checkpoint');
   D.player.body.reset(1950, 700); await tick(200);
   log(Math.abs(D.player.x - 1450) < 30 && state.play.falls === 1, `fall -> respawn at door 1 (x=${Math.round(D.player.x)})`);
+  // 따라오는 유령 (얼어붙은 성·얼음 왕좌만, 말랑이보다 느리게)
+  log(DUNGEONS.slice(0, 6).every((d) => !d.level.chasers) && DUNGEONS[6].level.chasers.length === 1 && DUNGEONS[7].level.chasers.length === 2, 'chasers only in rooms 7 (1) and 8 (2)');
+  log(DUNGEONS.flatMap((d) => d.level.chasers ?? []).every((c) => c.speed < PHYS.MOVE_SPEED), 'chasers slower than hero');
+  const g = D.chasers.list[0];
+  log(g.awake && g.r.body.enable, 'ghost wakes after passing wakeX');
+  state.coins = 50;
+  D.player.body.reset(1500, 420); await tick(300);
+  const d0 = Math.hypot(g.r.x - D.player.x, g.r.y - D.player.y);
+  await tick(600);
+  const d1 = Math.hypot(g.r.x - D.player.x, g.r.y - D.player.y);
+  log(d1 < d0, `ghost chases the hero (${Math.round(d0)} -> ${Math.round(d1)})`);
+  const hits = state.play.hits;
+  g.r.setPosition(D.player.x - 18, D.player.y - 18); g.r.body.updateFromGameObject();
+  log(await waitFor(() => state.play.hits === hits + 1, 2000), 'ghost touch = hit');
+  log(Math.abs(g.r.x - D.player.x) > 250, 'ghost backs off after hitting');
   S('Dungeon').scene.start('Dungeon', { dungeon: 7 }); await waitFor(() => active('Dungeon') && S('Dungeon').index === 7); log(S('Dungeon').level.width === 3800, 'last room (얼음 왕좌) builds'); S('Dungeon').onClear();
   log(await waitFor(() => active('Result')) && S('Result').children.list.some((c) => (c.text || '').startsWith('모든 방을 정복했어요')), 'clearing last room -> all rooms conquered message');
 } catch (e) { out.push('ERROR ' + e.stack); }

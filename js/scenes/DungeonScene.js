@@ -13,6 +13,7 @@ import {
 import { playMusic } from '../music.js';
 import { COLORS as SKINS } from '../cosmetics.js';
 import { isTouchDevice, createTouchControls } from '../touch.js';
+import { createChasers } from '../chasers.js';
 
 // 안내 줄: 조작과 가진 능력 (예: ←→ 이동 · Space 점프 · Shift 대시(남은 2회) · 보호막 · 이단 점프)
 // 터치 기기는 화면 버튼 이름으로 안내한다
@@ -74,6 +75,8 @@ export default class DungeonScene extends Phaser.Scene {
 
     this.physics.add.collider(this.player, this.platforms);
     this.physics.add.overlap(this.player, this.obstacles, this.onHit, null, this);
+    // 따라오는 유령 (뒤쪽 방): 깨어나면 한 번 알려 준다
+    this.chasers = createChasers(this, L.chasers, this.obstacles, () => this.guide.notice('유령이 따라와요! 멈추지 말고 달려요', CSS.bad));
     this.physics.add.overlap(this.player, this.flagPole, this.onClear, null, this);
 
     this.hud = createHud(this, '', { back: true });
@@ -86,6 +89,7 @@ export default class DungeonScene extends Phaser.Scene {
     this.keys = this.input.keyboard.createCursorKeys();
     this.shift = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
     this.touch = TOUCH ? createTouchControls(this) : null; // 태블릿·휴대폰: 화면 버튼
+    if (TOUCH) this.guide.text.setWordWrapWidth(380).setLineSpacing(-2); // 안내 글은 양쪽 버튼 사이에만
 
     // 회복 퀴즈에서 돌아왔을 때 눌린 채로 남은 키를 풀어 준다.
     this.events.off('resume', this.onResume, this);
@@ -224,9 +228,10 @@ export default class DungeonScene extends Phaser.Scene {
     this.touch?.release();
   }
 
-  update(time) {
+  update(time, delta) {
     this.updateArt(time);
     if (checkTimeout(this) || this.clearing) return;
+    this.chasers.update(delta, this.player, time);
 
     const passed = this.level.doors.filter((d) => this.player.x > d.x).length;
     if (passed > this.checkpoint) {
@@ -312,6 +317,7 @@ export default class DungeonScene extends Phaser.Scene {
     const d = this.level.doors[this.checkpoint - 1];
     const at = d ? { x: d.x, y: d.y - 50 } : this.level.start;
     this.player.body.reset(at.x, at.y);
+    this.chasers.resetAll(this.player, this.time.now);
   }
 
   onHit(player, obstacle) {
@@ -340,6 +346,7 @@ export default class DungeonScene extends Phaser.Scene {
 
     const dir = Math.sign(player.x - (obstacle.x + obstacle.width / 2)) || -this.facing;
     player.body.setVelocity(dir * 200, -250);
+    this.chasers.pushBack(obstacle, player, this.time.now); // 유령이면 뒤로 물러난다
     this.stunUntil = this.time.now + PHYS.HIT_STUN_MS;
 
     this.invuln = true;

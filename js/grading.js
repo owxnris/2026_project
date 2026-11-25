@@ -71,7 +71,7 @@ export function abilityCost(ab) {
 
 const isCount = (n) => Number.isInteger(n) && n >= 0;
 
-// 플레이 기록 검사. 코인은 획득 코인을 넘게 쓸 수 없다.
+// 플레이 기록 검사. 코인은 획득 코인(+ 학급 광산 지원 코인 0 또는 20)을 넘게 쓸 수 없다.
 // 맞으면 null, 틀리면 이유 문자열
 export function statsError(outcome, s, coinsEarned) {
   if (outcome !== 'cleared' && outcome !== 'failed') return 'outcome';
@@ -79,7 +79,9 @@ export function statsError(outcome, s, coinsEarned) {
   const ab = s.abilities;
   if (!ab || !isCount(ab.dash) || typeof ab.shield !== 'boolean' || typeof ab.doubleJump !== 'boolean') return 'abilities';
   if (!isCount(s.coinsSpent) || s.coinsSpent !== abilityCost(ab)) return 'coinsSpent';
-  if (s.coinsSpent > coinsEarned) return 'coinsSpent>coinsEarned';
+  const support = s.supportCoins ?? 0;
+  if (support !== 0 && support !== 20) return 'supportCoins';
+  if (s.coinsSpent > coinsEarned + support) return 'coinsSpent>coinsEarned';
   if (!isCount(s.dashesUsed) || s.dashesUsed > ab.dash) return 'dashesUsed';
   if (!isCount(s.hits) || !isCount(s.falls)) return 'hits/falls';
   if (outcome === 'cleared' && !(typeof s.clearSec === 'number' && s.clearSec >= 0)) return 'clearSec';
@@ -114,6 +116,7 @@ export function buildResult({ run, attempts, student, activityId, outcome, stats
     wrongConcepts,
     coinsEarned: run.coinsEarned,
     coinsSpent: s.coinsSpent,
+    supportCoins: s.supportCoins ?? 0,
     abilities: s.abilities,
     dashesUsed: s.dashesUsed,
     hits: s.hits,

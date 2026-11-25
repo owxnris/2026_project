@@ -12,6 +12,7 @@ import { ranking, filterResults } from './analysis.js';
 import { message, renderTable } from './tableUtil.js';
 import { DUNGEONS } from '../dungeons.js';
 import { boardOf } from '../goldrushBoard.js';
+import { mineState } from '../mine.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,6 +22,8 @@ let activityId = null;
 let busy = false;
 let progress = {};
 let stopProgress = null;
+let stopMine = null;
+let mine = null; // 학급 광산 { dug, done } | null
 
 // 학생별 진행 상황·순위 (design.md: 교실 화면에 띄우므로 본문 글자). 순위 기준(기본값): 깬 던전 수 → 맞힌 문제 수
 function renderRanking() {
@@ -39,14 +42,24 @@ function renderRanking() {
     renderTable(box, ['순위', '닉네임', '골드'], b.all.map((p) => [p.rank, p.nickname, `${p.gold} 골드`]), { className: 'rank-table' });
     return;
   }
+  renderMine();
   const rows = ranking(filterResults(getResults(), activityId), students, progress);
   const where = (r) => {
     if (!progress[r.studentUid]) return '들어오기 전';
+    if (progress[r.studentUid].inMine) return '학급 광산';
     return r.currentDungeon === null ? '월드맵' : (DUNGEONS[r.currentDungeon]?.name ?? '-');
   };
   renderTable(box, ['순위', '닉네임', '지금 위치', '깬 던전', '맞힌 문제'], rows.map((r) => [
     r.rank, r.nickname, where(r), `${r.clearedCount}개`, `${r.quizCorrect} / ${r.quizTotal}`,
   ]), { className: 'rank-table' });
+}
+
+// 학급 광산 (모험 활동): 광산 안 인원 / 필요 인원 · 캔 학급 코인 / 목표 — 아무도 캐지 않았으면 숨긴다
+function renderMine() {
+  const s = mineState(Object.values(progress), mine, serverNow());
+  const el = $('av-mine');
+  el.hidden = s.miners === 0 && s.dug === 0 && !s.done;
+  el.textContent = `학급 광산 · 광산 안 ${s.miners}명 / 필요 ${s.need}명 · 학급 코인 ${s.dug} / ${s.goal}${s.done ? ' · 완성! 아직 못 깬 학생은 방마다 코인 +20' : ''}`;
 }
 
 const START_ERROR = {
@@ -169,6 +182,9 @@ export function openActivityView(c, id) {
   $('av-error').textContent = '';
   if (stopProgress) stopProgress();
   stopProgress = store.watchProgress(c.id, id, (p) => { progress = p; renderRanking(); });
+  mine = null;
+  if (stopMine) stopMine();
+  stopMine = store.watchMine ? store.watchMine(c.id, id, (m) => { mine = m; renderRanking(); }) : null;
   render();
   showView('activity');
   renderRanking();
@@ -177,6 +193,8 @@ export function openActivityView(c, id) {
 export function closeActivityView() {
   if (stopProgress) stopProgress();
   stopProgress = null;
+  if (stopMine) stopMine();
+  stopMine = null;
 }
 
 let goBack = () => {};

@@ -9,7 +9,7 @@ import { state, resetGame, restoreCleared } from '../state.js';
 import { loadClearedCount } from '../progress.js';
 import { loadAdventure, setAdventureBase } from '../firebase/adventure.js';
 import { DUNGEONS } from '../dungeons.js';
-import { text, createBackButton } from '../ui.js';
+import { text, createBackButton, createSoundToggle } from '../ui.js';
 import {
   backdrop, fadeIn, panel, sprite, dressedHero, UI, TD, SCALE,
 } from '../art.js';
@@ -28,6 +28,7 @@ export default class WaitingScene extends Phaser.Scene {
     playMusic('menu');
     panel(this, cx, 240, 560, 220, UI.wood, 0x8a6a8a).setAlpha(0.9);
     createBackButton(this, () => this.scene.start('Start'));
+    createSoundToggle(this, LAYOUT.W - 40, 30); // 소리 켜기·끄기
     // 기다리는 동안 말랑이가 통통 뛴다
     const hero = sprite(this, cx, 470, 'td', TD.hero).setOrigin(0.5, 1).setScale(SCALE + 1);
     this.tweens.add({ targets: hero, y: 440, duration: 380, yoyo: true, repeat: -1, ease: 'Quad.out', repeatDelay: 700 });
@@ -65,6 +66,7 @@ export default class WaitingScene extends Phaser.Scene {
         restoreCleared(Math.max(n, adv.clearedCount));
         state.gold = adv.gold;
         state.style = { owned: adv.owned, look: adv.look, spent: adv.spent };
+        state.donated = adv.donated;
         if (this.scene.isActive()) this.scene.start(session.mode === 'goldrush' ? 'GoldRush' : 'WorldMap');
       });
     }, (e) => {

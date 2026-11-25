@@ -5,7 +5,9 @@ import { reasonText } from '../firebase/errors.js';
 import { play } from '../sound.js';
 import { COLORS, CSS, LAYOUT, RULES } from '../config.js';
 import { DUNGEONS } from '../dungeons.js';
-import { state, checkTimeout, recordQuiz } from '../state.js';
+import { state, checkTimeout, recordQuiz, clearedRoomCount } from '../state.js';
+import { mineDone } from '../firebase/mine.js';
+import { supportCoins } from '../mine.js';
 import { reportProgress } from '../progress.js';
 import { session } from '../session.js';
 import { beginRun, nextQuestion, submitAnswer, hasOpenRun } from '../quiz.js';
@@ -131,7 +133,7 @@ export default class QuizScene extends Phaser.Scene {
       ? `문제 ${this.count + 1}/${RULES.ENTRY_QUIZ_COUNT} · ${q.subject}`
       : this.mode === 'rush' ? `골드 러시 ${this.count + 1}번째 문제 · ${q.subject}`
         : `정답을 맞혀야 다시 움직일 수 있어요 · ${q.subject}`;
-    this.items.push(text(this, W / 2, 90, head, 'small').setOrigin(0.5));
+    this.items.push(text(this, W / 2, 100, head, 'small').setOrigin(0.5));
     this.items.push(text(this, W / 2, 180, q.question, 'body')
       .setOrigin(0.5).setWordWrapWidth(860));
 
@@ -177,13 +179,25 @@ export default class QuizScene extends Phaser.Scene {
     } else if (this.mode === 'entry') {
       this.count += 1;
       if (this.count < RULES.ENTRY_QUIZ_COUNT) this.showQuestion();
-      else this.scene.start('Shop', { dungeon: this.dungeon });
+      else this.goShop();
     } else if (correct) {
       this.scene.stop();
       this.scene.resume('Dungeon');
     } else {
       this.showQuestion();
     }
+  }
+
+  // 입장 퀴즈가 끝나면 상점으로. 학급 광산이 완성됐고 아직 8개 방을 다 깨지 못했으면 지원 코인 +20 (js/mine.js)
+  async goShop() {
+    const bonus = supportCoins(await mineDone(), clearedRoomCount());
+    if (!this.scene.isActive() || state.timedOut) return;
+    if (bonus) {
+      state.coins += bonus;
+      state.play.supportCoins = bonus;
+      reportProgress();
+    }
+    this.scene.start('Shop', { dungeon: this.dungeon, support: bonus });
   }
 
   // 골드 러시: 왼쪽 위 '현황'(이벤트 화면) 버튼과 오른쪽 위 실시간 내 순위·참가자 수 (Firestore 실제 데이터)

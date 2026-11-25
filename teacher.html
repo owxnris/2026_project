@@ -114,6 +114,22 @@
         <button class="tab" type="button" data-tab="results">결과</button>
       </nav>
       <div class="tab-panel" data-panel="students">
+        <div class="chest-card" id="chest-card">
+          <div class="chest-head">
+            <b>학급 보물상자</b>
+            <span class="small-text muted">학생들이 모은 골드를 함께 넣어 선생님이 정한 보상을 열어요</span>
+            <button class="btn small" id="chest-edit-btn" type="button">목표 정하기</button>
+          </div>
+          <div id="chest-status"></div>
+          <form id="chest-form" class="form-row" novalidate hidden>
+            <label class="field"><span class="small-text">목표 골드</span><input class="input" id="chest-goal" type="number" min="1" step="1" placeholder="예: 1000"></label>
+            <label class="field"><span class="small-text">보상 (40자까지)</span><input class="input" id="chest-reward" type="text" maxlength="40" placeholder="예: 다 함께 자유 시간 10분"></label>
+            <button class="btn primary" id="chest-save-btn" type="submit">저장</button>
+            <button class="btn" id="chest-cancel-btn" type="button">취소</button>
+          </form>
+          <p class="small-text error" id="chest-error"></p>
+          <div id="chest-history" class="small-text muted"></div>
+        </div>
         <p class="small-text" id="student-count"></p>
         <div id="student-list"></div>
       </div>
@@ -283,6 +299,7 @@
         </div>
       </div>
       <p class="small-text muted" id="av-info"></p>
+      <p class="small-text" id="av-mine" hidden></p>
       <div id="av-ranking" class="av-ranking"></div>
       <p class="small-text error" id="av-error"></p>
       <div class="button-row">

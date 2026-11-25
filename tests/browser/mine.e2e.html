@@ -1,0 +1,93 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<script type="importmap">
+{ "imports": {
+  "http://127.0.0.1:5599/js/firebase/sdk.js": "/__test/e2e-sdk.js",
+  "http://127.0.0.1:5599/js/firebase/app.js": "/__test/e2e-app.js"
+} }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+<style>html,body{margin:0;background:#1B1F2A}#game{width:960px;height:540px}</style></head>
+<body><div id="game"></div><pre id="out">running</pre>
+<script type="module">
+// 학급 광산: 8개 방을 다 깬 학생만 지도에 '광산' → 혼자서는 못 캠(참여 인원 절반 이상·최소 2명) → 친구가 들어오면 캐기 → 3초마다 쓰기
+// → 목표(참여 인원 × 50) 완성 → 아직 다 못 깬 학생은 입장 퀴즈 뒤 상점에서 지원 코인 +20, 결과에 supportCoins
+var out = []; window.addEventListener('error', (e) => out.push('WINERR ' + e.message + ' @' + e.filename + ':' + e.lineno)); window.addEventListener('unhandledrejection', (e) => out.push('REJ ' + (e.reason?.stack || e.reason)));
+const log = (ok, msg) => out.push((ok ? 'PASS ' : 'FAIL ') + msg);
+const tick = (ms = 50) => new Promise((r) => setTimeout(r, ms));
+async function waitFor(fn, ms = 6000) { const t = Date.now(); while (Date.now() - t < ms) { try { if (fn()) return true; } catch {} await tick(30); } return false; }
+try {
+  const F = await import('/__test/e2e-sdk.js');
+  const T = await import('/js/teacher/activities.js');
+  const put = (p, v) => F.docs.set(p, v);
+  const QS = [
+    { id: 'q1', subject: '수학', difficulty: '하', learningConcept: '곱셈', question: '2×3', choices: ['5', '6', '7', '8'] },
+    { id: 'q2', subject: '과학', difficulty: '하', learningConcept: '광합성', question: '광합성 장소', choices: ['뿌리', '잎', '줄기', '꽃'] },
+  ];
+  const KEY = { q1: 1, q2: 1 };
+  put('classes/C1', { ownerUid: 'T1', name: '1반', joinCode: '123456' });
+  put('joinCodes/123456', { classId: 'C1', ownerUid: 'T1' });
+  // 하늘(S1)은 지난 수업까지 8개 방을 모두 깼다
+  put('classes/C1/adventure/S1', { nickname: '하늘', clearedCount: 8, gold: 300, spent: 0, owned: ['mint', 'none'], look: { color: 'mint', hat: 'none' }, donated: 0 });
+  const aid = await T.createActivity('C1', { title: '모험', totalTimeSec: 600, picked: QS.map((q) => ({ ...q, answer: KEY[q.id] })) });
+
+  const { COLORS, LAYOUT, PHYS } = await import('/js/config.js');
+  const scenes = await Promise.all(['Boot', 'Start', 'Join', 'Waiting', 'WorldMap', 'Quiz', 'Shop', 'Dungeon', 'Result', 'GoldRush', 'Wardrobe', 'Chest', 'Mine'].map((n) => import(`/js/scenes/${n}Scene.js`).then((m) => m.default)));
+  const { state } = await import('/js/state.js');
+  const { playStats } = await import('/js/quiz.js');
+  const { statsError } = await import('/js/grading.js');
+  const game = new Phaser.Game({ type: Phaser.CANVAS, parent: 'game', width: LAYOUT.W, height: LAYOUT.H, backgroundColor: COLORS.bg,
+    fps: { forceSetTimeOut: true, target: 60 }, dom: { createContainer: true }, physics: { default: 'arcade', arcade: { gravity: { y: PHYS.GRAVITY } } }, scene: scenes });
+  const active = (k) => game.scene.isActive(k); const S = (k) => game.scene.getScene(k);
+  const texts = (k) => S(k).children.list.map((c) => c.text || '').join('\n');
+  const mine = () => F.docs.get(`classes/C1/activities/${aid}/mine/main`);
+  const prog = (u) => F.docs.get(`classes/C1/activities/${aid}/progress/${u}`);
+
+  await waitFor(() => active('Start'));
+  S('Start').scene.start('Join'); await waitFor(() => active('Join'));
+  S('Join').code.el.value = '123456'; S('Join').nick.el.value = '하늘'; S('Join').submit();
+  await waitFor(() => active('Waiting'));
+  await T.startActivity('C1', aid);
+  log(await waitFor(() => active('WorldMap')) && state.cleared.filter(Boolean).length === 8, 'student with 8 cleared rooms on map');
+  log(texts('WorldMap').includes('광산'), "map shows '광산' for a student who cleared all rooms");
+
+  S('WorldMap').scene.start('Mine');
+  log(await waitFor(() => active('Mine')), 'enter mine');
+  log(await waitFor(() => prog('S1')?.inMine === true), 'progress says inMine (classmates/teacher count it)');
+  log(await waitFor(() => texts('Mine').includes('혼자서는 캘 수 없어요')), 'alone -> cannot dig');
+  S('Mine').tapDig(); await tick(3300);
+  log(!mine(), 'tapping alone writes nothing');
+
+  // 바다(S9)도 8개 방을 다 깨고 광산에 들어옴 (참여 2명 → 필요 2명, 목표 100)
+  F.setDoc({ path: `classes/C1/activities/${aid}/progress/S9` }, { nickname: '바다', currentDungeon: null, clearedCount: 8, coins: 0, inMine: true, updatedAt: F.serverTimestamp() });
+  log(await waitFor(() => texts('Mine').includes('함께 캐는 중') && texts('Mine').includes('광산 안 친구 2명 / 필요 2명')), 'friend joins -> can dig');
+  log(texts('Mine').includes('0 / 100'), 'goal = participants(2) x 50');
+  for (let i = 0; i < 3; i++) { S('Mine').tapDig(); await tick(260); }
+  log(await waitFor(() => mine()?.dug === 3, 5000), `digs are written in batches (dug ${mine()?.dug})`);
+  // 거의 다 캠 → 마지막 캐기로 완성
+  F.setDoc({ path: `classes/C1/activities/${aid}/mine/main` }, { ...mine(), dug: 99 });
+  await waitFor(() => texts('Mine').includes('99 / 100'));
+  S('Mine').tapDig();
+  log(await waitFor(() => mine()?.dug === 100 && mine()?.done === true, 6000), 'goal reached -> done saved');
+  log(await waitFor(() => texts('Mine').includes('학급 코인 완성')), 'complete message');
+  S('Mine').scene.start('WorldMap');
+  log(await waitFor(() => prog('S1')?.inMine === false), 'leaving the mine -> inMine false');
+
+  // 지원: 아직 다 못 깬 학생(같은 기기에서 3개 방만 깬 것으로) → 입장 퀴즈 뒤 상점에서 +20
+  await waitFor(() => active('WorldMap'));
+  state.cleared = [true, true, true]; state.unlocked = 3;
+  S('WorldMap').scene.start('Quiz', { mode: 'entry', dungeon: 3 });
+  const Q = () => S('Quiz');
+  for (let i = 0; i < 3; i++) {
+    await waitFor(() => active('Quiz') && Q().item && !Q().answered && Q().count === i);
+    Q().answer(KEY[Q().item.question.id]);
+    await waitFor(() => Q().count === i + 1 || active('Shop'), 3000);
+  }
+  log(await waitFor(() => active('Shop')), 'entry quiz -> shop');
+  log(state.coins === 50 && state.play.supportCoins === 20, `support coins +20 (coins ${state.coins})`);
+  log(texts('Shop').includes('학급 광산 지원 코인 +20'), 'shop shows support');
+  state.play.abilities = { dash: 0, shield: true, doubleJump: true }; // 15 + 20 = 35 ≤ 30 + 20
+  log(statsError('cleared', { ...playStats(true) }, 30) === null, 'spending support coins passes the check');
+  log(statsError('cleared', { ...playStats(true), supportCoins: 0 }, 30) === 'coinsSpent>coinsEarned', 'without support the same spend fails');
+} catch (e) { out.push('ERROR ' + e.stack); }
+document.getElementById('out').textContent = out.join(String.fromCharCode(10));
+</script></body></html>

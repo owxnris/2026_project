@@ -1,0 +1,63 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<script type="importmap">
+{ "imports": {
+  "http://127.0.0.1:5599/js/firebase/sdk.js": "/__test/e2e-sdk.js",
+  "http://127.0.0.1:5599/js/firebase/app.js": "/__test/off-app.js"
+} }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script></head>
+<body><div id="game"></div><pre id="out">running</pre>
+<script type="module">
+// 학급 보물상자: 목표 없음 안내, 골드 넣기(쓸 수 있는 골드 줄고 합계·넣은 골드 늘기), 골드 부족, 열림 (Firebase 없는 예비 흐름 = 이 브라우저 저장)
+var out = []; window.addEventListener('error', (e) => out.push('WINERR ' + e.message));
+const log = (ok, m) => out.push((ok ? 'PASS ' : 'FAIL ') + m);
+const tick = (ms = 50) => new Promise((r) => setTimeout(r, ms));
+async function waitFor(fn, ms = 5000) { const t = Date.now(); while (Date.now() - t < ms) { try { if (fn()) return true; } catch {} await tick(30); } return false; }
+try {
+  localStorage.removeItem('dd.adventure');
+  localStorage.removeItem('dd.chest');
+  const { COLORS, LAYOUT, PHYS } = await import('/js/config.js');
+  const scenes = await Promise.all(['Boot', 'Start', 'Join', 'Waiting', 'WorldMap', 'Quiz', 'Shop', 'Dungeon', 'Result', 'GoldRush', 'Wardrobe', 'Chest'].map((n) => import(`/js/scenes/${n}Scene.js`).then((m) => m.default)));
+  const { state, resetGame } = await import('/js/state.js');
+  const { loadAdventure } = await import('/js/firebase/adventure.js');
+  const game = new Phaser.Game({ type: Phaser.CANVAS, parent: 'game', width: LAYOUT.W, height: LAYOUT.H, backgroundColor: COLORS.bg,
+    fps: { forceSetTimeOut: true, target: 60 }, dom: { createContainer: true }, physics: { default: 'arcade', arcade: { gravity: { y: PHYS.GRAVITY } } }, scene: scenes });
+  const active = (k) => game.scene.isActive(k); const S = (k) => game.scene.getScene(k);
+  const texts = (k) => S(k).children.list.filter((o) => o.type === 'Text').map((o) => o.text).join(' | ');
+  await waitFor(() => active('Start'));
+  resetGame();
+  state.gold = 120; state.style = { ...state.style, spent: 0 }; state.donated = 0;
+  S('Start').scene.start('WorldMap');
+  await waitFor(() => active('WorldMap'));
+  log(texts('WorldMap').includes('보물상자'), 'world map has chest button');
+  S('WorldMap').scene.start('Chest');
+  log(await waitFor(() => active('Chest')), 'map -> chest');
+  await tick(100);
+  log(texts('Chest').includes('선생님이 아직 보물상자를 준비하지 않았어요'), 'no chest yet -> notice');
+
+  localStorage.setItem('dd.chest', JSON.stringify({ goal: 150, reward: '다 함께 자유 시간 5분', total: 0, history: [] }));
+  S('Chest').scene.restart();
+  await waitFor(() => texts('Chest').includes('0 / 150 골드'));
+  log(texts('Chest').includes('보상: 다 함께 자유 시간 5분') && texts('Chest').includes('150 남음'), 'chest shows reward, progress, left');
+  await S('Chest').give(100);
+  log(state.style.spent === 100 && state.donated === 100 && state.gold === 120, 'give 100: spent +100, donated 100, collected gold unchanged');
+  log(JSON.parse(localStorage.getItem('dd.chest')).total === 100 && texts('Chest').includes('100 / 150 골드 (66%)'), 'chest total 100, redrawn');
+  await S('Chest').give(50);
+  log(state.style.spent === 100 && JSON.parse(localStorage.getItem('dd.chest')).total === 100, 'give 50 with balance 20 -> refused');
+  const adv = await loadAdventure();
+  log(adv.donated === 100 && adv.spent === 100, 'saved in adventure record');
+  await S('Chest').give(10); await S('Chest').give(10);
+  log(state.style.spent === 120 && texts('Chest').includes('120 / 150'), 'give 10 twice');
+
+  // 다른 학생들이 채워 목표 도달 → 열림
+  localStorage.setItem('dd.chest', JSON.stringify({ goal: 150, reward: '다 함께 자유 시간 5분', total: 150, history: [] }));
+  S('Chest').scene.restart();
+  log(await waitFor(() => texts('Chest').includes('상자가 열렸어요')), 'opened message');
+  state.gold = 500;
+  await S('Chest').give(10);
+  log(state.style.spent === 120, 'cannot give to an opened chest');
+  S('Chest').scene.start('WorldMap');
+  log(await waitFor(() => active('WorldMap')), 'back to map');
+} catch (e) { out.push('ERROR ' + e.stack); }
+document.getElementById('out').textContent = out.join(String.fromCharCode(10));
+</script></body></html>

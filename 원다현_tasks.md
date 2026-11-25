@@ -463,3 +463,13 @@ D-1 → D-2·D-3 → D-4 → (사용자: 11-5 플레이 감각 점검) → D-5 �
   - 구현됨(2026-11-20) — classData.js watchAdventures, classHub.js, studentsTab.js, main.js. teacher-full 통과, 실제 화면 확인 전 (규칙 게시 후)
 - [ ] 14-6 말랑이 꾸미기(골드 쓰는 곳): 몸 색 5·모자 5, 사기·입기, 모험 기록에 저장, 던전·대기 화면에 꾸민 모습 (2026-11-25)
   - 구현됨 — js/cosmetics.js·js/scenes/WardrobeScene.js(신규), art.js(색 바꾼 말랑이·모자 그림), adventure.js·state.js(꾸미기 저장), DungeonScene·WaitingScene·WorldMapScene, firestore.rules(spent·owned·look). 시험: wardrobe.e2e 9개, 노드 4개, 규칙 에뮬레이터 13묶음 통과. **규칙 다시 게시 필요(사용자)**, 실제 화면 확인 전
+- [ ] 14-7 학급 보물상자(골드를 계속 쓰는 곳): 교사가 목표·보상을 정하고, 학생들이 골드를 함께 넣어 열고, 다음 목표로 이어짐 (2026-11-25)
+  - 구현됨 — js/chest.js·js/firebase/chest.js·js/scenes/ChestScene.js(신규), WorldMapScene('보물상자' 버튼), adventure.js·state.js(donated), 교사 teacher.html·studentsTab.js·classData.js·classHub.js·main.js·teacher.css(보물상자 카드·넣은 골드 칸), firestore.rules(chest·donated), 체험 모드 첫 목표. 시험: chest.e2e 12개, teacher-full 97개, 노드 3개, 규칙 에뮬레이터 14묶음 통과. **규칙 다시 게시 필요(사용자)**, 실제 여러 기기 확인 전
+- [ ] 14-8 화면 다듬기(사용자 지적 2026-11-25): 한글 글자 가독성·겹침, 지도 방마다 다른 그림, 터치 버튼이 말랑이를 가림
+  - 구현됨 — 글자 크기를 Galmuri 제 크기로(작은 글자 Galmuri14 15px, 제목 60px), 골드 러시 제목·최종 결과 제목·시작 화면 부제·지도 방 이름 외곽선, 퀴즈 머리글 위치, 참여 화면 닉네임 안내. 지도 방 그림 8개 모두 다르게(잠긴 방도 그림 보임). 터치 버튼을 맨 아래 줄로. 파일: config.js·art.js·ui.js·touch.js, Start·Join·Quiz·Result·GoldRush·WorldMap·Wardrobe·DungeonScene, design.md. 시험 모두 통과·캡처 확인, 실제 휴대폰 확인 전
+- [ ] 14-9 소리 켜기·끄기를 게임 중에도: 정보 표시줄·대기 화면의 ♪ 버튼 (2026-11-25)
+  - 구현됨 — ui.js createSoundToggle(정보 표시줄), WaitingScene. 시험 모두 통과·캡처 확인, 실제 화면 확인 전
+- [ ] 14-10 뒤쪽 방 난도: 따라오는 유령(얼어붙은 성 1·얼음 왕좌 2) (2026-11-25, 사용자 선택)
+  - 구현됨 — js/chasers.js(신규), DungeonScene, dungeons.js(chasers). 시험: dungeon3.e2e 6개 추가(28개), 캡처 확인. 실제 플레이 난이도 확인 전
+- [ ] 14-11 학급 광산: 8개 방을 다 깬 학생이 함께 캠(참여 인원 절반 이상·최소 2명), 목표 = 참여 인원 × 50, 완성되면 못 깬 친구에게 방마다 코인 +20 (2026-11-25)
+  - 구현됨 — js/mine.js·js/firebase/mine.js·js/scenes/MineScene.js(신규), progress.js(inMine·신호), QuizScene·ShopScene(지원 코인), state.js·quiz.js·grading.js(supportCoins), WorldMapScene('광산'), 교사 activityView·classData·main·activities(삭제 시 광산 문서)·teacher.html, firestore.rules(mine·progress 읽기·supportCoins). 시험: mine.e2e 17개, 노드 3개, 규칙 에뮬레이터 15묶음 통과. **규칙 다시 게시 필요(사용자)**, 실제 여러 기기 확인 전

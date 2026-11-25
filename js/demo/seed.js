@@ -90,4 +90,7 @@ export async function seed({ docs, Timestamp }) {
     questions: todayQs.map(activityQuestion), createdAt: ts(now - 1000), mode: 'goldrush',
   });
   put(`classes/${C}/activities/demo-rush/answerKey/main`, { answers: answerKeyOf(todayQs) });
+
+  // 학급 보물상자: 교사가 정한 첫 목표 (학생들이 골드를 넣어 채운다)
+  put(`classes/${C}/chest/main`, { goal: 500, reward: '다 함께 자유 시간 5분', total: 0, history: [], updatedAt: ts(now - 1000) });
 }

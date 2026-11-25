@@ -54,6 +54,8 @@ let auto = 0;
 const newId = () => `d${Date.now().toString(36)}${(auto++).toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 export const getFirestore = () => ({});
 export const serverTimestamp = () => ({ __serverTs: true });
+export const increment = (n) => ({ __inc: n }); // 지금 값에 더하기 (여러 학생이 동시에 넣어도 합계가 맞게)
+const merge = (prev = {}, data) => Object.fromEntries([...Object.entries(prev), ...Object.entries(data).map(([k, v]) => [k, v && v.__inc !== undefined ? (prev[k] ?? 0) + v.__inc : v])]);
 export function collection(base, ...s) { return { path: [base.path, ...s].filter(Boolean).join('/'), kind: 'col' }; }
 export function doc(base, ...s) {
   if (base.kind === 'col' && s.length === 0) { const id = newId(); return { path: `${base.path}/${id}`, id, kind: 'doc' }; }
@@ -79,7 +81,7 @@ export async function setDoc(ref, data) {
   if (ref.path.includes('/results/') && docs.has(ref.path)) throw denied(); // 결과는 만들기만 (실제 규칙과 같게)
   docs.set(ref.path, resolve(data)); write();
 }
-export async function updateDoc(ref, data) { await ready; docs.set(ref.path, { ...docs.get(ref.path), ...resolve(data) }); write(); }
+export async function updateDoc(ref, data) { await ready; docs.set(ref.path, resolve(merge(docs.get(ref.path), data))); write(); }
 export async function addDoc(col, data) { await ready; const r = doc(col); docs.set(r.path, resolve(data)); write(); return r; }
 export async function deleteDoc(ref) { await ready; docs.delete(ref.path); write(); }
 export async function getCountFromServer(col) { await ready; return { data: () => ({ count: colDocs(col).length }) }; }
@@ -87,7 +89,7 @@ export function writeBatch() {
   const ops = [];
   return {
     set(ref, data) { ops.push(() => docs.set(ref.path, resolve(data))); return this; },
-    update(ref, data) { ops.push(() => docs.set(ref.path, { ...docs.get(ref.path), ...resolve(data) })); return this; },
+    update(ref, data) { ops.push(() => docs.set(ref.path, resolve(merge(docs.get(ref.path), data)))); return this; },
     delete(ref) { ops.push(() => docs.delete(ref.path)); return this; },
     async commit() { await ready; ops.forEach((op) => op()); write(); },
   };

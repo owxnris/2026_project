@@ -9,7 +9,7 @@ import { normalize } from '../cosmetics.js';
 
 const LOCAL_KEY = 'dd.adventure';
 const ref = () => doc(db, 'classes', session.classId, 'adventure', auth.currentUser.uid);
-const EMPTY = { clearedCount: 0, gold: 0, ...normalize() };
+const EMPTY = { clearedCount: 0, gold: 0, donated: 0, ...normalize() };
 
 // 돌려줌: { clearedCount, gold, spent, owned, look }
 export async function loadAdventure() {
@@ -17,7 +17,7 @@ export async function loadAdventure() {
     const raw = !session.online
       ? JSON.parse(localStorage.getItem(LOCAL_KEY) || '{}')
       : await getDoc(ref()).then((snap) => (snap.exists() ? snap.data() : {}));
-    return { clearedCount: raw.clearedCount ?? 0, gold: raw.gold ?? 0, ...normalize(raw) };
+    return { clearedCount: raw.clearedCount ?? 0, gold: raw.gold ?? 0, donated: raw.donated ?? 0, ...normalize(raw) };
   } catch {
     return { ...EMPTY }; // 읽지 못하면 처음부터 (게임은 막지 않는다)
   }
@@ -25,13 +25,16 @@ export async function loadAdventure() {
 
 // 깬 방 수·모은 골드·쓴 골드는 줄어들지 않는다 (규칙도 같은 조건)
 let last = { ...EMPTY };
-export function saveAdventure({ clearedCount, gold, spent = last.spent, owned = last.owned, look = last.look }) {
+export function saveAdventure({
+  clearedCount, gold, spent = last.spent, owned = last.owned, look = last.look, donated = last.donated,
+}) {
   const next = {
     clearedCount: Math.max(clearedCount, last.clearedCount),
     gold: Math.max(gold, last.gold),
     spent: Math.max(spent, last.spent),
     owned: [...owned],
     look: { ...look },
+    donated: Math.max(donated ?? 0, last.donated ?? 0),
   };
   if (JSON.stringify(next) === JSON.stringify(last)) return Promise.resolve();
   const prev = last;
@@ -47,7 +50,9 @@ export function saveAdventure({ clearedCount, gold, spent = last.spent, owned = 
 
 // 불러온 값을 기준점으로 삼는다 (다른 학생으로 바뀌었을 때 이전 값이 남지 않게)
 export function setAdventureBase(adv) {
-  last = { clearedCount: adv.clearedCount, gold: adv.gold, spent: adv.spent ?? 0, owned: [...(adv.owned ?? EMPTY.owned)], look: { ...(adv.look ?? EMPTY.look) } };
+  last = {
+    clearedCount: adv.clearedCount, gold: adv.gold, spent: adv.spent ?? 0, owned: [...(adv.owned ?? EMPTY.owned)], look: { ...(adv.look ?? EMPTY.look) }, donated: adv.donated ?? 0,
+  };
 }
 
 // 프롤로그를 본 적 있는지 (이 브라우저·학생마다)

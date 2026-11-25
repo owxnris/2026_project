@@ -49,7 +49,8 @@ export async function deleteActivity(classId, activityId) {
     getDocs(collection(db, 'classes', classId, 'activities', activityId, 'progress')),
     getDocs(query(collection(db, 'classes', classId, 'results'), where('activityId', '==', activityId))),
   ]);
-  const refs = [...prog.docs.map((d) => d.ref), ...res.docs.map((d) => d.ref), ref];
+  const mine = doc(db, 'classes', classId, 'activities', activityId, 'mine', 'main'); // 학급 광산 (없어도 지우기는 된다)
+  const refs = [...prog.docs.map((d) => d.ref), ...res.docs.map((d) => d.ref), mine, ref];
   for (let i = 0; i < refs.length; i += 400) { // 한 번에 쓸 수 있는 수(500) 아래로 나눠서
     const b = writeBatch(db);
     refs.slice(i, i + 400).forEach((r) => b.delete(r));

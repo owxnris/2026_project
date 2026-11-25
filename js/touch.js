@@ -14,15 +14,15 @@ export function createTouchControls(scene) {
   const { W, H, GUIDE_H } = LAYOUT;
   scene.input.addPointer(2); // 이동하면서 점프: 손가락 여러 개
   const state = { left: false, right: false, jump: false, dash: false };
-  const y = H - GUIDE_H - 52;
+  const y = H - GUIDE_H / 2 - 6; // 맨 아래 줄: 발판 위의 말랑이를 가리지 않는다
 
   function button(x, label, w, onDown, onUp) {
-    const bg = panel(scene, x, y, w, 76, UI.stone, 0xb8c4e8).setAlpha(0.45).setScrollFactor(0).setDepth(30);
-    const t = scene.add.text(x, y, label, { fontFamily: FONT_PIXEL, fontSize: '28px', color: '#F5F5F5' })
+    const bg = panel(scene, x, y, w, 56, UI.stone, 0xb8c4e8).setAlpha(0.7).setScrollFactor(0).setDepth(30);
+    const t = scene.add.text(x, y, label, { fontFamily: FONT_PIXEL, fontSize: '24px', color: '#F5F5F5' })
       .setOrigin(0.5).setScrollFactor(0).setDepth(31).setAlpha(0.9);
-    const zone = scene.add.zone(x, y, w + 10, 90).setScrollFactor(0).setDepth(32).setInteractive();
+    const zone = scene.add.zone(x, y - 10, w + 10, 90).setScrollFactor(0).setDepth(32).setInteractive();
     const press = () => { bg.setAlpha(0.85); onDown(); };
-    const release = () => { bg.setAlpha(0.45); if (onUp) onUp(); };
+    const release = () => { bg.setAlpha(0.7); if (onUp) onUp(); };
     zone.on('pointerdown', press);
     zone.on('pointerup', release);
     zone.on('pointerout', release);

@@ -102,9 +102,30 @@ try {
   log(await waitFor(() => rows('student-list').length === 2 && $('student-count').textContent === '참여한 학생 2명'), '6-6: students tab realtime (2)');
   // 학생별 모험 진행: 학생 기기가 쓴 모험 기록이 학생 탭에 실시간으로
   F.setDoc({ path: `classes/${classId}/adventure/S1` }, { nickname: '하늘', clearedCount: 3, gold: 120, updatedAt: F.serverTimestamp() });
-  log(await waitFor(() => cells(rows('student-list').find((r) => r.cells[0].textContent === '하늘')).slice(2).join('|') === "3/8 · 다음 '용암 광산'|120"
-    && cells(rows('student-list').find((r) => r.cells[0].textContent === '바다')).slice(2).join('|') === '아직 시작 전|0'
+  log(await waitFor(() => cells(rows('student-list').find((r) => r.cells[0].textContent === '하늘')).slice(2).join('|') === "3/8 · 다음 '용암 광산'|120|0"
+    && cells(rows('student-list').find((r) => r.cells[0].textContent === '바다')).slice(2).join('|') === '아직 시작 전|0|0'
     && $('student-count').textContent.includes('평균 깬 방 1.5/8')), 'students tab shows each student adventure progress and gold');
+
+  // ── 학급 보물상자 카드: 목표 정하기 → 학생 기부(합계) → 열림 → 새 목표(지난 목표 기록) ──
+  log(await waitFor(() => $('chest-status').textContent.includes('아직 목표가 없어요') && $('chest-edit-btn').textContent === '목표 정하기'), 'chest card: no goal yet');
+  $('chest-edit-btn').click();
+  $('chest-goal').value = '0'; $('chest-reward').value = '자유 시간';
+  $('chest-form').requestSubmit();
+  log(await waitFor(() => $('chest-error').textContent !== '') && !F.docs.get(`classes/${classId}/chest/main`), 'chest: bad goal rejected');
+  $('chest-goal').value = '200'; $('chest-reward').value = '다 함께 자유 시간 5분';
+  $('chest-form').requestSubmit();
+  const chestPath = `classes/${classId}/chest/main`;
+  log(await waitFor(() => F.docs.get(chestPath)?.goal === 200 && F.docs.get(chestPath)?.total === 0 && $('chest-form').hidden), 'chest: goal saved');
+  log(await waitFor(() => $('chest-status').textContent.includes('0 / 200 골드 (0%)') && $('chest-status').textContent.includes('다 함께 자유 시간 5분')), 'chest card shows progress and reward');
+  F.setDoc({ path: `classes/${classId}/adventure/S1` }, { nickname: '하늘', clearedCount: 3, gold: 300, spent: 200, donated: 200, updatedAt: F.serverTimestamp() });
+  F.setDoc({ path: chestPath }, { ...F.docs.get(chestPath), total: 200 });
+  log(await waitFor(() => $('chest-status').textContent.includes('200 / 200 골드 (100%)') && $('chest-status').textContent.includes('열렸어요')
+    && cells(rows('student-list').find((r) => r.cells[0].textContent === '하늘'))[4] === '200'), 'chest opened + donated column');
+  $('chest-edit-btn').click();
+  $('chest-goal').value = '500'; $('chest-reward').value = '교실 영화 보기';
+  $('chest-form').requestSubmit();
+  log(await waitFor(() => F.docs.get(chestPath)?.goal === 500 && F.docs.get(chestPath)?.total === 0 && F.docs.get(chestPath)?.history?.length === 1
+    && $('chest-history').textContent.includes('다 함께 자유 시간 5분(200/200 열림)')), 'chest: next goal keeps history');
 
   // ── 시작 → 진행 중 화면 순위 ──
   document.querySelector('[data-tab="activities"]').click();

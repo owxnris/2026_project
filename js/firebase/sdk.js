@@ -5,5 +5,5 @@ export {
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 export {
   getFirestore, doc, getDoc, getDocs, setDoc, Timestamp, serverTimestamp, collection, writeBatch,
-  query, where, onSnapshot, getCountFromServer, updateDoc, addDoc, deleteDoc,
+  query, where, onSnapshot, getCountFromServer, updateDoc, addDoc, deleteDoc, increment,
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';

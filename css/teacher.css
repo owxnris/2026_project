@@ -371,3 +371,11 @@ h2.body-text, .page-title { font-size: 24px; font-weight: bold; color: var(--nav
 .share-none { font-size: 13px; }
 .demo-link { color: var(--navy); font-weight: bold; }
 .csv-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 8px; }
+
+/* 학급 보물상자 카드 (학생 탭 위) */
+.chest-card { background: #FFF9E6; border: 1px solid #F0D98C; border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; }
+.chest-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.chest-head .btn { margin-left: auto; }
+.chest-bar { height: 14px; background: #F3E6BF; border-radius: 999px; overflow: hidden; margin: 6px 0; }
+.chest-bar > div { height: 100%; background: var(--good); border-radius: 999px; }
+#chest-form { margin: 8px 0; }

@@ -15,6 +15,10 @@ service cloud.firestore {
     function ownsClass(classId) {
       return isTeacher() && classDoc(classId).data.ownerUid == request.auth.uid;
     }
+    // 8개 방을 모두 깬 학생인지 (학급 광산)
+    function finishedAll(classId) {
+      return get(/databases/$(database)/documents/classes/$(classId)/adventure/$(request.auth.uid)).data.clearedCount == 8;
+    }
     function inClass(classId) {
       return signedIn()
         && exists(/databases/$(database)/documents/classes/$(classId)/students/$(request.auth.uid));
@@ -136,12 +140,27 @@ service cloud.firestore {
         }
 
         // 실시간 진행 상황: 학생은 자기 문서만 쓰고 읽는다 (다시 들어올 때 깬 던전 수를 이어 받기 위해)
+        // 학급 광산(2026-11-25): 8개 방을 다 깬 학생만 캔 양(dug)을 늘린다 (한 번에 30까지), 완성(done)은 되돌릴 수 없다
+        match /mine/{mineId} {
+          allow read: if ownsClass(classId) || inClass(classId);
+          allow create: if inClass(classId) && mineId == 'main' && finishedAll(classId)
+            && request.resource.data.keys().hasOnly(['dug', 'done', 'updatedAt'])
+            && request.resource.data.dug is int && request.resource.data.dug > 0 && request.resource.data.dug <= 30
+            && request.resource.data.done == false;
+          allow update: if inClass(classId) && mineId == 'main' && finishedAll(classId)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['dug', 'done', 'updatedAt'])
+            && request.resource.data.dug is int && request.resource.data.dug >= resource.data.dug
+            && request.resource.data.dug - resource.data.dug <= 30
+            && (request.resource.data.done == resource.data.done || (resource.data.done == false && request.resource.data.done == true));
+          allow delete: if ownsClass(classId);
+        }
+
         match /progress/{studentUid} {
-          // 골드 러시 활동이면 같은 학급 학생도 읽는다 (실시간 순위·참가자 수)
-          allow read: if ownsClass(classId) || (inClass(classId) && (request.auth.uid == studentUid
-            || get(/databases/$(database)/documents/classes/$(classId)/activities/$(activityId)).data.get('mode', 'adventure') == 'goldrush'));
+          // 같은 학급 학생도 읽는다 (골드 러시 순위·참가자 수, 학급 광산 안 인원 — 2026-11-25)
+          allow read: if ownsClass(classId) || inClass(classId);
           allow create, update: if inClass(classId) && request.auth.uid == studentUid
-            && request.resource.data.keys().hasOnly(['nickname', 'currentDungeon', 'clearedCount', 'coins', 'updatedAt']);
+            && request.resource.data.keys().hasOnly(['nickname', 'currentDungeon', 'clearedCount', 'coins', 'updatedAt', 'inMine'])
+            && request.resource.data.get('inMine', false) is bool;
           allow delete: if ownsClass(classId);
         }
       }
@@ -150,7 +169,7 @@ service cloud.firestore {
       match /adventure/{studentUid} {
         allow read: if ownsClass(classId) || (inClass(classId) && request.auth.uid == studentUid);
         allow create, update: if inClass(classId) && request.auth.uid == studentUid
-          && request.resource.data.keys().hasOnly(['nickname', 'clearedCount', 'gold', 'updatedAt', 'spent', 'owned', 'look'])
+          && request.resource.data.keys().hasOnly(['nickname', 'clearedCount', 'gold', 'updatedAt', 'spent', 'owned', 'look', 'donated'])
           && request.resource.data.clearedCount is int && request.resource.data.clearedCount >= 0 && request.resource.data.clearedCount <= 8
           && request.resource.data.gold is int && request.resource.data.gold >= 0
           // 말랑이 꾸미기(2026-11-25): 쓴 골드는 모은 골드를 넘을 수 없고 줄일 수 없다. 산 물건 목록·입은 것
@@ -158,9 +177,41 @@ service cloud.firestore {
           && request.resource.data.get('spent', 0) <= request.resource.data.gold
           && request.resource.data.get('owned', []) is list && request.resource.data.get('owned', []).size() <= 20
           && request.resource.data.get('look', {}) is map
+          // 학급 보물상자에 넣은 골드: 쓴 골드 안에 들어 있고 줄일 수 없다
+          && request.resource.data.get('donated', 0) is int && request.resource.data.get('donated', 0) >= 0
+          && request.resource.data.get('donated', 0) <= request.resource.data.get('spent', 0)
           && (resource == null || (request.resource.data.clearedCount >= resource.data.clearedCount
             && request.resource.data.gold >= resource.data.gold
-            && request.resource.data.get('spent', 0) >= resource.data.get('spent', 0)));
+            && request.resource.data.get('spent', 0) >= resource.data.get('spent', 0)
+            && request.resource.data.get('donated', 0) >= resource.data.get('donated', 0)));
+        allow delete: if ownsClass(classId);
+      }
+
+      // 학급 보물상자(2026-11-25): 교사가 목표 골드·보상을 정하고, 학생들이 골드를 넣어 함께 채운다.
+      // 학생은 합계(total)만 늘릴 수 있고, 늘린 만큼 같은 일괄 쓰기에서 자기 모험 기록의 '넣은 골드'가 늘어나야 한다 (getAfter로 확인)
+      function validChest(d) {
+        return d.keys().hasOnly(['goal', 'reward', 'total', 'history', 'updatedAt'])
+          && d.goal is int && d.goal > 0 && d.goal <= 1000000
+          && d.reward is string && d.reward.size() > 0 && d.reward.size() <= 40
+          && d.total is int && d.total >= 0
+          && d.history is list && d.history.size() <= 50;
+      }
+      function donatedBefore(classId) {
+        return exists(/databases/$(database)/documents/classes/$(classId)/adventure/$(request.auth.uid))
+          ? get(/databases/$(database)/documents/classes/$(classId)/adventure/$(request.auth.uid)).data.get('donated', 0) : 0;
+      }
+      function donatedAfter(classId) {
+        return getAfter(/databases/$(database)/documents/classes/$(classId)/adventure/$(request.auth.uid)).data.get('donated', 0);
+      }
+      match /chest/{chestId} {
+        allow read: if ownsClass(classId) || inClass(classId);
+        allow create: if ownsClass(classId) && chestId == 'main' && validChest(request.resource.data);
+        allow update: if (ownsClass(classId) && validChest(request.resource.data))
+          || (inClass(classId) && chestId == 'main'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['total', 'updatedAt'])
+            && request.resource.data.total > resource.data.total
+            && request.resource.data.total - resource.data.total <= 500
+            && request.resource.data.total - resource.data.total == donatedAfter(classId) - donatedBefore(classId));
         allow delete: if ownsClass(classId);
       }
 
@@ -173,7 +224,7 @@ service cloud.firestore {
           && request.resource.data.keys().hasOnly([
                'studentUid', 'nickname', 'activityId', 'dungeon', 'outcome', 'cleared',
                'quizCorrect', 'quizTotal', 'answers', 'wrongConcepts', 'coinsEarned', 'coinsSpent',
-               'abilities', 'dashesUsed', 'hits', 'falls', 'clearSec', 'createdAt'])
+               'abilities', 'dashesUsed', 'hits', 'falls', 'clearSec', 'createdAt', 'supportCoins'])
           && request.resource.data.studentUid == request.auth.uid
           && request.resource.data.nickname == get(/databases/$(database)/documents/classes/$(classId)/students/$(request.auth.uid)).data.nickname
           && request.resource.data.createdAt == request.time
@@ -191,7 +242,11 @@ service cloud.firestore {
               && request.resource.data.dashesUsed == null && request.resource.data.hits == null
               && request.resource.data.falls == null && request.resource.data.clearSec == null)
             : (request.resource.data.coinsSpent is int && request.resource.data.coinsSpent >= 0
-              && request.resource.data.coinsSpent <= request.resource.data.coinsEarned
+              // 학급 광산 지원 코인(0 또는 20): 20이면 이 활동의 광산이 완성돼 있어야 한다
+              && request.resource.data.get('supportCoins', 0) in [0, 20]
+              && (request.resource.data.get('supportCoins', 0) == 0
+                || get(/databases/$(database)/documents/classes/$(classId)/activities/$(request.resource.data.activityId)/mine/main).data.done == true)
+              && request.resource.data.coinsSpent <= request.resource.data.coinsEarned + request.resource.data.get('supportCoins', 0)
               && request.resource.data.abilities is map
               && request.resource.data.dashesUsed is int && request.resource.data.dashesUsed >= 0
               && request.resource.data.hits is int && request.resource.data.hits >= 0

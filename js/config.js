@@ -17,7 +17,8 @@ export const CSS = {
 };
 
 export const FONT = '"Malgun Gothic", sans-serif';
-export const SIZE = { big: '48px', body: '24px', small: '16px' };
+// 픽셀 글꼴 Galmuri는 제 크기에서만 또렷하다: 본문·큰 글자 = Galmuri11(12의 배수), 작은 글자 = Galmuri14(15px)
+export const SIZE = { big: '48px', body: '24px', small: '15px' };
 
 export const LAYOUT = { W: 960, H: 540, HUD_H: 60, GUIDE_H: 40 };
 

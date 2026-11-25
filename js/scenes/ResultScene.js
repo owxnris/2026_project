@@ -90,7 +90,7 @@ export default class ResultScene extends Phaser.Scene {
     // 이야기: 깬 방 한마디 + 다음 목표 (안내자 루미)
     this.add.rectangle(cx, 350, RIGHT - LEFT + 40, 52, COLORS.player, 0.1);
     text(this, cx, 338, `${GUIDE_NAME}: ${ROOMS[this.dungeon]?.clear ?? ''}`, 'small', CSS.good).setOrigin(0.5).setWordWrapWidth(500);
-    text(this, cx, 362, nextObjective(this.dungeon, DUNGEONS.map((d) => d.name)), 'small').setOrigin(0.5).setWordWrapWidth(500).setFontSize(13);
+    text(this, cx, 362, nextObjective(this.dungeon, DUNGEONS.map((d) => d.name)), 'small').setOrigin(0.5).setWordWrapWidth(500);
     createButton(this, cx, 410, '월드맵으로', () => this.scene.start('WorldMap'), { primary: true });
   }
 
@@ -134,7 +134,7 @@ export default class ResultScene extends Phaser.Scene {
     r.wrongQuestions.slice(0, 5).forEach((w, i) => {
       const y = 140 + i * 56;
       items.push(text(this, 150, y, `${i + 1}. ${w.question}`, 'small').setOrigin(0, 0.5).setDepth(11.5).setWordWrapWidth(660));
-      items.push(text(this, 170, y + 22, `정답: ${w.answer}  ·  내가 고른 답: ${w.chosen}${w.concept ? `  ·  개념: ${w.concept}` : ''}`, 'small', CSS.good).setOrigin(0, 0.5).setDepth(11.5).setFontSize(14));
+      items.push(text(this, 170, y + 22, `정답: ${w.answer}  ·  내가 고른 답: ${w.chosen}${w.concept ? `  ·  개념: ${w.concept}` : ''}`, 'small', CSS.good).setOrigin(0, 0.5).setDepth(11.5));
     });
     if (r.wrongQuestions.length > 5) items.push(text(this, cx, 420, `외 ${r.wrongQuestions.length - 5}문제는 선생님과 함께 복습해요`, 'small').setOrigin(0.5).setDepth(11.5).setAlpha(0.7));
     const b = createButton(this, cx, 455, '닫기', close, { primary: true, w: 160, h: 48, fixed: true });
@@ -145,7 +145,7 @@ export default class ResultScene extends Phaser.Scene {
   drawFinal() {
     const count = state.cleared.filter(Boolean).length;
     const head = this.mode === 'ended' ? '선생님이 활동을 끝냈어요' : '시간 종료!';
-    text(this, cx, 110, head, 'body', CSS.bad).setOrigin(0.5);
+    text(this, cx, 116, head, 'body', CSS.bad).setOrigin(0.5).setStroke('#1B1F2A', 4);
     text(this, cx, 150, '이번 활동 최종 결과', 'small').setOrigin(0.5).setAlpha(0.6);
     this.line(195, '모험 지도', `깬 방 ${count}/${DUNGEONS.length} · 골드 ${state.gold}`);
     this.line(225, '맞힌 문제', `${state.totalCorrect} / ${state.totalQuiz}`);
@@ -156,9 +156,9 @@ export default class ResultScene extends Phaser.Scene {
     // 학생 맞춤 복습: 한마디 + 다시 볼 개념 (이번 활동에서 푼 문제로, 규칙 기반)
     const r = reviewSummary(state.reviewLog);
     const color = r.tone === 'good' ? CSS.good : r.tone === 'bad' ? CSS.bad : CSS.player;
-    text(this, cx, 318, r.message, 'small', color).setOrigin(0.5).setWordWrapWidth(440).setFontSize(14);
+    text(this, cx, 318, r.message, 'small', color).setOrigin(0.5).setWordWrapWidth(440);
     if (r.weakConcepts.length) {
-      text(this, cx, 346, `다시 볼 개념: ${r.weakConcepts.map((c) => `${c.concept}(${c.wrong}번 틀림)`).join(' · ')}`, 'small').setOrigin(0.5).setWordWrapWidth(440).setFontSize(14);
+      text(this, cx, 346, `다시 볼 개념: ${r.weakConcepts.map((c) => `${c.concept}(${c.wrong}번 틀림)`).join(' · ')}`, 'small').setOrigin(0.5).setWordWrapWidth(440);
     }
     this.endButtons(400);
   }

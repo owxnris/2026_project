@@ -4,7 +4,7 @@ import { test, before, after } from 'node:test';
 import fs from 'node:fs';
 import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
 import {
-  doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, query, where, writeBatch, serverTimestamp, Timestamp,
+  doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, query, where, writeBatch, serverTimestamp, Timestamp, increment,
 } from 'firebase/firestore';
 
 let env;
@@ -50,6 +50,11 @@ before(async () => {
     await setDoc(doc(db, 'classes/C1/activities/GR'), { title: 'g', totalTimeSec: 60, status: 'running', mode: 'goldrush', questions: [{ id: 'q' }] });
     await setDoc(doc(db, 'classes/C1/activities/GR/progress/ST2'), { nickname: '바다', currentDungeon: null, clearedCount: 0, coins: 50 });
     await setDoc(doc(db, 'classes/C1/activities/A1/progress/ST2'), { nickname: '바다', currentDungeon: 0, clearedCount: 1, coins: 10 });
+    // 학급 광산 시험용: M1은 8개 방을 다 깼고 M2는 3개
+    await setDoc(doc(db, 'classes/C1/students/M1'), { nickname: '산', joinCode: '123456' });
+    await setDoc(doc(db, 'classes/C1/students/M2'), { nickname: '강', joinCode: '123456' });
+    await setDoc(doc(db, 'classes/C1/adventure/M1'), { nickname: '산', clearedCount: 8, gold: 0 });
+    await setDoc(doc(db, 'classes/C1/adventure/M2'), { nickname: '강', clearedCount: 3, gold: 0 });
   });
 });
 after(async () => { await env.cleanup(); });
@@ -125,6 +130,69 @@ test('모험 기록(adventure): 본인만 쓰고 줄일 수 없다, 소유 교�
   await assertFails(getDoc(doc(teacher('B'), 'classes/C1/adventure/ST')), '다른 교사는 못 읽는다');
 });
 
+test('학급 보물상자(chest): 교사가 목표를 정하고, 학생은 자기 쓴 골드만큼만 합계를 늘린다', async () => {
+  const a = teacher('A');
+  const chest = { goal: 300, reward: '자유 시간 5분', total: 0, history: [], updatedAt: serverTimestamp() };
+  await assertFails(setDoc(doc(teacher('B'), 'classes/C1/chest/main'), chest), '다른 교사는 못 만든다');
+  await assertFails(setDoc(doc(student('ST2'), 'classes/C1/chest/main'), chest), '학생은 못 만든다');
+  await assertFails(setDoc(doc(a, 'classes/C1/chest/main'), { ...chest, goal: 0 }), '목표는 1 이상');
+  await assertFails(setDoc(doc(a, 'classes/C1/chest/main'), { ...chest, reward: 'x'.repeat(41) }), '보상 40자까지');
+  await assertFails(setDoc(doc(a, 'classes/C1/chest/other'), chest), '상자는 main 하나');
+  await assertSucceeds(setDoc(doc(a, 'classes/C1/chest/main'), chest));
+  const st = student('ST2');
+  await assertSucceeds(getDoc(doc(st, 'classes/C1/chest/main')), '같은 학급 학생은 읽는다');
+  await assertFails(getDoc(doc(student('OUT'), 'classes/C1/chest/main')), '학급 밖 학생은 못 읽는다');
+  const adv = (o) => ({ nickname: '바다', clearedCount: 1, gold: 200, spent: 0, owned: [], look: {}, donated: 0, updatedAt: serverTimestamp(), ...o });
+  const give = (db, amount, o) => {
+    const b = writeBatch(db);
+    b.set(doc(db, 'classes/C1/adventure/ST2'), adv(o));
+    b.update(doc(db, 'classes/C1/chest/main'), { total: increment(amount), updatedAt: serverTimestamp() });
+    return b.commit();
+  };
+  await assertSucceeds(give(st, 50, { spent: 50, donated: 50 }), '첫 기부: 넣은 골드 50 = 합계 +50');
+  await assertFails(give(st, 100, { spent: 60, donated: 60 }), '합계 증가(100) ≠ 넣은 골드 증가(10)');
+  await assertFails(give(st, 250, { spent: 300, donated: 300 }), '모은 골드(200)보다 많이 쓸 수 없다');
+  await assertFails(updateDoc(doc(st, 'classes/C1/chest/main'), { total: increment(30) }), '모험 기록 없이 합계만 늘릴 수 없다');
+  await assertFails(give(st, 0, { spent: 50, donated: 50 }), '0은 넣을 수 없다');
+  await assertFails(updateDoc(doc(st, 'classes/C1/chest/main'), { goal: 1 }), '학생은 목표를 못 바꾼다');
+  await assertSucceeds(give(st, 100, { spent: 150, donated: 150 }), '두 번째 기부');
+  const after1 = (await getDoc(doc(a, 'classes/C1/chest/main'))).data();
+  if (after1.total !== 150) throw new Error(`total ${after1.total}`);
+  await assertFails(give(student('OUT'), 10, { spent: 10, donated: 10 }), '학급 밖 학생');
+  await assertSucceeds(setDoc(doc(a, 'classes/C1/chest/main'), { goal: 500, reward: '영화', total: 0, history: [{ goal: 300, reward: '자유 시간 5분', total: 150, opened: false }], updatedAt: serverTimestamp() }), '교사가 다음 목표');
+});
+
+test('학급 광산(mine): 8개 방을 다 깬 학생만 캔 양을 늘리고, 완성되면 지원 코인 20을 결과에 쓸 수 있다', async () => {
+  const m1 = student('M1');
+  const m2 = student('M2');
+  const ref = (db) => doc(db, 'classes/C1/activities/A1/mine/main');
+  // 진행 상황에 inMine (광산 안 인원)
+  await assertSucceeds(setDoc(doc(m1, 'classes/C1/activities/A1/progress/M1'), { nickname: '산', currentDungeon: null, clearedCount: 8, coins: 0, inMine: true, updatedAt: serverTimestamp() }));
+  await assertFails(setDoc(doc(m1, 'classes/C1/activities/A1/progress/M1'), { nickname: '산', currentDungeon: null, clearedCount: 8, coins: 0, inMine: 'yes', updatedAt: serverTimestamp() }), 'inMine은 참/거짓');
+  // 지원 코인은 광산이 완성되기 전에는 못 쓴다
+  await assertFails(setDoc(doc(student('ST'), 'classes/C1/results/ST_sup0'), result({ supportCoins: 20, coinsSpent: 35 })), '광산이 없으면 지원 코인 불가');
+  await assertFails(setDoc(ref(m2), { dug: 5, done: false, updatedAt: serverTimestamp() }), '다 깨지 못한 학생은 못 캔다');
+  await assertFails(setDoc(ref(m1), { dug: 31, done: false, updatedAt: serverTimestamp() }), '한 번에 30까지');
+  await assertFails(setDoc(ref(m1), { dug: 5, done: true, updatedAt: serverTimestamp() }), '처음부터 완성 불가');
+  await assertSucceeds(setDoc(ref(m1), { dug: 5, done: false, updatedAt: serverTimestamp() }));
+  await assertSucceeds(updateDoc(ref(m1), { dug: increment(30), updatedAt: serverTimestamp() }));
+  await assertFails(updateDoc(ref(m1), { dug: increment(31) }), '한 번에 30까지');
+  await assertFails(updateDoc(ref(m1), { dug: 1 }), '줄일 수 없다');
+  await assertFails(updateDoc(ref(m1), { dug: increment(1), extra: 1 }), '정해지지 않은 필드');
+  await assertFails(updateDoc(ref(m2), { dug: increment(1) }), '다 깨지 못한 학생은 못 캔다');
+  await assertSucceeds(getDoc(ref(student('ST'))), '같은 학급 학생은 읽는다');
+  await assertSucceeds(getDoc(ref(teacher('A'))), '소유 교사는 읽는다');
+  await assertFails(getDoc(ref(student('OUT'))), '학급 밖 학생은 못 읽는다');
+  await assertSucceeds(updateDoc(ref(m1), { done: true, updatedAt: serverTimestamp() }), '완성');
+  await assertFails(updateDoc(ref(m1), { done: false }), '완성은 되돌릴 수 없다');
+  // 결과: 지원 코인 20이면 쓴 코인 ≤ 얻은 코인 + 20
+  const st = student('ST');
+  await assertSucceeds(setDoc(doc(st, 'classes/C1/results/ST_sup1'), result({ supportCoins: 20, coinsSpent: 35 })), '20 + 20 ≥ 35');
+  await assertFails(setDoc(doc(st, 'classes/C1/results/ST_sup2'), result({ supportCoins: 10, coinsSpent: 25 })), '지원 코인은 0 또는 20');
+  await assertFails(setDoc(doc(st, 'classes/C1/results/ST_sup3'), result({ supportCoins: 20, coinsSpent: 45 })), '20 + 20 < 45');
+  await assertFails(setDoc(doc(st, 'classes/C1/results/ST_sup4'), result({ coinsSpent: 25 })), '지원 없이 얻은 코인보다 많이 쓸 수 없다');
+});
+
 test('골드 러시: 활동 종류(mode), 같은 학급 학생의 순위 읽기, goldrush 결과', async () => {
   const a = teacher('A');
   await assertSucceeds(setDoc(doc(a, 'classes/C1/activities/G1'), newAct({ mode: 'goldrush' })));
@@ -132,7 +200,7 @@ test('골드 러시: 활동 종류(mode), 같은 학급 학생의 순위 읽기,
   await assertSucceeds(setDoc(doc(a, 'classes/C1/activities/G3'), newAct({ mode: 'adventure' })));
   const st = student('ST');
   await assertSucceeds(getDocs(collection(st, 'classes/C1/activities/GR/progress')), '골드 러시면 같은 학급 학생이 순위를 읽는다');
-  await assertFails(getDoc(doc(st, 'classes/C1/activities/A1/progress/ST2')), '보통 활동이면 남의 진행 상황은 못 읽는다');
+  await assertSucceeds(getDoc(doc(st, 'classes/C1/activities/A1/progress/ST2')), '보통 활동도 같은 학급이면 읽는다 (학급 광산 인원 — 2026-11-25)');
   await assertFails(getDocs(collection(student('OUT'), 'classes/C1/activities/GR/progress')), '학급 밖 학생은 못 읽는다');
   await assertFails(setDoc(doc(st, 'classes/C1/activities/GR/progress/ST2'), { nickname: '바다', currentDungeon: null, clearedCount: 0, coins: 0, updatedAt: serverTimestamp() }), '남의 골드는 못 바꾼다');
   await assertSucceeds(setDoc(doc(st, 'classes/C1/results/ST_rush1'), abandoned({ outcome: 'goldrush' })), 'goldrush 결과(플레이 기록 null)');

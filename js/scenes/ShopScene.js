@@ -24,6 +24,7 @@ export default class ShopScene extends Phaser.Scene {
 
   init(data) {
     this.dungeon = data.dungeon;
+    this.support = data.support ?? 0; // 학급 광산 지원 코인
   }
 
   create() {
@@ -31,7 +32,9 @@ export default class ShopScene extends Phaser.Scene {
     fadeIn(this);
     playMusic('map');
     this.hud = createHud(this, `${DUNGEONS[this.dungeon].name} · 능력 구매`, { back: true });
-    this.guide = createGuide(this, '코인으로 능력을 사세요 · 안 사도 클리어할 수 있어요');
+    this.guide = createGuide(this, this.support
+      ? `학급 광산 지원 코인 +${this.support}! 코인으로 능력을 사세요`
+      : '코인으로 능력을 사세요 · 안 사도 클리어할 수 있어요');
     createBackButton(this, () => this.scene.start('WorldMap'), {
       warn: (m) => this.guide.notice(m, CSS.bad), message: '한 번 더 누르면 월드맵으로 가요 · 이번 판의 코인과 능력은 사라져요',
     });

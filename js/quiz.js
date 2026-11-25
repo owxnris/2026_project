@@ -95,10 +95,13 @@ export function abilityCost(ab) {
 
 // 지금 판의 플레이 기록 (능력 가격 합 = 쓴 코인 ≤ 얻은 코인)
 export function playStats(cleared) {
-  const { hits, falls, dashesUsed, dungeonStartMs, abilities } = state.play;
+  const {
+    hits, falls, dashesUsed, dungeonStartMs, abilities, supportCoins,
+  } = state.play;
   return {
     abilities: { ...abilities },
     coinsSpent: abilityCost(abilities),
+    supportCoins: supportCoins ?? 0,
     dashesUsed,
     hits,
     falls,

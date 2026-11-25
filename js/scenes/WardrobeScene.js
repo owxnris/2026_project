@@ -59,9 +59,9 @@ export default class WardrobeScene extends Phaser.Scene {
       const thumb = dressedHero(this, x, y + 34, preview(it.id), skinOf(preview(it.id).color), 4);
       add(thumb.body); if (thumb.hat) add(thumb.hat);
       if (act === 'poor') { thumb.body.setAlpha(0.5); thumb.hat?.setAlpha(0.5); }
-      add(text(this, x, y + 62, it.name, 'small').setOrigin(0.5).setFontSize(14));
+      add(text(this, x, y + 62, it.name, 'small').setOrigin(0.5));
       const tag = { worn: '입는 중', equip: '있음 · 입기', buy: `${it.price} 골드`, poor: `${it.price} 골드` }[act];
-      add(text(this, x, y + 82, tag, 'small', act === 'poor' ? CSS.bad : CSS.good).setOrigin(0.5).setFontSize(13));
+      add(text(this, x, y + 82, tag, 'small', act === 'poor' ? CSS.bad : CSS.good).setOrigin(0.5));
       add(this.add.zone(x, y + 20, 100, 130).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.pick(it)));
     });
   }

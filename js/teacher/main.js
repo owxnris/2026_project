@@ -20,7 +20,7 @@ import {
 } from './activityTab.js';
 import { setupActivityView, openActivityView, closeActivityView } from './activityView.js';
 import {
-  watchStudents, watchResults, watchProgress, watchAdventures,
+  watchStudents, watchResults, watchProgress, watchAdventures, watchChest, saveChest, watchMine,
 } from './classData.js';
 import { setupClassHub, closeClassData } from './classHub.js';
 import { setupStudentsTab } from './studentsTab.js';
@@ -125,10 +125,12 @@ if (!isConfigured) {
   });
   setupActivityTab({ create: createActivity, watch: watchActivities }, openActivityView);
   setupActivityView({
-    start: startActivity, end: endActivity, restart: restartActivity, remove: deleteActivity, getActivities, watchProgress,
+    start: startActivity, end: endActivity, restart: restartActivity, remove: deleteActivity, getActivities, watchProgress, watchMine,
   }, backToActivities);
-  setupClassHub({ watchStudents, watchResults, watchAdventures });
-  setupStudentsTab();
+  setupClassHub({
+    watchStudents, watchResults, watchAdventures, watchChest,
+  });
+  setupStudentsTab(saveChest);
   setupResultsTab(getActivities, onActivitiesChange, () => myQuestions, (ids, title) => {
     backToActivities();
     openFormWith(ids, title);

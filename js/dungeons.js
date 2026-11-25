@@ -6,6 +6,7 @@
 // 점프로 넘을 수 있는 구멍 폭은 최대 약 140px — 대시 없이도 클리어할 수 있게 유지한다. (점프 높이 약 110px, 오르막은 90px 이하)
 // 문은 체크포인트다: 지나간 문이 있으면 구멍에 빠졌을 때 그 문에서 다시 시작한다. 문은 발판 위에 둔다.
 // 장애물: dx·dy가 있으면 duration(ms) 동안 그만큼 왕복한다.
+// chasers(따라오는 유령, js/chasers.js): 말랑이가 wakeX를 지나면 뒤에서 나타나 speed(px/초)로 따라온다. 말랑이(220)보다 느리게
 
 export const DUNGEONS = [
   {
@@ -185,6 +186,7 @@ export const DUNGEONS = [
       ],
       doors: [{ x: 1450, y: 470 }, { x: 2400, y: 470 }],
       flag: { x: 3500, y: 470 },
+      chasers: [{ wakeX: 900, speed: 95 }],
     },
   },
   {
@@ -216,6 +218,7 @@ export const DUNGEONS = [
       ],
       doors: [{ x: 1720, y: 470 }, { x: 2600, y: 470 }],
       flag: { x: 3700, y: 470 },
+      chasers: [{ wakeX: 700, speed: 110 }, { wakeX: 2300, speed: 130 }],
     },
   },
 ];

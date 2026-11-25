@@ -29,7 +29,7 @@ export default class GoldRushScene extends Phaser.Scene {
     reportProgress(null);
 
     ribbon(this, cx, 98, 420);
-    text(this, cx, 96, '골드 러시!', 'body', CSS.good).setOrigin(0.5).setStroke('#3f2631', 6);
+    text(this, cx, 96, '골드 러시!', 'body', CSS.player).setOrigin(0.5).setStroke('#3f2631', 6);
     [cx - 250, cx + 250].forEach((x) => this.add.sprite(x, 98, 'pp', PP.coin).setScale(SCALE + 1).play('coin_spin'));
     this.timeText = text(this, cx, 150, '', 'small').setOrigin(0.5);
 

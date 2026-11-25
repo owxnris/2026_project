@@ -12,6 +12,7 @@ export const state = {
   cleared: [],
   gold: 0, // 모험 내내 쌓이는 골드 (정답 1개 = 10, 수업이 바뀌어도 이어진다)
   style: normalize(), // 말랑이 꾸미기 { owned, look: { color, hat }, spent } — 쓸 수 있는 골드 = gold − style.spent
+  donated: 0, // 학급 보물상자에 넣은 골드 (쓴 골드에 들어 있다)
   endTime: 0,
   timedOut: false,
   // 던전 한 판의 플레이 기록 (결과 저장용)
@@ -26,7 +27,7 @@ export const state = {
 // abilities: 이번 판에 산 능력 (보호막·이단 점프는 산 판에만), dashLeft: 남은 대시, shieldLeft: 보호막이 남았는지
 function newPlay() {
   return {
-    hits: 0, falls: 0, dashesUsed: 0, dungeonStartMs: 0, quizCorrect: 0, quizTotal: 0, entryCorrect: 0,
+    hits: 0, falls: 0, dashesUsed: 0, dungeonStartMs: 0, quizCorrect: 0, quizTotal: 0, entryCorrect: 0, supportCoins: 0, // supportCoins: 학급 광산 지원
     abilities: { dash: 0, shield: false, doubleJump: false }, dashLeft: 0, shieldLeft: false,
   };
 }
@@ -84,7 +85,7 @@ export function clearedRoomCount() {
 
 // 모험 기록 저장 (깬 방 수·골드). 실패해도 게임은 계속
 export function saveAdventureNow() {
-  return saveAdventure({ clearedCount: clearedRoomCount(), gold: state.gold, ...state.style });
+  return saveAdventure({ clearedCount: clearedRoomCount(), gold: state.gold, ...state.style, donated: state.donated });
 }
 
 // 시간이 다 되거나 교사가 활동을 종료하면 어느 화면에서든 최종 결과 화면으로 보낸다.

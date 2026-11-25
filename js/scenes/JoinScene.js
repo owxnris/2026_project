@@ -27,8 +27,8 @@ export default class JoinScene extends Phaser.Scene {
     text(this, cx, 90, '수업 참여', 'body').setOrigin(0.5);
     text(this, cx, 150, '참여 코드', 'small').setOrigin(0.5);
     this.code = createInput(this, cx, 195, { placeholder: '숫자 6자리', inputMode: 'numeric' });
-    text(this, cx, 255, '닉네임', 'small').setOrigin(0.5);
-    this.nick = createInput(this, cx, 300, { placeholder: '선생님이 알아볼 수 있는 이름 (10자까지)' });
+    text(this, cx, 255, '닉네임 (선생님이 알아볼 수 있는 이름)', 'small').setOrigin(0.5);
+    this.nick = createInput(this, cx, 300, { placeholder: '10자까지' });
     this.nick.el.maxLength = NICKNAME_MAX;
     this.error = text(this, cx, 350, '', 'small', CSS.bad).setOrigin(0.5);
     this.button = createButton(this, cx, 420, '입장', () => this.submit(), { primary: true });
