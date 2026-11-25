@@ -448,3 +448,13 @@ Cloud Functions(Blaze 요금제)를 쓰지 않기로 해서, 서버 채점을 �
 ## 성공·실패 조건
 - 성공: 던전 끝 깃발 도달
 - 실패: 전체 시간 초과
+
+## 출시
+- 웹 배포: GitHub Pages
+- 원스토어 Web 상품: 웹게임 SDK 기본 연동
+- 일반 브라우저: SDK 없이 지금처럼 플레이
+- 광고와 결제는 넣지 않는다
+- 연동 (2026-11-25, SDK v1.2.0, js/onestore.js): index.html 맨 앞 module 스크립트가 SDK를 먼저 불러오고, Phaser는 defer, 게임은 그다음. pause·resume을 initializeAsync 전에 등록 → initializeAsync 결과에 err가 있으면(또는 SDK를 못 불러오면) 일반 브라우저로 보고 바로 시작. 앱 안이면 그림 로딩 진행률을 setLoadingProgress(0~100)로 알리고 startGameAsync가 끝난 뒤 시작 화면
+- pause 때 게임(game.pause)·효과음·음악을 멈추고 resume 때 다시 시작한다. 수업 남은 시간(서버 시각 기준)은 멈추지 않는다
+- exit 저장·뒤로 가기 키·무음 모드는 따로 처리하지 않는다 (진행 기록은 플레이 중 서버에 저장, 뒤로 가기는 앱 기본 종료 확인 창)
+

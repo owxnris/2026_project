@@ -8,13 +8,14 @@ let on = true;
 try { on = localStorage.getItem(KEY) !== 'off'; } catch { /* 저장소를 못 쓰면 켜진 채로 */ }
 
 let ctx = null;
+let paused = false; // 원스토어 앱이 잠깐 멈췄을 때 (js/onestore.js)
 function audio() {
   if (!ctx) {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return null;
     ctx = new AC();
   }
-  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+  if (ctx.state === 'suspended' && !paused) ctx.resume().catch(() => {});
   return ctx;
 }
 
@@ -27,6 +28,13 @@ if (typeof window !== 'undefined') {
 }
 
 export function soundOn() { return on; }
+
+// 원스토어 앱이 백그라운드로 가면 효과음 장치를 멈추고, 돌아오면 다시 켠다
+export function setSoundPaused(next) {
+  paused = next;
+  if (!ctx) return;
+  (paused ? ctx.suspend() : ctx.resume()).catch(() => {});
+}
 
 export function setSound(next) {
   on = next;
@@ -59,7 +67,7 @@ const SOUNDS = {
 
 // 소리 내기: 꺼져 있거나 브라우저가 지원하지 않으면 아무것도 하지 않는다
 export function play(name) {
-  if (!on) return;
+  if (!on || paused) return;
   try {
     const c = audio();
     if (c) SOUNDS[name](c);

@@ -32,9 +32,16 @@
       m.after(b);
     })();
   </script>
+  <!-- 원스토어 H5 게임 SDK (spec.md 출시): 게임 코드·Phaser보다 먼저 불러온다. 일반 브라우저에서는 아무 일도 하지 않고,
+       못 불러와도(학교망 차단 등) 게임은 그대로 시작한다. 연동 코드는 js/onestore.js -->
+  <script type="module">
+    import { createSDK } from 'https://h5sdk.onestore.net/lib/v1.2.0/onestore-h5-sdk.min.js';
+    createSDK();
+  </script>
   <!-- 픽셀 글꼴 Galmuri (SIL OFL 1.1, assets/CREDITS.md) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css">
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+  <!-- defer: SDK(위 module) 다음, 게임(js/main.js) 전에 실행 -->
+  <script defer src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
 </head>
 <body>
   <div id="game"></div>

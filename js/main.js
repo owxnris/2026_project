@@ -12,8 +12,9 @@ import GoldRushScene from './scenes/GoldRushScene.js';
 import WardrobeScene from './scenes/WardrobeScene.js';
 import ChestScene from './scenes/ChestScene.js';
 import MineScene from './scenes/MineScene.js';
+import { setupOneStore } from './onestore.js';
 
-new Phaser.Game({
+const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'game',
   width: LAYOUT.W,
@@ -25,3 +26,6 @@ new Phaser.Game({
   physics: { default: 'arcade', arcade: { gravity: { y: PHYS.GRAVITY } } },
   scene: [BootScene, StartScene, JoinScene, WaitingScene, WorldMapScene, QuizScene, ShopScene, DungeonScene, ResultScene, GoldRushScene, WardrobeScene, ChestScene, MineScene],
 });
+
+// 원스토어 앱 안이면 SDK와 연결 (일반 브라우저는 그대로) — js/onestore.js
+setupOneStore(game);

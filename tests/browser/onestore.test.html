@@ -1,0 +1,59 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"></head>
+<body><pre id="out">running</pre>
+<script type="module">
+// 원스토어 SDK 연동(js/onestore.js)을 가짜 SDK로 시험: 일반 브라우저(err)·앱 안(진행률 → startGameAsync)·SDK 없음, pause/resume
+var out = []; window.addEventListener('error', (e) => out.push('WINERR ' + e.message));
+const log = (ok, m) => out.push((ok ? 'PASS ' : 'FAIL ') + m);
+function fakeSdk(initResult) {
+  const calls = []; const handlers = {};
+  return {
+    calls, handlers,
+    on(ev, fn) { calls.push('on:' + ev); handlers[ev] = fn; },
+    initializeAsync() { calls.push('init'); return Promise.resolve(initResult); },
+    setLoadingProgress(p) { calls.push('progress:' + p); },
+    startGameAsync() { calls.push('start'); return Promise.resolve({}); },
+  };
+}
+const fakeGame = () => { const g = { paused: 0, resumed: 0, pause() { g.paused += 1; }, resume() { g.resumed += 1; } }; return g; };
+try {
+  // 1) 일반 브라우저: initializeAsync가 err로 끝남 → 진행률·startGameAsync 없이 바로 시작
+  window.ONEstoreH5 = fakeSdk({ err: 'Platform Not Supported' });
+  let M = await import('/js/onestore.js?web');
+  M.setupOneStore(fakeGame());
+  M.reportLoading(0.5);
+  await M.platformReady();
+  const c1 = window.ONEstoreH5.calls;
+  log(c1.indexOf('on:pause') < c1.indexOf('init') && c1.indexOf('on:resume') < c1.indexOf('init'), 'listeners registered before initializeAsync');
+  log(!c1.some((c) => c.startsWith('progress') || c === 'start'), 'regular browser (err): no progress, no startGameAsync, starts right away');
+
+  // 2) 원스토어 앱: 진행률 0~100 → 로딩이 끝나면 startGameAsync
+  window.ONEstoreH5 = fakeSdk({ playerId: 'p1', locale: 'ko-KR' });
+  M = await import('/js/onestore.js?app');
+  const game = fakeGame();
+  M.setupOneStore(game);
+  await Promise.resolve(); await Promise.resolve();
+  M.reportLoading(0.3); M.reportLoading(0.9);
+  await M.platformReady();
+  const c2 = window.ONEstoreH5.calls;
+  const prog = c2.filter((c) => c.startsWith('progress')).map((c) => Number(c.split(':')[1]));
+  log(prog.length >= 3 && prog.every((p, i) => i === 0 || p >= prog[i - 1]) && prog.at(-1) === 100, `progress reported and rises to 100 (${prog.join(',')})`);
+  log(c2.indexOf('start') > c2.lastIndexOf('progress:100') && c2.filter((c) => c === 'start').length === 1, 'startGameAsync once, after progress 100');
+
+  // pause/resume: 게임과 소리 멈춤·다시 시작
+  const S = await import('/js/sound.js');
+  window.ONEstoreH5.handlers.pause({ reason: 'background' });
+  log(game.paused === 1, 'pause -> game.pause()');
+  let threw = false; try { S.play('coin'); } catch { threw = true; }
+  log(!threw, 'sound calls are safe while paused');
+  window.ONEstoreH5.handlers.resume({});
+  log(game.resumed === 1, 'resume -> game.resume()');
+
+  // 3) SDK를 못 불러옴(학교망 차단 등): 그대로 시작
+  delete window.ONEstoreH5;
+  M = await import('/js/onestore.js?none');
+  M.setupOneStore(fakeGame());
+  let ok = false; await M.platformReady().then(() => { ok = true; });
+  log(ok, 'no SDK loaded -> starts normally');
+} catch (e) { out.push('ERROR ' + e.stack); }
+document.getElementById('out').textContent = out.join(String.fromCharCode(10));
+</script></body></html>

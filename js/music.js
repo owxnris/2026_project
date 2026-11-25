@@ -15,9 +15,10 @@ const VOLUME = 0.3; // 효과음과 퀴즈 글을 가리지 않게
 const players = {}; // 곡마다 오디오 하나 (다시 오면 이어서)
 let wanted = null; // 지금 화면이 원하는 곡
 let current = null; // 지금 재생 중인 오디오
+let paused = false; // 원스토어 앱이 잠깐 멈췄을 때 (js/onestore.js)
 
 function apply() {
-  const next = wanted && soundOn() ? wanted : null;
+  const next = wanted && soundOn() && !paused ? wanted : null;
   if (current && (!next || current !== players[next])) current.pause();
   if (!next) { current = null; return; }
   if (typeof Audio === 'undefined') return;
@@ -43,7 +44,13 @@ export function refreshMusic() {
   apply();
 }
 
+// 원스토어 앱이 백그라운드로 가면 멈추고, 돌아오면 이어서 튼다
+export function setMusicPaused(on) {
+  paused = on;
+  apply();
+}
+
 if (typeof window !== 'undefined') {
-  const retry = () => { if (current && current.paused && soundOn()) current.play().catch(() => {}); };
+  const retry = () => { if (current && current.paused && soundOn() && !paused) current.play().catch(() => {}); };
   ['pointerdown', 'touchend', 'keydown'].forEach((t) => window.addEventListener(t, retry, { capture: true, passive: true }));
 }

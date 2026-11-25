@@ -446,3 +446,13 @@
 - 수정한 파일: js/ui.js, js/scenes/WaitingScene.js, js/chasers.js(신규), js/scenes/DungeonScene.js, js/dungeons.js, js/mine.js·js/firebase/mine.js·js/scenes/MineScene.js(신규), js/progress.js, js/scenes/QuizScene.js·ShopScene.js·WorldMapScene.js, js/state.js, js/quiz.js, js/grading.js, js/main.js, js/teacher/activityView.js·classData.js·main.js·activities.js, teacher.html, firestore.rules, spec.md, design.md, 원다현_tasks.md(14-9~14-11), tests(dungeon3·mine.e2e·mine.test·rules·shot·shot-on·run-all)
 - 판단 근거: 장애물은 사용자가 고른 '따라오는 유령'만 성 두 방에 넣음(말랑이보다 느리게 해 멈추지 않으면 피할 수 있게). 광산은 서버 없이 규칙으로 '다 깬 학생만·한 번에 30까지·완성 후 지원 코인 20'을 지키고, 쓰기 수를 아끼려 3초마다 모아서 씀
 
+[2026-11-25 16:30]
+- 요청 요약: spec.md 맨 아래에 '## 출시' 항목 추가 (GitHub Pages 배포, 원스토어 Web 상품은 웹게임 SDK 기본 연동, 일반 브라우저는 SDK 없이, 광고·결제 없음)
+- 수정한 파일: spec.md
+- 판단 근거: 요청대로 맨 아래에 항목만 추가하고 다른 부분은 건드리지 않음 (SDK 연동 구현은 명세만, 코드 작업은 하지 않음)
+
+[2026-11-25 17:00]
+- 요청 요약: 원스토어 웹게임 SDK 기본 연동 (SDK를 게임·Phaser보다 먼저, err면 바로 시작, setLoadingProgress → startGameAsync, pause/resume에 게임·소리, 광고·결제 없음) — 계획을 먼저 보여 주고 승인받아 진행
+- 수정한 파일: js/onestore.js(신규), index.html, js/main.js, js/scenes/BootScene.js, js/music.js, js/sound.js, spec.md(출시 항목 아래 연동 세부), 원다현_tasks.md(14-12), tests/browser(onestore.test.html, run-all.sh)
+- 판단 근거: 원스토어 공식 SDK 안내(ONE-store/onestore_web_sdk_skills, v1.2.0)의 호출 순서·err 분기를 그대로 따름. 일반 <script>는 module보다 먼저 실행되므로 Phaser에 defer를 붙여 SDK → Phaser → 게임 순서를 보장
+

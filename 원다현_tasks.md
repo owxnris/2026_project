@@ -473,3 +473,5 @@ D-1 → D-2·D-3 → D-4 → (사용자: 11-5 플레이 감각 점검) → D-5 �
   - 구현됨 — js/chasers.js(신규), DungeonScene, dungeons.js(chasers). 시험: dungeon3.e2e 6개 추가(28개), 캡처 확인. 실제 플레이 난이도 확인 전
 - [ ] 14-11 학급 광산: 8개 방을 다 깬 학생이 함께 캠(참여 인원 절반 이상·최소 2명), 목표 = 참여 인원 × 50, 완성되면 못 깬 친구에게 방마다 코인 +20 (2026-11-25)
   - 구현됨 — js/mine.js·js/firebase/mine.js·js/scenes/MineScene.js(신규), progress.js(inMine·신호), QuizScene·ShopScene(지원 코인), state.js·quiz.js·grading.js(supportCoins), WorldMapScene('광산'), 교사 activityView·classData·main·activities(삭제 시 광산 문서)·teacher.html, firestore.rules(mine·progress 읽기·supportCoins). 시험: mine.e2e 17개, 노드 3개, 규칙 에뮬레이터 15묶음 통과. **규칙 다시 게시 필요(사용자)**, 실제 여러 기기 확인 전
+- [ ] 14-12 원스토어 H5 게임 SDK 기본 연동 (v1.2.0, 광고·결제 없음) (2026-11-25)
+  - 구현됨 — js/onestore.js(신규), index.html(SDK 먼저·Phaser defer), main.js, BootScene(진행률·startGameAsync), music.js·sound.js(pause/resume). 시험: onestore.test 8개(가짜 SDK: 일반 브라우저·앱·SDK 없음), 실제 index.html·체험 모드가 진짜 SDK로 시작 화면까지 열림. 원콘솔 'H5 게임 URL 검증'·원스토어 앱 확인 전(사용자)
