@@ -23,6 +23,18 @@ export function watchChest(cb) {
   return onSnapshot(chestRef(), (snap) => cb(snap.exists() ? snap.data() : null), () => cb(null));
 }
 
+// 방을 깬 뒤 남은 코인을 보물상자에 (2026-11-25): 남은 코인만큼 골드를 더해 그대로 넣는다
+// → 클리어 보상 골드(state.js clearDungeon)는 그대로 남고, 넣은 만큼 학급 상자가 찬다. 실패하면 골드를 되돌린다
+export async function investLeftover(amount) {
+  state.gold += amount;
+  try {
+    await donate(amount);
+  } catch (e) {
+    state.gold -= amount;
+    throw e;
+  }
+}
+
 // 골드 넣기: 쓴 골드·넣은 골드를 늘리고 상자 합계에 더한다. 실패하면 오류를 낸다 (상태는 바꾸지 않는다)
 export async function donate(amount) {
   const next = {

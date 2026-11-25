@@ -22,6 +22,7 @@ const tick = (ms) => new Promise((r) => setTimeout(r, ms));
 while (!game.scene.isActive('Start')) await tick(50);
 resetGame(); restoreCleared(Number(q.get('cleared') || 1)); state.coins = 35; if (q.get('gold')) state.gold = Number(q.get('gold'));
 if (q.get('review')) { const A = (id, c, ok, ch) => ({ id, subject: '수학', concept: c, question: id + ' 문제는 무엇일까요?', choices: ['가', '나', '다', '라'], chosen: ch, correctIndex: 1, correct: ok }); state.reviewLog = [A('q1', '곱셈', false, 0), A('q2', '분수', true, 1), A('q3', '곱셈', false, null), A('q4', '나눗셈', false, 2), A('q5', '분수', true, 1)]; state.totalQuiz = 5; state.totalCorrect = 2; }
+if (q.get('qc')) { state.play.quizCorrect = Number(q.get('qc')); state.play.quizTotal = 3; } // 결과 화면용 맞힌 문제 수
 const target = q.get('scene') || 'Dungeon';
 const data = JSON.parse(q.get('data') || '{"dungeon":0}');
 game.scene.getScene('Start').scene.start(target, data);

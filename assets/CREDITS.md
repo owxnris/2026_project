@@ -14,3 +14,10 @@
 - 직접 만든 그림: 결과 화면 별(js/art.js STAR, 16px 픽셀 그림)과 주인공 눈 감은 그림(Tiny Dungeon 108번을 고쳐 만듦), 입자 점. 모두 이 프로젝트 코드 안에서 만든다
 - Kenney 라이선스 원문은 assets/kenney/License-*.txt에 그대로 두었다
 - 그림을 바꾸거나 더할 때는 이 표에 출처와 라이선스를 먼저 적는다. CC0이 아니면 상업적 이용·재배포 조건을 확인하고 적는다
+
+## 원스토어 등록 이미지 (2026-11-25)
+- store/graphic_1024x578.png: 새 그림 없이 게임에 쓰는 Kenney 그림(Tiny Dungeon·Pixel Platformer, CC0)과 Galmuri 글꼴(SIL OFL 1.1)을 store/graphic.html(캔버스)로 배치해 헤드리스 크롬으로 1024×578 캡처
+- store/icon_512.png: 같은 방법(store/icon.html) — 말랑이(Tiny Dungeon 108번)·코인(Pixel Platformer 151번)·벽돌, 글자 없음
+- store/screenshot_1~6.png: 실제 게임 화면을 헤드리스 크롬으로 960×540(16:9) 캡처
+- store/gameplay.mp4: 실제 게임을 자동으로 플레이하며(tests/browser/video.html) 캔버스를 WebCodecs(H.264)로 인코딩하고 mp4-muxer(MIT, jsDelivr CDN)로 MP4로 묶음 — 34초, 소리 없음
+

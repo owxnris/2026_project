@@ -1,4 +1,4 @@
-// mode 'entry': 던전 입장 전 3문제 → 던전 시작
+// mode 'entry': 던전 입장 전 최대 5문제 — 코인 10 이상이면 문제마다 '한 문제 더' / '능력 사러 가기'를 고른다 → 상점 → 던전
 // mode 'revive': 코인이 0개가 됐을 때 던전 위에 뜸 → 맞힐 때까지 계속 출제
 // 문제와 채점은 quiz.js가 맡는다 (화면은 답을 낸 뒤에야 정답 보기를 보여 준다)
 import { reasonText } from '../firebase/errors.js';
@@ -130,7 +130,7 @@ export default class QuizScene extends Phaser.Scene {
     this.limitSec = item.timeLimitSec;
 
     const head = this.mode === 'entry'
-      ? `문제 ${this.count + 1}/${RULES.ENTRY_QUIZ_COUNT} · ${q.subject}`
+      ? `문제 ${this.count + 1} (최대 ${RULES.ENTRY_QUIZ_MAX}) · ${q.subject}`
       : this.mode === 'rush' ? `골드 러시 ${this.count + 1}번째 문제 · ${q.subject}`
         : `정답을 맞혀야 다시 움직일 수 있어요 · ${q.subject}`;
     this.items.push(text(this, W / 2, 100, head, 'small').setOrigin(0.5));
@@ -178,14 +178,41 @@ export default class QuizScene extends Phaser.Scene {
       this.showQuestion();
     } else if (this.mode === 'entry') {
       this.count += 1;
-      if (this.count < RULES.ENTRY_QUIZ_COUNT) this.showQuestion();
-      else this.goShop();
+      if (this.count >= RULES.ENTRY_QUIZ_MAX) this.goShop();
+      else if (state.coins >= RULES.COIN_PER_CORRECT) this.askMore();
+      else this.showQuestion();
     } else if (correct) {
       this.scene.stop();
       this.scene.resume('Dungeon');
     } else {
       this.showQuestion();
     }
+  }
+
+  // 코인이 10 이상이면 더 풀지, 상점으로 갈지 고른다 (문제를 푸는 도중에는 나가지 않아 푼 기록이 깔끔하다)
+  askMore() {
+    this.clearItems();
+    this.bar.setScale(0, 1);
+    const left = RULES.ENTRY_QUIZ_MAX - this.count;
+    this.items.push(text(this, W / 2, 150, `지금 코인 ${state.coins}개`, 'body', CSS.good).setOrigin(0.5));
+    this.items.push(text(this, W / 2, 190, `문제를 더 풀어 코인을 모으거나, 지금 능력을 사러 갈 수 있어요 (남은 문제 ${left}개)`, 'small').setOrigin(0.5));
+    this.choosing = true;
+    this.items.push(
+      createButton(this, W / 2 - 170, 330, '한 문제 더', () => this.oneMore(), { w: 280, h: 64 }),
+      createButton(this, W / 2 + 170, 330, '능력 사러 가기', () => this.toShop(), { primary: true, w: 280, h: 64 }),
+    );
+  }
+
+  oneMore() {
+    if (!this.choosing) return;
+    this.choosing = false;
+    this.showQuestion();
+  }
+
+  toShop() {
+    if (!this.choosing) return;
+    this.choosing = false;
+    this.goShop();
   }
 
   // 입장 퀴즈가 끝나면 상점으로. 학급 광산이 완성됐고 아직 8개 방을 다 깨지 못했으면 지원 코인 +20 (js/mine.js)

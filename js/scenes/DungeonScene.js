@@ -368,12 +368,14 @@ export default class DungeonScene extends Phaser.Scene {
     if (this.clearing) return;
     this.clearing = true;
     const stats = playStats(true); // 깃발에 닿은 순간의 기록 (클리어 시간 포함)
-    clearDungeon(this.index);
+    const leftover = clearDungeon(this.index); // 남은 코인 → 클리어 보상 골드, 결과 화면에서 보물상자에 넣을 수 있다
     reportProgress(null);
     // 깃발 반짝임과 말랑이 점프를 잠깐 보여 준 뒤 결과 화면으로
     this.player.body.setVelocity(0, -300);
     sparkle(this, this.flag.x, this.flag.y - 40, 0xffd54f, 30);
     play('clear');
-    this.time.delayedCall(reducedMotion() ? 0 : 650, () => this.scene.start('Result', { mode: 'clear', dungeon: this.index, stats }));
+    this.time.delayedCall(reducedMotion() ? 0 : 650, () => this.scene.start('Result', {
+      mode: 'clear', dungeon: this.index, stats, leftover,
+    }));
   }
 }

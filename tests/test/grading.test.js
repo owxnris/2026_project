@@ -41,11 +41,12 @@ test('isValidChoice / grade', () => {
   assert.deepEqual(grade(2, 2, true), { chosen: null, correct: false }, '늦게 낸 정답은 시간 초과');
 });
 
-test('issueBlocker: 입장 3문제까지, 회복은 입장 뒤에만', () => {
+test('issueBlocker: 입장 최대 5문제, 회복은 입장 퀴즈를 하나 이상 받은 뒤에만', () => {
   assert.equal(issueBlocker({ status: 'playing', entryIssued: 0 }, 'entry'), null);
-  assert.equal(issueBlocker({ status: 'playing', entryIssued: 3 }, 'entry'), 'entry-done');
-  assert.equal(issueBlocker({ status: 'playing', entryIssued: 2 }, 'revive'), 'entry-not-done');
-  assert.equal(issueBlocker({ status: 'playing', entryIssued: 3 }, 'revive'), null);
+  assert.equal(issueBlocker({ status: 'playing', entryIssued: 4 }, 'entry'), null);
+  assert.equal(issueBlocker({ status: 'playing', entryIssued: 5 }, 'entry'), 'entry-done');
+  assert.equal(issueBlocker({ status: 'playing', entryIssued: 0 }, 'revive'), 'entry-not-done');
+  assert.equal(issueBlocker({ status: 'playing', entryIssued: 1 }, 'revive'), null, '코인 10을 모아 일찍 나간 판도 회복 퀴즈가 된다');
   assert.equal(issueBlocker({ status: 'finished', entryIssued: 0 }, 'entry'), 'run-finished');
   assert.equal(issueBlocker({ status: 'playing', entryIssued: 0 }, 'bonus'), 'bad-quiz-type');
 });

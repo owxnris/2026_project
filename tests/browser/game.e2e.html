@@ -90,10 +90,13 @@ try {
     await waitFor(() => Q().answered && state.play.quizTotal === i + 1);
     if (i === 0) log(state.coins === 10 && Q().items.some((x) => x.text === '정답! 코인 +10'), 'correct -> +10 coins and feedback');
     if (i === 2) log(Q().items.some((x) => x.text?.startsWith('오답')), 'wrong -> red feedback');
-    await tick(1100);
+    // 코인이 10 이상이면 '한 문제 더' / '능력 사러 가기'를 고른다 (2026-11-25)
+    log(await waitFor(() => Q().choosing, 3000) && Q().items.some((x) => x.text === `지금 코인 ${state.coins}개`), `coins >= 10 -> choose more or shop (${i + 1})`);
+    if (i < 2) Q().oneMore();
   }
+  Q().toShop();
   // ── 능력 구매 ──
-  log(await waitFor(() => active('Shop')), 'after 3 entry questions -> shop');
+  log(await waitFor(() => active('Shop')), "'능력 사러 가기' after 3 entry questions -> shop");
   const shop = S('Shop');
   log(state.coins === 20, 'coins 20 after 2 correct + 1 wrong');
   shop.buy(shop.rows[1].a); // 보호막 15

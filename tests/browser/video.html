@@ -1,0 +1,110 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<script type="importmap">
+{ "imports": {
+  "http://127.0.0.1:5599/js/firebase/sdk.js": "/__test/e2e-sdk.js",
+  "http://127.0.0.1:5599/js/firebase/app.js": "/__test/off-app.js"
+} }
+</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css">
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+<style>html,body{margin:0;background:#000}#game{width:960px;height:540px}</style></head>
+<body><div id="game"></div>
+<script type="module">
+// 원스토어 홍보 동영상 만들기 도구 (게임 코드와 무관): 실제 게임을 자동으로 플레이하며 캔버스를 MP4로 녹화한다 (WebCodecs H.264 + mp4-muxer).
+// 시작 화면 → 던전 지도 → 입장 퀴즈(모두 정답) → 능력 구매 → 던전(간단한 자동 조작) → 클리어 결과.
+// 녹화가 끝나면 window.__video(base64)에 담는다 — 녹화 스크립트가 꺼내 store/gameplay.mp4로 저장
+const tick = (ms) => new Promise((r) => setTimeout(r, ms));
+try { localStorage.setItem('dungeonDash.sound', 'on'); localStorage.removeItem('dd.adventure'); } catch {}
+const { COLORS, LAYOUT, PHYS, ABILITIES } = await import('/js/config.js');
+const scenes = await Promise.all(['Boot', 'Start', 'Join', 'Waiting', 'WorldMap', 'Quiz', 'Shop', 'Dungeon', 'Result', 'GoldRush', 'Wardrobe', 'Chest', 'Mine'].map((n) => import(`/js/scenes/${n}Scene.js`).then((m) => m.default)));
+const { state, resetGame, restoreCleared } = await import('/js/state.js');
+const game = new Phaser.Game({ type: Phaser.CANVAS, parent: 'game', width: LAYOUT.W, height: LAYOUT.H, backgroundColor: COLORS.bg, pixelArt: true,
+  fps: { forceSetTimeOut: true, target: 60 }, dom: { createContainer: true }, physics: { default: 'arcade', arcade: { gravity: { y: PHYS.GRAVITY } } }, scene: scenes });
+const active = (k) => game.scene.isActive(k); const S = (k) => game.scene.getScene(k);
+const until = async (fn, ms = 15000) => { const t = Date.now(); while (Date.now() - t < ms) { try { if (fn()) return true; } catch {} await tick(30); } return false; };
+await until(() => active('Start'));
+await document.fonts.load('24px "Galmuri11"');
+
+// 녹화: 1/30초마다 캔버스를 한 프레임으로 인코딩하고 일반 MP4(길이 정보가 앞에 있는 파일)로 묶는다
+const { Muxer, ArrayBufferTarget } = await import('https://cdn.jsdelivr.net/npm/mp4-muxer@5.1.3/+esm');
+const canvas = document.querySelector('#game canvas');
+const FPS = 30;
+const cfg = { codec: 'avc1.42001f', width: 960, height: 540, bitrate: 3_000_000, framerate: FPS };
+window.__videoMime = (await VideoEncoder.isConfigSupported(cfg)).supported ? 'video/mp4 (avc)' : 'none';
+const muxer = new Muxer({ target: new ArrayBufferTarget(), video: { codec: 'avc', width: 960, height: 540, frameRate: FPS }, fastStart: 'in-memory' });
+const enc = new VideoEncoder({ output: (chunk, meta) => muxer.addVideoChunk(chunk, meta), error: (e) => { window.__videoErr = String(e); } });
+enc.configure(cfg);
+let n = 0;
+const grab = setInterval(() => {
+  const f = new VideoFrame(canvas, { timestamp: Math.round((n * 1e6) / FPS), duration: Math.round(1e6 / FPS) });
+  enc.encode(f, { keyFrame: n % (FPS * 2) === 0 });
+  f.close();
+  n += 1;
+}, 1000 / FPS);
+
+resetGame(); restoreCleared(1); state.gold = 120;
+S('Start').scene.restart();
+await tick(3000);
+S('Start').scene.start('WorldMap');
+await until(() => active('WorldMap'));
+S('WorldMap').select(1);
+await tick(3000);
+
+// 입장 퀴즈: 모두 정답
+S('WorldMap').scene.start('Quiz', { mode: 'entry', dungeon: 1 });
+const Q = () => S('Quiz');
+for (let i = 0; i < 3; i++) {
+  await until(() => active('Quiz') && Q().item && !Q().answered && Q().count === i);
+  await tick(1300);
+  Q().answer(Q().item.local.answer);
+  await until(() => Q().choosing, 4000);
+  await tick(1500);
+  if (i < 2) Q().oneMore(); else Q().toShop();
+}
+// 능력 구매: 보호막 (코인이 남아 한두 번 부딪혀도 계속 달린다)
+await until(() => active('Shop'));
+await tick(900);
+S('Shop').buy(ABILITIES[1]); await tick(1500);
+S('Shop').scene.start('Dungeon', { dungeon: 1 });
+await until(() => active('Dungeon'));
+
+// 던전 자동 조작: 오른쪽으로 달리며, 앞이 구멍·높은 발판·장애물이면 점프 (떨어지는데 아래에 발판이 없으면 이단 점프)
+const D = S('Dungeon');
+const L = D.level;
+const bot = { left: false, right: true, jump: false, takeJump() { const v = this.jump; this.jump = false; return v; }, takeDash() { return false; }, release() {} };
+D.touch = bot;
+const onPlat = (x, y) => L.platforms.some(([px, py, pw, ph]) => x >= px && x <= px + pw && y >= py - 2 && y <= py + ph + 40);
+let reviveAt = 0;
+const drive = setInterval(() => {
+  // 코인을 다 잃으면 회복 퀴즈: 잠깐 뒤 정답
+  if (active('Quiz') && Q().mode === 'revive' && Q().item && !Q().answered) {
+    if (!reviveAt) reviveAt = Date.now() + 1500;
+    if (Date.now() > reviveAt) { reviveAt = 0; Q().answer(Q().item.local.answer); }
+    return;
+  }
+  if (!active('Dungeon')) return;
+  const p = D.player; const b = p.body;
+  const ground = b.blocked.down || b.touching.down;
+  const feet = p.y + 24;
+  if (ground) {
+    const gapAhead = !onPlat(p.x + 70, feet);
+    const stepUp = L.platforms.some(([px, py]) => px > p.x + 10 && px < p.x + 90 && py < feet - 8);
+    const obstacle = D.obstacles.getChildren().some((o) => o.x > p.x && o.x - p.x < 110 && Math.abs((o.y + o.height / 2) - p.y) < 80);
+    if (gapAhead || stepUp || obstacle) bot.jump = true;
+  } else if (b.velocity.y > 120 && !D.airJumped && !onPlat(p.x, feet + 60)) {
+    bot.jump = true;
+  }
+}, 30);
+window.__cleared = await until(() => active('Result'), 60000);
+clearInterval(drive);
+await tick(4500);
+
+clearInterval(grab);
+await enc.flush();
+muxer.finalize();
+const blob = new Blob([muxer.target.buffer], { type: 'video/mp4' });
+window.__frames = n;
+const fr = new FileReader();
+fr.onload = () => { window.__video = String(fr.result).split(',')[1]; };
+fr.readAsDataURL(blob);
+</script></body></html>

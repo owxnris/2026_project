@@ -1,6 +1,6 @@
 // mode 'clear': 던전 클리어 → 월드맵 / mode 'timeout': 전체 시간 종료 / mode 'ended': 교사가 활동 종료 → 최종 결과
 // 결과 화면 (design.md): 제목 → 별 3개 → 획득 내역 → 구분선 → 합계 → 보상 → 주 버튼
-// 별 기준(기본값, spec.md): 클리어 / 입장 퀴즈 3문제 모두 정답 / 충돌 0번
+// 별 기준(기본값, spec.md): 클리어 / 푼 입장 퀴즈 모두 정답 / 충돌 0번
 // 온라인이면 끝난 판의 결과를 Firestore에 저장한다 (클리어 cleared / 시간 종료·교사 종료 failed). 실패하면 '다시 시도'
 import { reasonText } from '../firebase/errors.js';
 import { COLORS, CSS, LAYOUT, RULES } from '../config.js';
@@ -17,6 +17,9 @@ import {
   backdrop, fadeIn, panel, ribbon, sparkle, reducedMotion, UI, SCALE,
 } from '../art.js';
 import { playMusic } from '../music.js';
+import { play } from '../sound.js';
+import { chestState } from '../chest.js';
+import { watchChest, investLeftover } from '../firebase/chest.js';
 
 const { W } = LAYOUT;
 const cx = W / 2;
@@ -24,7 +27,7 @@ const LEFT = 300;
 const RIGHT = 660;
 
 export function starsOf(play) {
-  return [true, play.entryCorrect === RULES.ENTRY_QUIZ_COUNT, play.hits === 0];
+  return [true, play.entryTotal > 0 && play.entryCorrect === play.entryTotal, play.hits === 0];
 }
 
 export default class ResultScene extends Phaser.Scene {
@@ -34,6 +37,7 @@ export default class ResultScene extends Phaser.Scene {
     this.mode = data.mode;
     this.dungeon = data.dungeon;
     this.stats = data.stats;
+    this.leftover = data.leftover ?? 0; // 클리어할 때 남은 코인 (보상 골드로 이미 더해짐)
   }
 
   create() {
@@ -80,18 +84,71 @@ export default class ResultScene extends Phaser.Scene {
       }
     });
     text(this, cx, 155, '별: 클리어 · 입장 퀴즈 모두 정답 · 충돌 0번', 'small').setOrigin(0.5).setAlpha(0.6);
-    this.line(185, '맞힌 문제', `${p.quizCorrect} / ${p.quizTotal}`);
-    this.line(210, '능력에 쓴 코인', this.stats.coinsSpent);
-    this.line(235, '충돌 · 추락', `${p.hits}번 · ${p.falls}번`);
-    this.line(260, '클리어 시간', `${this.stats.clearSec}초`);
-    this.add.rectangle(LEFT, 280, RIGHT - LEFT, 1, COLORS.player, 0.2).setOrigin(0, 0.5);
-    text(this, LEFT, 306, '얻은 코인', 'body').setOrigin(0, 0.5);
-    text(this, RIGHT, 306, String(p.quizCorrect * RULES.COIN_PER_CORRECT), 'big', CSS.good).setOrigin(1, 0.5);
-    // 이야기: 깬 방 한마디 + 다음 목표 (안내자 루미)
-    this.add.rectangle(cx, 350, RIGHT - LEFT + 40, 52, COLORS.player, 0.1);
-    text(this, cx, 338, `${GUIDE_NAME}: ${ROOMS[this.dungeon]?.clear ?? ''}`, 'small', CSS.good).setOrigin(0.5).setWordWrapWidth(500);
-    text(this, cx, 362, nextObjective(this.dungeon, DUNGEONS.map((d) => d.name)), 'small').setOrigin(0.5).setWordWrapWidth(500);
-    createButton(this, cx, 410, '월드맵으로', () => this.scene.start('WorldMap'), { primary: true });
+    this.line(180, '맞힌 문제', `${p.quizCorrect} / ${p.quizTotal}`);
+    this.line(202, '능력에 쓴 코인', this.stats.coinsSpent);
+    this.line(224, '충돌 · 추락', `${p.hits}번 · ${p.falls}번`);
+    this.line(246, '클리어 시간', `${this.stats.clearSec}초`);
+    this.add.rectangle(LEFT, 264, RIGHT - LEFT, 1, COLORS.player, 0.2).setOrigin(0, 0.5);
+    text(this, LEFT, 290, '얻은 코인', 'body').setOrigin(0, 0.5);
+    text(this, RIGHT, 290, String(p.quizCorrect * RULES.COIN_PER_CORRECT), 'big', CSS.good).setOrigin(1, 0.5);
+    // 이야기: 깬 방 한마디 + 다음 목표 (안내자 루미) — 두 줄로 넘어가도 겹치지 않게 차례로 쌓는다
+    const WRAP = 430;
+    const box = this.add.rectangle(cx, 322, WRAP + 30, 10, COLORS.player, 0.1).setOrigin(0.5, 0);
+    const t1 = text(this, cx, 328, `${GUIDE_NAME}: ${ROOMS[this.dungeon]?.clear ?? ''}`, 'small', CSS.good).setOrigin(0.5, 0).setWordWrapWidth(WRAP);
+    const t2 = text(this, cx, t1.y + t1.height + 2, nextObjective(this.dungeon, DUNGEONS.map((d) => d.name)), 'small').setOrigin(0.5, 0).setWordWrapWidth(WRAP);
+    const bottom = t2.y + t2.height + 6;
+    box.height = bottom - 322;
+    box.setSize(WRAP + 30, bottom - 322);
+    // 클리어 보상: 남은 코인만큼 골드 + (선생님이 보물상자를 준비했으면) 남은 코인을 보물상자에 넣기
+    let by = Math.max(410, bottom + 34);
+    if (this.leftover > 0) {
+      this.rewardText = text(this, cx, bottom + 14, `클리어 보상: 남은 코인 ${this.leftover} → 골드 +${this.leftover}`, 'small', CSS.good).setOrigin(0.5);
+      by = bottom + 50;
+    }
+    this.buttonY = by;
+    this.drawClearButtons(false);
+    if (this.leftover > 0) {
+      this.stopChest = watchChest((c) => {
+        if (!this.alive || this.invested) return;
+        const s = chestState(c);
+        this.drawClearButtons(s.ready && !s.opened);
+      });
+      this.events.once('shutdown', () => this.stopChest?.());
+    }
+  }
+
+  // 아래 버튼: [보물상자에 넣기] [월드맵으로] — 넣을 수 없으면 월드맵만 가운데
+  drawClearButtons(canInvest) {
+    (this.clearButtons ?? []).forEach((b) => b.destroy());
+    const toMap = () => this.scene.start('WorldMap');
+    if (!canInvest) {
+      this.clearButtons = [createButton(this, cx, this.buttonY, '월드맵으로', toMap, { primary: true, h: 48 })];
+      return;
+    }
+    this.clearButtons = [
+      createButton(this, cx - 112, this.buttonY, '보물상자에 넣기', () => this.invest(), { w: 210, h: 48 }),
+      createButton(this, cx + 112, this.buttonY, '월드맵으로', toMap, { primary: true, w: 200, h: 48 }),
+    ];
+  }
+
+  // 남은 코인을 학급 보물상자에 (넣지 않고 월드맵으로 가면 코인은 사라진다)
+  async invest() {
+    if (this.investing || this.invested) return;
+    this.investing = true;
+    try {
+      await investLeftover(this.leftover);
+      if (!this.alive) return;
+      this.invested = true;
+      this.stopChest?.();
+      play('coin');
+      sparkle(this, cx, this.buttonY, 0xffd54f, 20);
+      this.rewardText?.setText(`클리어 보상 골드 +${this.leftover} · 보물상자에 코인 ${this.leftover}을 넣었어요!`);
+      this.drawClearButtons(false);
+    } catch (e) {
+      if (this.alive) this.rewardText?.setText(`보물상자에 넣지 못했어요 (${errorReason(e)})`).setColor(CSS.bad);
+    } finally {
+      this.investing = false;
+    }
   }
 
   // 골드 러시 결과: 내 골드·순위, 참가자 수·총 골드, 상위 5명 (실시간 현황의 마지막 값)

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>원스토어 그래픽 이미지 1024×578</title>
+<!-- 원스토어 등록용 그래픽 이미지 원본 (게임 코드와 무관). 게임에 있는 그림(Kenney CC0)과 Galmuri 글꼴, design.md 색만 쓴다.
+     크롬으로 1024×578 그대로 캡처해 store/graphic_1024x578.png로 저장한다 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css">
+<style>html, body { margin: 0; background: #1B1F2A; } canvas { display: block; }</style>
+</head>
+<body>
+<canvas id="c" width="1024" height="578"></canvas>
+<script>
+const W = 1024, H = 578;
+const C = { bg: '#1B1F2A', white: '#F5F5F5', gold: '#FFD54F', purple: '#9C6ADE', outline: '#3f2631' };
+const SHEET = { td: ['../assets/kenney/tiny-dungeon.png', 16, 12], pp: ['../assets/kenney/pixel-platformer.png', 18, 20], ui: ['../assets/kenney/ui-pixel.png', 16, 23] };
+const TD = { hero: 108, wall: 57, banner: 29, window: 28, chest: 89, bat: 120, ghost: 121, spider: 122, snail: 123, crab: 110, cyclops: 109, rat: 124, darkWizard: 111 };
+const PP = { coin: 151, flag: 111, pole: 131, top: 2, fill: 122 };
+const load = (src) => new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = src; });
+
+(async () => {
+  const img = {};
+  for (const k of Object.keys(SHEET)) img[k] = await load(SHEET[k][0]);
+  await document.fonts.load('48px "Galmuri11"');
+  await document.fonts.load('15px "Galmuri14"');
+  const g = document.getElementById('c').getContext('2d');
+  g.imageSmoothingEnabled = false;
+  // 그림 한 칸: 시트·번호·위치(가운데 아래 기준)·배율
+  const draw = (sheet, n, x, y, s, alpha = 1, tint = null) => {
+    const [, size, cols] = SHEET[sheet];
+    const sx = (n % cols) * size, sy = Math.floor(n / cols) * size;
+    const w = size * s;
+    g.globalAlpha = alpha;
+    if (tint) {
+      const t = document.createElement('canvas'); t.width = size; t.height = size;
+      const tg = t.getContext('2d'); tg.drawImage(img[sheet], sx, sy, size, size, 0, 0, size, size);
+      tg.globalCompositeOperation = 'multiply'; tg.fillStyle = tint; tg.fillRect(0, 0, size, size);
+      tg.globalCompositeOperation = 'destination-in'; tg.drawImage(img[sheet], sx, sy, size, size, 0, 0, size, size);
+      g.drawImage(t, 0, 0, size, size, Math.round(x - w / 2), Math.round(y - w), w, w);
+    } else {
+      g.drawImage(img[sheet], sx, sy, size, size, Math.round(x - w / 2), Math.round(y - w), w, w);
+    }
+    g.globalAlpha = 1;
+  };
+  const label = (str, x, y, font, color, stroke = 0, align = 'left') => {
+    g.font = font; g.textAlign = align; g.textBaseline = 'middle';
+    if (stroke) { g.lineJoin = 'round'; g.lineWidth = stroke; g.strokeStyle = C.outline; g.strokeText(str, x, y); }
+    g.fillStyle = color; g.fillText(str, x, y);
+  };
+
+  // 배경: 남색 + 흐린 던전 벽돌 + 벽 장식
+  g.fillStyle = C.bg; g.fillRect(0, 0, W, H);
+  for (let y = 0; y < H; y += 48) for (let x = 0; x < W; x += 48) draw('td', TD.wall, x + 24, y + 48, 3, 0.18);
+  draw('td', TD.banner, 600, 150, 3, 0.5);
+  draw('td', TD.window, 860, 120, 3, 0.45);
+
+  // 바닥: 풀 덮인 흙 발판 (구멍 하나)
+  const GROUND = 470;
+  for (let x = 0; x < W; x += 54) {
+    if (x >= 702 && x < 810) continue;
+    draw('pp', PP.top, x + 27, GROUND + 54, 3);
+    for (let y = GROUND + 54; y < H + 54; y += 54) draw('pp', PP.fill, x + 27, y + 54, 3);
+  }
+
+  // 오른쪽: 말랑이가 코인을 따라 구멍을 뛰어넘고, 몬스터·깃발·보물상자
+  [[640, 420], [690, 360], [745, 330], [800, 345], [850, 395]].forEach(([x, y]) => draw('pp', PP.coin, x, y, 3));
+  draw('td', TD.hero, 745, 430, 7);
+  draw('td', TD.spider, 560, GROUND + 6, 4);
+  draw('td', TD.bat, 610, 250, 4);
+  draw('td', TD.ghost, 540, 330, 5, 0.9, '#b07cff');
+  draw('td', TD.crab, 862, GROUND + 6, 4);
+  [0, 1].forEach((k) => draw('pp', PP.pole, 970, GROUND - k * 54 + 4, 3));
+  draw('pp', PP.flag, 976, GROUND - 104, 3);
+  draw('td', TD.chest, 930, GROUND + 4, 3);
+
+  // 왼쪽: 제목·두 줄 소개·방 그림 3개
+  label('던전 대시', 60, 150, '72px "Galmuri11"', C.gold, 12);
+  label('DUNGEON DASH', 64, 212, '24px "Galmuri11"', C.white, 6);
+  label('퀴즈를 맞혀 코인을 모으고', 62, 272, '24px "Galmuri11"', C.white, 6);
+  label('8개의 던전을 돌파하세요!', 62, 308, '24px "Galmuri11"', C.white, 6);
+  [TD.snail, TD.crab, TD.darkWizard].forEach((n, i) => {
+    const x = 100 + i * 96, y = 380;
+    g.fillStyle = 'rgba(245,245,245,0.12)'; g.fillRect(x - 38, y - 38, 76, 76);
+    g.strokeStyle = i === 2 ? C.gold : 'rgba(245,245,245,0.6)'; g.lineWidth = 4; g.strokeRect(x - 38, y - 38, 76, 76);
+    draw('td', n, x, y + 26, 3);
+  });
+  document.title = 'ready';
+})();
+</script>
+</body>
+</html>

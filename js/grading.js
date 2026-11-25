@@ -1,7 +1,7 @@
 // 채점·출제 규칙 (순수 함수). Firestore·Phaser와 상관없이 node --test로 시험한다. 학생 기기(브라우저)에서 실행된다.
 // 수치는 spec.md와 js/config.js(RULES), firestore.rules의 결과 검사와 같아야 한다.
 export const RULES = {
-  ENTRY_QUIZ_COUNT: 3,
+  ENTRY_QUIZ_MAX: 5,
   QUIZ_TIME_SEC: 15,
   ANSWER_GRACE_SEC: 3, // 네트워크 지연 여유. 문제를 낸 뒤 15+3초가 지나면 시간 초과(오답)
   COIN_PER_CORRECT: 10,
@@ -59,8 +59,8 @@ export function issueBlocker(run, quizType) {
   if (run.status !== 'playing') return 'run-finished';
   if (quizType === 'rush') return null; // 골드 러시: 시간 안에 몇 문제든
   if (quizType !== 'entry' && quizType !== 'revive') return 'bad-quiz-type';
-  if (quizType === 'entry' && run.entryIssued >= RULES.ENTRY_QUIZ_COUNT) return 'entry-done';
-  if (quizType === 'revive' && run.entryIssued < RULES.ENTRY_QUIZ_COUNT) return 'entry-not-done';
+  if (quizType === 'entry' && run.entryIssued >= RULES.ENTRY_QUIZ_MAX) return 'entry-done';
+  if (quizType === 'revive' && run.entryIssued < 1) return 'entry-not-done'; // 입장 퀴즈를 하나도 안 풀었으면 던전 전
   return null;
 }
 

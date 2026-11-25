@@ -12,10 +12,10 @@ const QS = [
 const KEY = { a: 0, b: 1, c: 2 };
 const mk = (wrong = []) => newRun({ runId: 'U_r1', studentUid: 'U', dungeon: 1, wrong, nowMs: 0 });
 
-test('출제: 문제에 정답이 없고, 입장 3문제 뒤에는 입장 퀴즈를 더 못 받는다', () => {
+test('출제: 문제에 정답이 없고, 입장 5문제 뒤에는 입장 퀴즈를 더 못 받는다', () => {
   const run = mk();
   let t = 0;
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 5; i++) {
     const it = issue(run, QS, 'entry', t);
     assert.ok(!('answer' in it.question));
     answer(run, it.attemptId, KEY[it.question.id], KEY[it.question.id], t + 1000);
@@ -25,7 +25,7 @@ test('출제: 문제에 정답이 없고, 입장 3문제 뒤에는 입장 퀴즈
   assert.equal(issue(run, QS, 'revive', t).quizType, 'revive');
 });
 
-test('회복 퀴즈는 입장 퀴즈 3문제를 받은 뒤에만', () => {
+test('회복 퀴즈는 입장 퀴즈를 하나 이상 받은 뒤에만', () => {
   assert.throws(() => issue(mk(), QS, 'revive', 0), (e) => e.reason === 'entry-not-done');
 });
 

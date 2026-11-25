@@ -80,7 +80,8 @@ try {
   for (let i = 0; i < 3; i++) {
     await waitFor(() => active('Quiz') && Q().item && !Q().answered && Q().count === i);
     Q().answer(KEY[Q().item.question.id]);
-    await waitFor(() => Q().count === i + 1 || active('Shop'), 3000);
+    await waitFor(() => Q().choosing, 3000);
+    if (i < 2) Q().oneMore(); else Q().toShop();
   }
   log(await waitFor(() => active('Shop')), 'entry quiz -> shop');
   log(state.coins === 50 && state.play.supportCoins === 20, `support coins +20 (coins ${state.coins})`);

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>원스토어 대표 아이콘 512×512</title>
+<!-- 원스토어 등록용 대표 아이콘 원본 (게임 코드와 무관). 게임에 있는 그림(Kenney CC0)과 design.md 색만, 글자 없이.
+     크롬으로 512×512 그대로 캡처해 store/icon_512.png로 저장한다 -->
+<style>html, body { margin: 0; background: #1B1F2A; } canvas { display: block; }</style>
+</head>
+<body>
+<canvas id="c" width="512" height="512"></canvas>
+<script>
+const S = 512;
+const SHEET = { td: ['../assets/kenney/tiny-dungeon.png', 16, 12], pp: ['../assets/kenney/pixel-platformer.png', 18, 20] };
+const load = (src) => new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = src; });
+(async () => {
+  const img = { td: await load(SHEET.td[0]), pp: await load(SHEET.pp[0]) };
+  const g = document.getElementById('c').getContext('2d');
+  g.imageSmoothingEnabled = false;
+  const draw = (sheet, n, x, y, s, alpha = 1) => {
+    const [, size, cols] = SHEET[sheet];
+    const w = size * s;
+    g.globalAlpha = alpha;
+    g.drawImage(img[sheet], (n % cols) * size, Math.floor(n / cols) * size, size, size, Math.round(x - w / 2), Math.round(y - w / 2), w, w);
+    g.globalAlpha = 1;
+  };
+  // 남색 바탕 + 흐린 던전 벽돌
+  g.fillStyle = '#1B1F2A'; g.fillRect(0, 0, S, S);
+  for (let y = 0; y < S; y += 64) for (let x = 0; x < S; x += 64) draw('td', 57, x + 32, y + 32, 4, 0.22);
+  // 가운데 말랑이 (16px × 19 = 304px)
+  draw('td', 108, 256, 280, 19);
+  // 오른쪽 위 금색 코인
+  draw('pp', 151, 420, 96, 6);
+  // 금색 테두리
+  g.strokeStyle = '#FFD54F'; g.lineWidth = 16; g.strokeRect(8, 8, S - 16, S - 16);
+  document.title = 'ready';
+})();
+</script>
+</body>
+</html>

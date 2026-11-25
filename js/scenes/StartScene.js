@@ -42,7 +42,7 @@ export default class StartScene extends Phaser.Scene {
       this.tweens.add({ targets: m, scaleY: SCALE * 0.88, duration: 380 + i * 60, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
     });
 
-    text(this, cx, 240, '던전 고르기 → 입장 퀴즈 3문제(정답마다 코인 10) → 능력 구매 → 깃발까지 달리기', 'small').setOrigin(0.5).setAlpha(0.7);
+    text(this, cx, 240, '던전 고르기 → 입장 퀴즈 최대 5문제(정답마다 코인 10) → 능력 구매 → 깃발까지 달리기', 'small').setOrigin(0.5).setAlpha(0.7);
     // 주소 하나로 들어온다: 학생은 여기서 참여, 선생님은 교사 플랫폼(teacher.html, Google 로그인)으로
     createButton(this, cx, 300, session.online ? '학생으로 참여' : '시작', () => {
       leaveActivity();

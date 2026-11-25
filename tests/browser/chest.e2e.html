@@ -58,6 +58,31 @@ try {
   log(state.style.spent === 120, 'cannot give to an opened chest');
   S('Chest').scene.start('WorldMap');
   log(await waitFor(() => active('WorldMap')), 'back to map');
+
+  // 입장 퀴즈 최대 5문제: 하나도 못 맞히면(코인 0) 5문제 뒤 자동으로 상점
+  const Q = () => S('Quiz');
+  S('WorldMap').scene.start('Quiz', { mode: 'entry', dungeon: 0 });
+  for (let i = 0; i < 5; i++) {
+    await waitFor(() => active('Quiz') && Q().item && !Q().answered && Q().count === i);
+    Q().answer((Q().item.local.answer + 1) % 4);
+    await waitFor(() => Q().count === i + 1 || active('Shop'), 3000);
+  }
+  log(await waitFor(() => active('Shop')) && state.play.entryTotal === 5, 'entry quiz: at most 5 questions, then shop');
+
+  // 클리어 보상: 남은 코인만큼 골드 + 남은 코인을 보물상자에
+  const { clearDungeon } = await import('/js/state.js');
+  localStorage.setItem('dd.chest', JSON.stringify({ goal: 1000, reward: '자유 시간', total: 0, history: [] }));
+  state.gold = 500; state.coins = 25;
+  const spent0 = state.style.spent; const donated0 = state.donated;
+  const left = clearDungeon(0);
+  log(left === 25 && state.gold === 525 && state.coins === 0, 'clear: leftover 25 coins -> +25 gold reward, coins gone');
+  S('Shop').scene.start('Result', { mode: 'clear', dungeon: 0, stats: { abilities: { dash: 0, shield: false, doubleJump: false }, coinsSpent: 0, dashesUsed: 0, hits: 0, falls: 0, clearSec: 30 }, leftover: left });
+  const R = () => S('Result');
+  log(await waitFor(() => active('Result') && texts('Result').includes('클리어 보상: 남은 코인 25 → 골드 +25') && texts('Result').includes('보물상자에 넣기')), 'result shows reward and invest button');
+  await R().invest();
+  log(JSON.parse(localStorage.getItem('dd.chest')).total === 25 && state.donated === donated0 + 25 && state.style.spent === spent0 + 25 && state.gold === 550,
+    'invest: chest +25, my reward gold stays (gold 550, spent +25)');
+  log(texts('Result').includes('보물상자에 코인 25을 넣었어요') && !texts('Result').includes('보물상자에 넣기'), 'invest once, button gone');
 } catch (e) { out.push('ERROR ' + e.stack); }
 document.getElementById('out').textContent = out.join(String.fromCharCode(10));
 </script></body></html>

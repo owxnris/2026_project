@@ -456,3 +456,33 @@
 - 수정한 파일: js/onestore.js(신규), index.html, js/main.js, js/scenes/BootScene.js, js/music.js, js/sound.js, spec.md(출시 항목 아래 연동 세부), 원다현_tasks.md(14-12), tests/browser(onestore.test.html, run-all.sh)
 - 판단 근거: 원스토어 공식 SDK 안내(ONE-store/onestore_web_sdk_skills, v1.2.0)의 호출 순서·err 분기를 그대로 따름. 일반 <script>는 module보다 먼저 실행되므로 Phaser에 defer를 붙여 SDK → Phaser → 게임 순서를 보장
 
+[2026-11-25 17:30]
+- 요청 요약: 원스토어 판매정보용 던전 대시 한줄설명·상품설명 작성
+- 수정한 파일: 없음 (문구를 답변으로 전달)
+- 판단 근거: 등록 가이드 규격(한줄 100자·설명 1,000자 안팎, 소개→플레이 방법→특징→안내, -합니다 체)을 따르고, 실제 게임에 있는 기능과 저장·광고·결제 사실만 적음
+
+[2026-11-25 17:45]
+- 요청 요약: 원스토어 상품설명에 문제은행 등 교사 기능도 넣기
+- 수정한 파일: 없음 (문구를 답변으로 전달)
+- 판단 근거: spec.md의 문제은행·공유 문제은행·학습 분석·활동 진행·학생 현황을 실제 있는 기능만 [선생님 기능]으로 묶고, 한줄설명에도 교사 측면을 넣음 (3,000자 이내)
+
+[2026-11-25 18:00]
+- 요청 요약: 원스토어 그래픽 이미지(1024×578) 만들기
+- 수정한 파일: store/graphic.html·store/graphic_1024x578.png(신규), assets/CREDITS.md
+- 판단 근거: 등록 가이드대로 새 그림 없이 게임 그림(Kenney CC0)·Galmuri·design.md 색만 써서 HTML로 배치하고 정확한 크기로 캡처(31KB, 1MB 이하). 게임 코드는 건드리지 않음
+
+[2026-11-25 18:30]
+- 요청 요약: 원스토어 그래픽 리소스(대표 아이콘 512×512, 스크린샷 2~8장) 만들기
+- 수정한 파일: store/icon.html·icon_512.png·screenshot_1~6.png(신규), js/scenes/ResultScene.js(클리어 결과의 안내 글 겹침 수정), tests/browser/shot.html(맞힌 문제 수 지정), assets/CREDITS.md
+- 판단 근거: 게임 그림만 써서 아이콘을 만들고, 스크린샷은 실제 화면을 16:9(960×540, 1300px 이하)로 캡처. 캡처 중 클리어 결과 화면에서 안내 글이 코인 숫자·다음 목표와 겹치는 버그를 발견해 차례로 쌓이게 고침. 동영상은 ffmpeg가 없어 만들지 않음
+
+[2026-11-25 19:10]
+- 요청 요약: 원스토어 동영상(MP4, 15초~10분) 만들기
+- 수정한 파일: store/gameplay.mp4(신규), tests/browser/video.html(녹화 도구, 신규), assets/CREDITS.md
+- 판단 근거: 이 PC(Windows ARM)에 ffmpeg가 없어 브라우저 WebCodecs+mp4-muxer로 일반 MP4를 만듦(MediaRecorder MP4는 길이 정보가 틀려 길이 검사에 걸릴 수 있어 버림). 실제 게임을 자동 조작(정답·보호막·점프)해 34초 플레이를 녹화, 게임 코드는 건드리지 않음
+
+[2026-11-25 20:00]
+- 요청 요약: 문제를 원하는 만큼 풀어 코인을 벌고(코인 10부터 나가기) 한 번에 쓰기, 라운드가 끝나면 남은 코인을 학급 보물상자에 투자 + 끝나면 보상 — 질문으로 정함: 최대 5문제, 보상 = 남은 코인만큼 골드, 안 넣으면 코인 사라짐
+- 수정한 파일: js/config.js, js/grading.js, js/state.js, js/scenes/QuizScene.js·DungeonScene.js·ResultScene.js·StartScene.js, js/story.js, js/dungeons.js, js/firebase/chest.js, spec.md, 원다현_tasks.md(14-13), tests(grading·runLog·game.e2e·mine.e2e·chest.e2e·video.html), store/gameplay.mp4(다시 녹화)
+- 판단 근거: 문제 도중에 나가면 그 문제가 오답으로 남으므로, 답한 뒤 '한 문제 더'/'능력 사러 가기'를 고르게 함. 보물상자에 넣어도 보상 골드가 남도록 넣는 만큼 골드를 더해 기존 규칙(넣은 골드 = 쓴 골드 증가 = 상자 증가) 그대로 씀
+

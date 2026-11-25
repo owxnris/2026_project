@@ -27,7 +27,7 @@ export const state = {
 // abilities: 이번 판에 산 능력 (보호막·이단 점프는 산 판에만), dashLeft: 남은 대시, shieldLeft: 보호막이 남았는지
 function newPlay() {
   return {
-    hits: 0, falls: 0, dashesUsed: 0, dungeonStartMs: 0, quizCorrect: 0, quizTotal: 0, entryCorrect: 0, supportCoins: 0, // supportCoins: 학급 광산 지원
+    hits: 0, falls: 0, dashesUsed: 0, dungeonStartMs: 0, quizCorrect: 0, quizTotal: 0, entryCorrect: 0, entryTotal: 0, supportCoins: 0, // supportCoins: 학급 광산 지원
     abilities: { dash: 0, shield: false, doubleJump: false }, dashLeft: 0, shieldLeft: false,
   };
 }
@@ -52,6 +52,7 @@ export function resetPlay() {
 export function recordQuiz(correct, quizType) {
   state.play.quizTotal += 1;
   state.totalQuiz += 1;
+  if (quizType === 'entry') state.play.entryTotal += 1;
   if (!correct) return;
   state.gold += RULES.COIN_PER_CORRECT;
   state.play.quizCorrect += 1;
@@ -69,11 +70,16 @@ export function remainingSeconds() {
   return Math.max(0, Math.ceil((state.endTime - serverNow()) / 1000));
 }
 
+// 방을 깨면: 클리어 보상으로 남은 코인만큼 골드를 더하고(2026-11-25 사용자 선택), 코인은 사라진다.
+// 남은 코인은 결과 화면에서 학급 보물상자에 넣을 수 있다 (ResultScene). 돌려줌: 남은 코인
 export function clearDungeon(index) {
+  const leftover = state.coins;
   state.cleared[index] = true;
   state.unlocked = Math.max(state.unlocked, index + 1);
-  state.coins = 0; // 던전이 끝나면 남은 코인은 사라진다
+  state.gold += leftover;
+  state.coins = 0;
   saveAdventureNow();
+  return leftover;
 }
 
 // 앞에서부터 이어서 깬 방 수 (방은 차례로 열린다)

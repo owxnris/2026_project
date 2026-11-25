@@ -24,7 +24,7 @@ export const LAYOUT = { W: 960, H: 540, HUD_H: 60, GUIDE_H: 40 };
 
 export const RULES = {
   TOTAL_TIME_SEC: 300, // [임시] 교사 플랫폼 전까지 쓰는 기본값
-  ENTRY_QUIZ_COUNT: 3,
+  ENTRY_QUIZ_MAX: 5, // 입장 퀴즈 최대 문제 수 (2026-11-25 사용자 요청: 원하는 만큼 풀고 코인 10부터 나갈 수 있다)
   QUIZ_TIME_SEC: 15,
   COIN_PER_CORRECT: 10,
   HIT_COIN_LOSS: 10, // [임시] spec에서 [미정]
