@@ -379,3 +379,22 @@ h2.body-text, .page-title { font-size: 24px; font-weight: bold; color: var(--nav
 .chest-bar { height: 14px; background: #F3E6BF; border-radius: 999px; overflow: hidden; margin: 6px 0; }
 .chest-bar > div { height: 100%; background: var(--good); border-radius: 999px; }
 #chest-form { margin: 8px 0; }
+
+/* 휴대폰 폭 (2026-11-26 점검): 위 메뉴는 글자가 쪼개지지 않게 줄이고, 표는 머리글이 한 줄로·옆으로 밀어 보기 안내 */
+@media (max-width: 720px) {
+  .topbar { height: auto; min-height: 52px; padding: 4px 10px; gap: 6px; }
+  .topbar-left { gap: 8px; min-width: 0; }
+  .logo .body-text, #teacher-name { display: none; }
+  .menu { gap: 12px; }
+  .menu-item { white-space: nowrap; font-size: 14px; padding: 14px 2px; }
+  .topbar .btn { height: 32px; padding: 0 10px; font-size: 13px; white-space: nowrap; }
+  .table th { white-space: nowrap; }
+  .table td { min-width: 56px; } /* 칸이 한 글자 폭으로 눌리지 않게 — 표가 넓어지면 옆으로 민다 */
+  #shared-list .table td:nth-child(4), #q-list .table td:nth-child(4) { min-width: 200px; }
+  #shared-list .table td:nth-child(5), #shared-list .table td:last-child, #q-list .table td:last-child { white-space: nowrap; }
+  div:has(> .table)::before {
+    content: '← 표는 옆으로 밀어서 볼 수 있어요 →';
+    display: block; margin-bottom: 6px; font-size: 12px; color: var(--muted);
+  }
+}
+

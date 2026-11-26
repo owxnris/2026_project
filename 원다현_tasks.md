@@ -477,3 +477,5 @@ D-1 → D-2·D-3 → D-4 → (사용자: 11-5 플레이 감각 점검) → D-5 �
   - 구현됨 — js/onestore.js(신규), index.html(SDK 먼저·Phaser defer), main.js, BootScene(진행률·startGameAsync), music.js·sound.js(pause/resume). 시험: onestore.test 8개(가짜 SDK: 일반 브라우저·앱·SDK 없음), 실제 index.html·체험 모드가 진짜 SDK로 시작 화면까지 열림. 원콘솔 'H5 게임 URL 검증'·원스토어 앱 확인 전(사용자)
 - [ ] 14-13 입장 퀴즈 최대 5문제(코인 10부터 '한 문제 더' / '능력 사러 가기'), 클리어 보상(남은 코인만큼 골드), 남은 코인을 학급 보물상자에 (2026-11-25)
   - 구현됨 — config.js·grading.js(ENTRY_QUIZ_MAX 5, 회복 퀴즈는 입장 1문제 뒤), QuizScene(askMore), state.js(entryTotal·clearDungeon 보상), DungeonScene, ResultScene(보상 줄·보물상자에 넣기), firebase/chest.js(investLeftover), 별 기준, 시작 화면·이야기 글. 규칙 변경 없음(기존 보물상자 규칙 그대로). 시험: chest.e2e 17개, game.e2e 64개, 노드(grading·runLog) 갱신. 홍보 동영상 다시 녹화. 실제 화면 확인 전
+- [ ] 14-14 교사 플랫폼 점검 후 고치기 (2026-11-26, 점검 1·2번): 휴대폰 폭 위 메뉴·표 다듬기, 체험 학생 모험 기록을 결과와 맞게
+  - 구현됨 — css/teacher.css(720px 이하 메뉴·표), js/demo/seed.js(체험 학생 adventure), design.md. 시험: demo.test 14개(학생 탭이 결과와 맞음 추가), teacher-full·bank·import 통과, 390px 캡처·옆으로 밀기 확인. 실제 휴대폰 확인 전

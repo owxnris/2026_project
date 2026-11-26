@@ -23,6 +23,9 @@ try {
   log(await waitFor(() => !$('class-view').hidden && $('detail-code').textContent === '111111'), 'class detail: code 111111');
   td().querySelector('[data-tab="students"]').click();
   log(await waitFor(() => $('student-list').querySelectorAll('tbody tr').length === 4), 'four demo students');
+  const stuRow = (name) => [...$('student-list').querySelectorAll('tbody tr')].find((r) => r.cells[0].textContent === name);
+  log(await waitFor(() => stuRow('하늘')?.textContent.includes('2/8') && stuRow('하늘').cells[3].textContent === '70' && stuRow('구름')?.textContent.includes('아직 시작 전')),
+    `students tab matches seeded results (하늘 ${stuRow('하늘')?.cells[2].textContent} · ${stuRow('하늘')?.cells[3].textContent})`);
   td().querySelector('[data-tab="results"]').click();
   log(await waitFor(() => $('r-summary').textContent.includes('참여 학생 4명')), `results tab has seeded data (${$('r-summary').textContent.slice(0, 40)})`);
   td().querySelector('[data-tab="activities"]').click();

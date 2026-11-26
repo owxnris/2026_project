@@ -52,6 +52,8 @@ export async function seed({ docs, Timestamp }) {
   });
   put(`classes/${C}/activities/demo-past/answerKey/main`, { answers: answerKeyOf(pastQs) });
   STUDENTS.forEach((s) => {
+    const clearedRooms = new Set();
+    let gold = 0;
     // 판 하나에 문제 3~4개씩
     for (let start = 0, run = 0; start < s.pattern.length; start += 4, run += 1) {
       const attempts = s.pattern.slice(start, start + 4).map((ok, k) => {
@@ -73,7 +75,15 @@ export async function seed({ docs, Timestamp }) {
         },
       });
       put(`classes/${C}/results/${s.uid}_past${run}`, { ...result, createdAt: ts(pastStart + 60000 * (run + 1)) });
+      gold += correct * 10;
+      if (cleared) clearedRooms.add(run % 3);
     }
+    // 모험 기록: 위 결과와 맞게 (앞에서부터 이어서 깬 방 수, 골드 = 정답 × 10) — 학생 탭이 결과 탭과 같은 이야기를 하도록
+    let clearedCount = 0;
+    while (clearedRooms.has(clearedCount)) clearedCount += 1;
+    put(`classes/${C}/adventure/${s.uid}`, {
+      nickname: s.nickname, clearedCount, gold, spent: 0, owned: ['mint', 'none'], look: { color: 'mint', hat: 'none' }, donated: 0, updatedAt: ts(pastStart + 600000),
+    });
   });
 
   // 오늘 활동(대기): 교사 탭에서 '시작'을 누르면 학생 탭이 월드맵으로 넘어간다
