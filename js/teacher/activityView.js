@@ -87,10 +87,12 @@ function render() {
   $('av-time').classList.toggle('error', state === 'running' && sec <= 10);
   if (a.mode !== 'goldrush') $('av-info').textContent = `문제 ${a.questions.length}개 · 전체 시간 ${a.totalTimeSec / 60}분`;
   $('av-start-btn').hidden = state !== 'waiting';
+  $('av-edit-btn').hidden = state !== 'waiting';
+  $('av-extend-btn').hidden = state !== 'running' || !a.endAt;
   $('av-end-btn').hidden = state !== 'running';
   $('av-restart-btn').hidden = state !== 'ended';
   $('av-delete-btn').hidden = state === 'running';
-  ['av-start-btn', 'av-end-btn', 'av-restart-btn', 'av-delete-btn'].forEach((id) => { $(id).disabled = busy; });
+  ['av-start-btn', 'av-edit-btn', 'av-extend-btn', 'av-end-btn', 'av-restart-btn', 'av-delete-btn'].forEach((id) => { $(id).disabled = busy; });
 }
 
 function failText(prefix, e) {
@@ -115,6 +117,23 @@ async function onStart() {
     await store.start(cls.id, activityId);
   } catch (e) {
     $('av-error').textContent = failText('활동을 시작하지 못했어요', e);
+  } finally {
+    busy = false;
+    render();
+  }
+}
+
+// 진행 중: 5분 늘리기 (학생 화면의 남은 시간도 바로 늘어난다)
+async function onExtend() {
+  $('av-error').textContent = '';
+  busy = true;
+  render();
+  try {
+    const added = await store.extend(cls.id, activityId, 5);
+    $('av-notice').textContent = `시간을 ${Math.round(added / 60)}분 늘렸어요 — 학생 화면의 남은 시간도 늘어나요`;
+    setTimeout(() => { $('av-notice').textContent = ''; }, 5000);
+  } catch (e) {
+    $('av-error').textContent = e?.reason === 'too-long' ? '전체 시간은 3시간까지 늘릴 수 있어요' : failText('시간을 늘리지 못했어요', e);
   } finally {
     busy = false;
     render();
@@ -204,6 +223,14 @@ export function setupActivityView(s, backToClass) {
   goBack = backToClass;
   $('av-start-btn').addEventListener('click', onStart);
   $('av-end-btn').addEventListener('click', onEnd);
+  $('av-extend-btn').addEventListener('click', onExtend);
+  $('av-edit-btn').addEventListener('click', () => {
+    const a = activity();
+    if (!a) return;
+    closeActivityView();
+    goBack();
+    store.edit?.(a);
+  });
   $('av-restart-btn').addEventListener('click', onRestart);
   $('av-delete-btn').addEventListener('click', onDelete);
   $('av-back-btn').addEventListener('click', () => { closeActivityView(); backToClass(); });

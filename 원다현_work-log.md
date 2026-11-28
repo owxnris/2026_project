@@ -496,3 +496,8 @@
 - 수정한 파일: css/teacher.css, js/demo/seed.js, design.md, 원다현_tasks.md(14-14), tests/browser/demo.test.html
 - 판단 근거: 표는 원래 카드 안에서 옆으로 밀리지만 안내가 없고 칸이 한 글자 폭으로 눌려 쓰기 어려웠음 → 머리글 한 줄·칸 최소 폭·안내 문구. 메뉴는 좁은 폭에서 로고 글자·교사 이름을 숨겨 한 줄로. 체험 학생 모험 기록은 심어 둔 결과에서 계산해 두 탭이 같은 내용을 보이게 함
 
+[2026-11-28 10:00]
+- 요청 요약: 점검 남은 항목 중 3·4번(진행 중 활동 시간 연장, 대기 중 활동 수정) 고치기
+- 수정한 파일: js/teacher/activities.js·activityTab.js·activityView.js·main.js, teacher.html, js/session.js, js/state.js, firestore.rules, spec.md, 원다현_tasks.md(14-15), tests(rules.test.mjs·teacher-full.e2e·game.e2e)
+- 판단 근거: 연장은 종료 시각과 전체 시간을 같은 만큼 늘리게 해 규칙에서 '종료 시각 = 시작 + 전체 시간' 관계를 지키고, 한 번 30분·전체 3시간 상한과 시간이 남았을 때만 허용. 수정은 대기 중일 때만, 정답표도 같은 일괄 쓰기로 바꿔 문제와 정답이 어긋나지 않게 함
+

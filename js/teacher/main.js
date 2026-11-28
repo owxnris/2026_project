@@ -13,7 +13,7 @@ import {
   setupBank, setQuestions, showBankLoading, showBankError, resetBank,
 } from './bankView.js';
 import {
-  createActivity, watchActivities, startActivity, endActivity, restartActivity, deleteActivity,
+  createActivity, updateActivity, extendActivity, watchActivities, startActivity, endActivity, restartActivity, deleteActivity,
 } from './activities.js';
 import {
   setupActivityTab, setActivityBank, stopActivities, getActivities, onActivitiesChange,
@@ -31,7 +31,7 @@ import {
 import {
   setupSharedView, startShared, stopShared, refreshShared,
 } from './sharedView.js';
-import { openFormWith } from './activityTab.js';
+import { openFormWith, openEditForm } from './activityTab.js';
 
 let myQuestions = []; // 내 문제은행 최신 목록 (활동 만들기·추천·공유 문제은행이 함께 쓴다)
 
@@ -123,9 +123,10 @@ if (!isConfigured) {
     add: addQuestion, update: updateQuestion, remove: deleteQuestion, importDefaults: importDefaultQuestions,
     share: shareQuestion, reshare: updateSharedFrom,
   });
-  setupActivityTab({ create: createActivity, watch: watchActivities }, openActivityView);
+  setupActivityTab({ create: createActivity, update: updateActivity, watch: watchActivities }, openActivityView);
   setupActivityView({
     start: startActivity, end: endActivity, restart: restartActivity, remove: deleteActivity, getActivities, watchProgress, watchMine,
+    extend: extendActivity, edit: openEditForm,
   }, backToActivities);
   setupClassHub({
     watchStudents, watchResults, watchAdventures, watchChest,

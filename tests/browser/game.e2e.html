@@ -67,6 +67,11 @@ try {
   log(a1.status === 'running' && a1.endAt.toMillis() - a1.startAt.toMillis() === 600000, 'teacher start: status running, endAt = startAt + total (server time)');
   log(await waitFor(() => active('WorldMap')), 'teacher start -> student world map');
   log(state.endTime === F.docs.get('classes/C1/activities/A1').endAt.toMillis(), 'remaining time uses activity endAt');
+  // 교사가 시간을 늘리면(+5분) 학생의 남은 시간도 늘어난다 (2026-11-28)
+  const { remainingSeconds } = await import('/js/state.js');
+  const left0 = remainingSeconds();
+  await T.extendActivity('C1', 'A1', 5);
+  log(await waitFor(() => remainingSeconds() - left0 >= 295), `teacher extends +5 min -> student remaining time grows (${left0} -> ${remainingSeconds()})`);
   log(await waitFor(() => progress()?.currentDungeon === null && progress().nickname === '하늘'), '7-17: progress written on world map');
 
   // ── 7: 입장 퀴즈 (서버 채점): 2문제 정답, 1문제 오답 ──

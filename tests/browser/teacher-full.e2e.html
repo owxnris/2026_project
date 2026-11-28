@@ -130,8 +130,26 @@ try {
   // ── 시작 → 진행 중 화면 순위 ──
   document.querySelector('[data-tab="activities"]').click();
   rows('act-list')[0].click();
+  // 대기 중 활동 고치기 (2026-11-28): '수정' → 양식이 채워진 채로 → 제목·시간 바꿔 저장 (정답표도 함께)
+  log(await waitFor(() => !$('av-edit-btn').hidden) && $('av-extend-btn').hidden, 'waiting: edit button shown, extend hidden');
+  const titleBefore = F.docs.get(aPath).title;
+  $('av-edit-btn').click();
+  log(await waitFor(() => !$('act-form').hidden && $('act-title').value === titleBefore && $('act-form-title').textContent === '활동 고치기' && $('act-picked').textContent === `고른 문제 ${F.docs.get(aPath).questions.length}개`),
+    'edit form opens prefilled (title, questions)');
+  $('act-title').value = titleBefore + ' (고침)'; $('act-minutes').value = '12';
+  $('act-form').requestSubmit();
+  log(await waitFor(() => F.docs.get(aPath).title === titleBefore + ' (고침)' && F.docs.get(aPath).totalTimeSec === 720 && F.docs.get(aPath).status === 'waiting'
+    && Object.keys(F.docs.get(`${aPath}/answerKey/main`).answers).length === F.docs.get(aPath).questions.length), 'edit saved: title, time, answer key');
+  log(await waitFor(() => $('act-form').hidden), 'edit form closes');
+  rows('act-list').find((r) => r.textContent.includes('(고침)')).click();
   $('av-start-btn').click();
   log(await waitFor(() => F.docs.get(aPath).status === 'running'), '5-6: started');
+  // 진행 중 시간 늘리기: +5분 → 종료 시각과 전체 시간이 함께 늘어난다
+  log(await waitFor(() => !$('av-extend-btn').hidden && F.docs.get(aPath).endAt) && $('av-edit-btn').hidden, 'running: extend shown, edit hidden');
+  const end0 = F.docs.get(aPath).endAt.toMillis();
+  $('av-extend-btn').click();
+  log(await waitFor(() => F.docs.get(aPath).endAt.toMillis() === end0 + 300000 && F.docs.get(aPath).totalTimeSec === 1020 && $('av-notice').textContent.includes('5분 늘렸어요')),
+    'extend +5 min: endAt and total time, notice');
   log(await waitFor(() => rows('av-ranking').length === 2 && rows('av-ranking').every((r) => r.cells[2].textContent === '들어오기 전')), '8-3: ranking lists both students (before entry)');
 
   // 학생 기기가 하는 일(출제·채점·결과 문서 만들기)을 실제 js/runLog.js·grading.js로 흉내 낸다. S1: 3문제 모두 정답 → 클리어. S2: 1문제 틀리고 실패
@@ -240,12 +258,12 @@ try {
   log(await waitFor(() => $('r-supplement').textContent.includes('보충할 개념: 정보 · 알고리즘')), `class summary names weak concept (${$('r-supplement').textContent.slice(0, 80)})`);
   log(!$('r-supplement-btn').hidden && $('r-supplement').textContent.includes('보충 학습이 필요한 학생 (학습 수준 하): 바다'), 'supplement: button + students needing support');
   const part = rows('r-participation').map(cells);
-  log(part.length === 2 && part[0].join('|') === '정보·수학 복습|2 / 2명|100%|1명|50%' && part[1].join('|') === '알고리즘 확인|2 / 2명|100%|0명|0%', `participation (${part.map((p) => p.join('|')).join(' / ')})`);
+  log(part.length === 2 && part[0].join('|') === '정보·수학 복습 (고침)|2 / 2명|100%|1명|50%' && part[1].join('|') === '알고리즘 확인|2 / 2명|100%|0명|0%', `participation (${part.map((p) => p.join('|')).join(' / ')})`);
   log($('r-levels').textContent.startsWith('학습 수준: 상 0명 · 중 1명 · 하 1명 · 데이터 부족 0명'), `level distribution (${$('r-levels').textContent})`);
   rows('r-students').find((r) => r.cells[0].textContent === '하늘').click();
   const fbText = $('r-feedback').textContent;
   log(fbText.includes('학습 수준 중') && /취약 개념 정보 · 알고리즘: [3-6]번 중 3번/.test(fbText), `student feedback: level + weak concept from real answers (${fbText.slice(0, 160)})`);
-  log(fbText.includes("'정보·수학 복습' 100% → '알고리즘 확인' 0% — 내려갔어요"), 'student feedback: activity trend');
+  log(fbText.includes("'정보·수학 복습 (고침)' 100% → '알고리즘 확인' 0% — 내려갔어요"), 'student feedback: activity trend');
   log(rows('r-trend').length === 2 && rows('r-recommend').length === 1 && rows('r-recommend')[0].cells[2].textContent.startsWith('순서대로'), 'trend table + recommended bank question');
   $('r-recommend-btn').click();
   log(!$('act-form').hidden && $('act-title').value === '하늘 보충 활동' && $('act-picked').textContent === '고른 문제 1개'

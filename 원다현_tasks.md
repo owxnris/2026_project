@@ -479,3 +479,5 @@ D-1 → D-2·D-3 → D-4 → (사용자: 11-5 플레이 감각 점검) → D-5 �
   - 구현됨 — config.js·grading.js(ENTRY_QUIZ_MAX 5, 회복 퀴즈는 입장 1문제 뒤), QuizScene(askMore), state.js(entryTotal·clearDungeon 보상), DungeonScene, ResultScene(보상 줄·보물상자에 넣기), firebase/chest.js(investLeftover), 별 기준, 시작 화면·이야기 글. 규칙 변경 없음(기존 보물상자 규칙 그대로). 시험: chest.e2e 17개, game.e2e 64개, 노드(grading·runLog) 갱신. 홍보 동영상 다시 녹화. 실제 화면 확인 전
 - [ ] 14-14 교사 플랫폼 점검 후 고치기 (2026-11-26, 점검 1·2번): 휴대폰 폭 위 메뉴·표 다듬기, 체험 학생 모험 기록을 결과와 맞게
   - 구현됨 — css/teacher.css(720px 이하 메뉴·표), js/demo/seed.js(체험 학생 adventure), design.md. 시험: demo.test 14개(학생 탭이 결과와 맞음 추가), teacher-full·bank·import 통과, 390px 캡처·옆으로 밀기 확인. 실제 휴대폰 확인 전
+- [ ] 14-15 교사: 대기 중 활동 고치기('수정'), 진행 중 시간 늘리기('+5분') (2026-11-28, 점검 3·4번)
+  - 구현됨 — js/teacher/activities.js(updateActivity·extendActivity), activityTab.js(openEditForm), activityView.js(수정·+5분 버튼, 알림 줄), main.js, teacher.html, js/session.js·state.js(학생 남은 시간이 늘어난 종료 시각을 따름), firestore.rules(④ 대기 중 고치기 ⑤ 시간 늘리기, 정답표는 대기 중에만 고치기). 시험: teacher-full 103개, game.e2e(+5분이면 학생 남은 시간 +300초), 규칙 에뮬레이터 15묶음. **규칙 다시 게시 필요(사용자)**, 실제 화면 확인 전

@@ -16,6 +16,7 @@ let activities = [];
 let stopWatch = null;
 let bank = []; // 내 문제은행 (main.js가 넘겨준다)
 const picked = new Set(); // 고른 문제 id
+let editing = null; // 고치는 중인 대기 활동 id (null이면 새로 만들기)
 let noticeTimer = null;
 let shownStates = '';
 
@@ -167,6 +168,9 @@ function clearErrors() {
 }
 
 function openForm() {
+  editing = null;
+  $('act-form-title').textContent = '활동 만들기';
+  $('act-save-btn').textContent = '저장';
   picked.clear();
   $('act-title').value = '';
   $('act-minutes').value = '10';
@@ -190,7 +194,25 @@ export function openFormWith(questionIds, title) {
   renderPicker();
 }
 
+// 진행 중 화면의 '수정'에서: 대기 중 활동을 양식에 채워 연다. 문제은행에 없는 문제(지워진 문제)는 고를 수 없어 빠진다
+export function openEditForm(a) {
+  openForm();
+  editing = a.id;
+  $('act-form-title').textContent = '활동 고치기';
+  $('act-save-btn').textContent = '고친 내용 저장';
+  $('act-title').value = a.title;
+  $('act-minutes').value = String(Math.round(a.totalTimeSec / 60));
+  $('act-mode').value = a.mode === 'goldrush' ? 'goldrush' : 'adventure';
+  const ids = new Set(bank.map((q) => q.id));
+  const keep = (a.questions ?? []).map((q) => q.id).filter((id) => ids.has(id));
+  keep.forEach((id) => picked.add(id));
+  const gone = (a.questions ?? []).length - keep.length;
+  $('act-save-error').textContent = gone ? `문제은행에서 지운 문제 ${gone}개는 빠졌어요. 저장하면 빠진 채로 바뀌어요.` : '';
+  renderPicker();
+}
+
 function closeForm() {
+  editing = null;
   $('act-form').hidden = true;
   $('act-add-btn').hidden = false;
 }
@@ -209,18 +231,22 @@ async function onSave(event) {
   const target = current;
   $('act-save-btn').disabled = true;
   try {
-    await store.create(target.id, {
+    const data = {
       title,
       totalTimeSec: Number(minutes) * 60,
       picked: bank.filter((q) => picked.has(q.id)),
       mode: $('act-mode').value,
-    });
+    };
+    const wasEditing = editing;
+    if (wasEditing) await store.update(target.id, wasEditing, data);
+    else await store.create(target.id, data);
     if (current === target) {
       closeForm();
-      showNotice('저장했어요');
+      showNotice(wasEditing ? '고친 내용을 저장했어요' : '저장했어요');
     }
   } catch (e) {
-    $('act-save-error').textContent = `활동을 만들지 못했어요 (${reasonText(e)})`;
+    const what = editing ? '활동을 고치지 못했어요' : '활동을 만들지 못했어요';
+    $('act-save-error').textContent = e?.reason === 'not-waiting' ? '이미 시작한 활동은 고칠 수 없어요' : `${what} (${reasonText(e)})`;
   } finally {
     $('act-save-btn').disabled = false;
   }

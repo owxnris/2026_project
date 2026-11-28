@@ -142,7 +142,7 @@
         </div>
 
         <form id="act-form" class="q-form" novalidate hidden>
-          <p class="body-text">활동 만들기</p>
+          <p class="body-text" id="act-form-title">활동 만들기</p>
           <div class="form-row">
             <label class="field">
               <span class="small-text">활동 제목</span>
@@ -302,8 +302,11 @@
       <p class="small-text" id="av-mine" hidden></p>
       <div id="av-ranking" class="av-ranking"></div>
       <p class="small-text error" id="av-error"></p>
+      <p class="small-text notice" id="av-notice"></p>
       <div class="button-row">
         <button class="btn primary" id="av-start-btn" type="button" hidden>시작</button>
+        <button class="btn" id="av-edit-btn" type="button" hidden>수정</button>
+        <button class="btn" id="av-extend-btn" type="button" hidden>+5분 늘리기</button>
         <button class="btn primary" id="av-end-btn" type="button" hidden>종료</button>
         <button class="btn primary" id="av-restart-btn" type="button" hidden>다시 시작</button>
         <button class="btn danger" id="av-delete-btn" type="button" hidden>활동 삭제</button>

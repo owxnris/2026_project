@@ -29,6 +29,34 @@ export async function createActivity(classId, { title, totalTimeSec, picked, mod
   return ref.id;
 }
 
+// 대기 중인 활동 고치기 (2026-11-28): 제목·전체 시간·문제·종류. 문제 사본과 정답표를 한 번에 바꾼다
+export async function updateActivity(classId, activityId, { title, totalTimeSec, picked, mode = 'adventure' }) {
+  const ref = doc(activitiesOf(classId), activityId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new ActivityError('not-found');
+  if (snap.data().status !== 'waiting') throw new ActivityError('not-waiting');
+  const batch = writeBatch(db);
+  batch.update(ref, {
+    title, totalTimeSec, questions: picked.map(activityQuestion), mode: mode === 'goldrush' ? 'goldrush' : 'adventure',
+  });
+  batch.set(doc(db, 'classes', classId, 'activities', activityId, 'answerKey', 'main'), { answers: answerKeyOf(picked) });
+  await batch.commit();
+}
+
+// 진행 중인 활동 시간 늘리기 (2026-11-28): 종료 시각과 전체 시간을 함께 늘린다 (시간이 남아 있을 때만, 한 번에 30분·전체 3시간까지 — 규칙과 같다)
+export const EXTEND_MAX_TOTAL_SEC = 3 * 60 * 60;
+export async function extendActivity(classId, activityId, minutes = 5) {
+  const ref = doc(activitiesOf(classId), activityId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new ActivityError('not-found');
+  const a = snap.data();
+  if (a.status !== 'running' || !a.endAt || a.endAt.toMillis() <= serverNow()) throw new ActivityError('not-running');
+  const add = Math.min(minutes * 60, EXTEND_MAX_TOTAL_SEC - a.totalTimeSec);
+  if (add <= 0) throw new ActivityError('too-long');
+  await updateDoc(ref, { totalTimeSec: a.totalTimeSec + add, endAt: new Timestamp(a.endAt.seconds + add, a.endAt.nanoseconds) });
+  return add;
+}
+
 // 학급의 활동을 실시간으로 받는다 (최근에 만든 활동이 위)
 export function watchActivities(classId, onChange, onError) {
   return onSnapshot(activitiesOf(classId), (snap) => {

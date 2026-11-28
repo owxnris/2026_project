@@ -67,7 +67,8 @@ export function restoreCleared(clearedCount) {
 }
 
 export function remainingSeconds() {
-  return Math.max(0, Math.ceil((state.endTime - serverNow()) / 1000));
+  const end = Math.max(state.endTime, session.endAtMs || 0); // 교사가 시간을 늘렸으면 늘어난 종료 시각
+  return Math.max(0, Math.ceil((end - serverNow()) / 1000));
 }
 
 // 방을 깨면: 클리어 보상으로 남은 코인만큼 골드를 더하고(2026-11-25 사용자 선택), 코인은 사라진다.

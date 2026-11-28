@@ -120,14 +120,31 @@ service cloud.firestore {
           // ③ 종료: 진행 중 → 종료
           || (resource.data.status == 'running'
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
-            && request.resource.data.status == 'ended'));
+            && request.resource.data.status == 'ended')
+          // ④ 대기 중 고치기(2026-11-28): 제목·전체 시간·문제·종류만, 상태는 그대로
+          || (resource.data.status == 'waiting'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['title', 'totalTimeSec', 'questions', 'mode'])
+            && request.resource.data.totalTimeSec is int && request.resource.data.totalTimeSec > 0
+            && request.resource.data.questions is list && request.resource.data.questions.size() > 0
+            && (!('mode' in request.resource.data) || request.resource.data.mode in ['adventure', 'goldrush']))
+          // ⑤ 진행 중 시간 늘리기(2026-11-28): 시간이 남아 있을 때, 종료 시각과 전체 시간을 같은 만큼(한 번에 30분까지, 전체 3시간까지)
+          || (resource.data.status == 'running' && resource.data.endAt != null && request.time < resource.data.endAt
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['endAt', 'totalTimeSec'])
+            && request.resource.data.totalTimeSec is int
+            && request.resource.data.totalTimeSec > resource.data.totalTimeSec
+            && request.resource.data.totalTimeSec - resource.data.totalTimeSec <= 1800
+            && request.resource.data.totalTimeSec <= 10800
+            && request.resource.data.endAt == resource.data.endAt + duration.value(request.resource.data.totalTimeSec - resource.data.totalTimeSec, 's')));
         allow delete: if ownsClass(classId);
 
         // 정답표: 소유 교사가 만들고, 같은 학급 학생은 읽는다 (학생 기기가 채점한다 — 기기 조작으로 정답을 볼 수 있는 한계, spec.md)
         match /answerKey/{keyId} {
           allow read: if ownsClass(classId) || inClass(classId);
           allow create: if ownsClass(classId);
-          allow update, delete: if false;
+          // 대기 중인 활동을 고칠 때만 정답표도 바꾼다 (2026-11-28)
+          allow update: if ownsClass(classId)
+            && get(/databases/$(database)/documents/classes/$(classId)/activities/$(activityId)).data.status == 'waiting';
+          allow delete: if false;
         }
 
         // 학생별 복습 기록(틀리고 아직 다시 맞히지 못한 문제 id): 그 학생 본인만

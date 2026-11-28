@@ -282,13 +282,30 @@ test('교사: 활동 생성(대기만) → 시작(서버 시각) → 종료 시�
   await assertFails(updateDoc(doc(teacher('B'), 'classes/C1/activities/A2'), { status: 'running', startAt: serverTimestamp() }), '다른 교사는 시작 불가');
   await assertFails(updateDoc(doc(student('ST'), 'classes/C1/activities/A2'), { status: 'running', startAt: serverTimestamp() }));
   await assertFails(updateDoc(ref, { status: 'ended' }), '대기에서 바로 종료 불가');
+  // 대기 중 고치기 (2026-11-28): 제목·시간·문제·종류와 정답표를 함께
+  const ed = writeBatch(a);
+  ed.update(ref, { title: '고친 제목', totalTimeSec: 300, questions: [{ id: 'q' }, { id: 'q2' }], mode: 'goldrush' });
+  ed.set(doc(a, 'classes/C1/activities/A2/answerKey/main'), { answers: { q: 0, q2: 1 } });
+  await assertSucceeds(ed.commit(), '대기 중 활동 고치기');
+  await assertFails(updateDoc(ref, { mode: 'pvp' }), '정해진 종류만');
+  await assertFails(updateDoc(ref, { questions: [] }), '문제는 하나 이상');
+  await assertFails(updateDoc(doc(teacher('B'), 'classes/C1/activities/A2'), { title: '남의 활동' }), '다른 교사는 못 고침');
+  await assertFails(updateDoc(doc(student('ST'), 'classes/C1/activities/A2'), { title: '학생' }), '학생은 못 고침');
   await assertSucceeds(updateDoc(ref, { status: 'running', startAt: serverTimestamp() }));
+  await assertFails(updateDoc(ref, { title: '진행 중 고치기' }), '시작한 활동은 못 고침');
+  await assertFails(setDoc(doc(a, 'classes/C1/activities/A2/answerKey/main'), { answers: { q: 3 } }), '시작한 활동의 정답표는 못 바꿈');
 
   const { startAt } = (await getDoc(ref)).data();
   await assertFails(updateDoc(ref, { endAt: new Timestamp(startAt.seconds + 10, startAt.nanoseconds) }), '전체 시간(300초)보다 짧은 종료 시각 거부');
   await assertFails(updateDoc(ref, { endAt: new Timestamp(startAt.seconds + 9999, startAt.nanoseconds) }), '너무 긴 종료 시각 거부');
   await assertSucceeds(updateDoc(ref, { endAt: new Timestamp(startAt.seconds + 300, startAt.nanoseconds) }));
-  await assertFails(updateDoc(ref, { endAt: new Timestamp(startAt.seconds + 600, startAt.nanoseconds) }), '종료 시각을 다시 늘릴 수 없다');
+  await assertFails(updateDoc(ref, { endAt: new Timestamp(startAt.seconds + 600, startAt.nanoseconds) }), '종료 시각만 늘릴 수는 없다');
+  // 시간 늘리기 (2026-11-28): 종료 시각과 전체 시간을 같은 만큼
+  await assertSucceeds(updateDoc(ref, { totalTimeSec: 600, endAt: new Timestamp(startAt.seconds + 600, startAt.nanoseconds) }), '+5분');
+  await assertFails(updateDoc(ref, { totalTimeSec: 900, endAt: new Timestamp(startAt.seconds + 1200, startAt.nanoseconds) }), '늘린 시간과 종료 시각이 다름');
+  await assertFails(updateDoc(ref, { totalTimeSec: 2500, endAt: new Timestamp(startAt.seconds + 2500, startAt.nanoseconds) }), '한 번에 30분까지');
+  await assertFails(updateDoc(ref, { totalTimeSec: 300, endAt: new Timestamp(startAt.seconds + 300, startAt.nanoseconds) }), '줄일 수 없다');
+  await assertFails(updateDoc(doc(teacher('B'), 'classes/C1/activities/A2'), { totalTimeSec: 900, endAt: new Timestamp(startAt.seconds + 900, startAt.nanoseconds) }), '다른 교사는 못 늘림');
   await assertFails(updateDoc(ref, { totalTimeSec: 1 }), '진행 중 전체 시간 변경 불가');
   await assertFails(updateDoc(ref, { questions: [{ id: 'z' }] }), '진행 중 문제 변경 불가');
   await assertSucceeds(updateDoc(ref, { status: 'ended' }));
